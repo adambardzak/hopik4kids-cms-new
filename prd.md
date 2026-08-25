@@ -995,30 +995,41 @@ Cíl = lehké, udržovatelné, **rozšiřitelné**, přátelské k netechnikům 
 
 ## 15. Implementační roadmapa (fáze)
 
-**Fáze 0 — Základ (must-have, náhrada Strapi + multi-user platforma):**
+> **Stav (aktualizováno při vývoji):** Fáze 0 a 1 hotové a nasazené
+> (backend `api.hopik4kids.cz` na VPS, admin `admin.hopik4kids.cz` na Vercelu).
+> Z fáze 3 předsazeny **rozvrh** a **docházka** (byly poptány dřív). Web přepojen na nové API.
+
+**Fáze 0 — Základ (must-have, náhrada Strapi + multi-user platforma): ✅ HOTOVO**
 - **Modulární kostra** (sekce 12A) + datový model 3B, DB, veřejné čtecí API, zápis registrací
-  + server validace, admin CRUD, media upload, aktuality, migrace dat, oprava bezpeč. dluhu (9).
+  + server validace, admin CRUD, media upload, aktuality, oprava bezpeč. dluhu (9). ✅
+  (Migrace dat ze Strapi vynechána — nasazeno s prázdnou DB.)
 - **RBAC + správa uživatelů** (sekce 7): role owner/admin/trainer, pozvánky e-mailem,
-  audit log. Ne "admin pro 2 lidi" — rovnou multi-user.
-- *Cíl: web funguje beze změny, Strapi lze vypnout, tým lze rozšiřovat.*
+  reset hesla, audit log. Multi-user. ✅
+- Navíc: rate-limiting + shared secret na veřejný zápis, trainer scoping (přiřazení
+  trenér↔program), error handling, prod profil s fail-fast secrets, Docker/nginx/TLS deploy.
+- *Cíl splněn: web běží na novém API, Strapi vypnuto, tým lze rozšiřovat.*
 
-**Fáze 1 — Provozní hodnota (data už existují, málo práce):**
-- Dashboard (obsazenost, tržby, predikce, alert nedoplněných kurzů — 6A.1).
-- Docházkový/kontaktní list PDF + alergie + souhlasy (6A.3).
-- Stav platby + filtr neuhrazených (6A.3).
-- Přehled media souhlasů (6A.6).
+**Fáze 1 — Provozní hodnota (data už existují, málo práce): ✅ HOTOVO**
+- Dashboard (obsazenost, tržby, predikce, alert nedoplněných kurzů — 6A.1). ✅
+- Docházkový/kontaktní list PDF + alergie + souhlasy (6A.3). ✅
+- Stav platby + filtr neuhrazených (6A.3). ✅
+- Přehled media souhlasů (6A.6). ✅
+- Navíc: evidence docházky v aplikaci (zápis + statistiky), rozvrh (kalendář).
 
-**Fáze 2 — Fakturace & růst:**
-- PDF faktury + QR platba + rozeslání e-mailem (6A.5).
+**Fáze 2 — Fakturace & růst: 🔜 NA ŘADĚ**
+- PDF faktury + QR platba (SPAYD) + rozeslání e-mailem (6A.5).
 - Hromadné e-maily účastníkům (6A.3).
 - Waitlist, UTM/zdroj registrace, retence & cross-sell (6A.2).
 
-**Fáze 3 — Nástroje pro trenéry & automatizace:**
-- **Rozvrh trenérů** (kalendář lekcí s obdobím platnosti, "můj rozvrh", poznámky k lekci — 6A.8 A).
-- **Hlášení trenérů na hodiny** (shift-signup: LessonInstance + ShiftSignup, schvalování — 7.4).
-- **Interní dokumenty & příručky** (Hopíkovská pravidla, metodika, checklisty — 6A.8 B).
-- Auto-párování plateb z banky, upomínky, retence/anonymizace dat.
+**Fáze 3 — Nástroje pro trenéry & automatizace: 🟡 ČÁSTEČNĚ**
+- **Rozvrh trenérů** (kalendář lekcí s obdobím platnosti, poznámky k lekci — 6A.8 A). ✅ hotovo
+- **Docházka** (evidence + statistiky) — hotovo (nad rámec původního plánu).
+- **Přiřazení trenérů k programům** — backend (scoping) hotový, chybí admin UI. 🟡
+- **Hlášení trenérů na hodiny** (shift-signup: LessonInstance + ShiftSignup, schvalování — 7.4). ❌
+- **Interní dokumenty & příručky** (Hopíkovská pravidla, metodika, checklisty — 6A.8 B). ❌
+- Auto-párování plateb z banky, upomínky, retence/anonymizace dat. ❌
 - Přístupový kód ke kurzu (`accessMode=code`) a případně `roster` ověření (3B.10) dle potřeby.
+  (Backend `accessMode=code` hotový, chybí pole ve formuláři webu.)
 
 ---
 

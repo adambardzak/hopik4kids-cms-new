@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import type { Location, Program } from "@/lib/types";
+import type { Location, Program, Trainer } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -34,10 +34,12 @@ type FormState = Partial<Program> & { accessCode?: string };
 export function ProgramsManager({
   programs,
   locations,
+  trainers,
   openCreateOnly,
 }: {
   programs: Program[];
   locations: Location[];
+  trainers: Trainer[];
   openCreateOnly?: boolean;
 }) {
   const router = useRouter();
@@ -80,10 +82,12 @@ export function ProgramsManager({
       time: !isCamp ? form.time || null : null,
       schoolPart: form.type === "school" ? form.schoolPart || null : null,
       durationMin: !isCamp && form.durationMin ? Number(form.durationMin) : null,
+      trainersNeeded: !isCamp ? Number(form.trainersNeeded ?? 1) : null,
       validFrom: !isCamp ? form.validFrom || null : null,
       validTo: !isCamp ? form.validTo || null : null,
       startDate: isCamp ? form.startDate || null : null,
       endDate: isCamp ? form.endDate || null : null,
+      trainerIds: form.trainerIds ?? [],
     };
     startTransition(async () => {
       const res = await saveProgram(form.id ?? null, body);
@@ -265,6 +269,14 @@ export function ProgramsManager({
                       onChange={(e) => set("durationMin", e.target.value ? Number(e.target.value) : null)}
                     />
                   </Field>
+                  <Field label="Počet trenérů na hodinu">
+                    <Input
+                      type="number"
+                      min={1}
+                      value={form.trainersNeeded ?? 1}
+                      onChange={(e) => set("trainersNeeded", e.target.value ? Number(e.target.value) : 1)}
+                    />
+                  </Field>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Období od (první lekce)">
@@ -353,6 +365,37 @@ export function ProgramsManager({
             )}
 
             {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
+
+            {/* Trainer assignment — trainers see only their assigned programs (rozvrh/docházka). */}
+            <Field label="Trenéři">
+              {trainers.length === 0 ? (
+                <p className="text-xs text-[var(--muted-foreground)]">
+                  Zatím žádní trenéři. Pozvi je v sekci Tým (role Trenér).
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {trainers.map((t) => {
+                    const checked = (form.trainerIds ?? []).includes(t.id);
+                    return (
+                      <label key={t.id} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => {
+                            const cur = new Set(form.trainerIds ?? []);
+                            if (e.target.checked) cur.add(t.id);
+                            else cur.delete(t.id);
+                            set("trainerIds", Array.from(cur));
+                          }}
+                        />
+                        {t.name}
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </Field>
+
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
                 Zrušit

@@ -37,8 +37,11 @@ public class RegistrationRateLimitFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !("POST".equalsIgnoreCase(request.getMethod())
-                && "/api/registrations".equals(request.getRequestURI()));
+        if (!"POST".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+        String uri = request.getRequestURI();
+        return !("/api/registrations".equals(uri) || "/api/waitlist".equals(uri));
     }
 
     @Override

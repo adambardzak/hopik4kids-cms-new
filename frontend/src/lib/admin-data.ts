@@ -4,12 +4,19 @@ import type {
   AttendanceRow,
   AttendanceStats,
   DashboardStats,
+  DocumentItem,
+  Invoice,
   Location,
+  MarketingStats,
   PageResponse,
   Program,
   Registration,
   ScheduleEntry,
+  ShiftSlot,
+  SupplierSettings,
+  Trainer,
   User,
+  WaitlistEntry,
 } from "./types";
 
 // --- registrations ---
@@ -41,7 +48,6 @@ export function getProgram(id: string) {
 export function listLocations() {
   return api<PageResponse<Location>>("/admin/api/locations");
 }
-
 // --- articles ---
 export function listArticles() {
   return api<PageResponse<Article>>("/admin/api/articles");
@@ -79,4 +85,53 @@ export function getAttendanceRoster(program: string, date: string) {
 
 export function getAttendanceStats(program: string) {
   return api<AttendanceStats>(`/admin/api/attendance/stats?program=${program}`);
+}
+
+// --- billing ---
+export function listInvoices() {
+  return api<PageResponse<Invoice>>("/admin/api/billing/invoices");
+}
+
+export function getSupplierSettings() {
+  return api<SupplierSettings>("/admin/api/billing/supplier");
+}
+
+export function aresLookup(ico: string) {
+  return api<{ ico: string; name?: string | null; address?: string | null; dic?: string | null }>(
+    `/admin/api/billing/ares/${encodeURIComponent(ico)}`,
+  );
+}
+
+// --- bulk email ---
+export function getBulkRecipients(program: string) {
+  return api<PageResponse<string>>(`/admin/api/bulk-email/recipients?program=${program}`);
+}
+
+// --- waitlist ---
+export function listWaitlist(program: string) {
+  return api<PageResponse<WaitlistEntry>>(`/admin/api/waitlist?program=${program}`);
+}
+
+// --- marketing ---
+export function getMarketingStats() {
+  return api<MarketingStats>("/admin/api/marketing/stats");
+}
+
+// --- trainers ---
+export function listTrainers() {
+  return api<PageResponse<Trainer>>("/admin/api/trainers");
+}
+
+// --- documents ---
+export function listDocuments() {
+  return api<PageResponse<DocumentItem>>("/admin/api/documents");
+}
+
+// --- shifts (prd §7.4) ---
+export function listOpenShifts(from: string, to: string) {
+  return api<PageResponse<ShiftSlot>>(`/admin/api/shifts/open?from=${from}&to=${to}`);
+}
+
+export function listMyShifts(from: string, to: string) {
+  return api<PageResponse<ShiftSlot>>(`/admin/api/shifts/mine?from=${from}&to=${to}`);
 }

@@ -78,4 +78,33 @@ public interface RegistrationRepository extends JpaRepository<Registration, Stri
     List<Registration> findActiveWithChildByProgram(@Param("programId") String programId);
 
     long countByProgramId(String programId);
+
+    /** Distinct parent emails of active registrations in a program (for bulk email, prd §6A.3). */
+    @Query("""
+            select distinct pa.email from Registration r
+            join r.child c
+            join c.parent pa
+            where r.program.id = :programId
+              and r.status = cz.hopik4kids.cms.registrations.domain.RegistrationStatus.ACTIVE
+              and pa.email is not null
+            """)
+    List<String> findParentEmailsByProgram(@Param("programId") String programId);
+
+    /** All active registrations with child+parent+program fetched (marketing/retention analysis). */
+    @Query("""
+            select r from Registration r
+            join fetch r.child c
+            join fetch c.parent
+            join fetch r.program p
+            where r.status = cz.hopik4kids.cms.registrations.domain.RegistrationStatus.ACTIVE
+            """)
+    List<Registration> findAllActiveWithDetails();
+
+    /** Source distribution over active registrations. */
+    @Query("""
+            select coalesce(r.source, ''), count(r) from Registration r
+            where r.status = cz.hopik4kids.cms.registrations.domain.RegistrationStatus.ACTIVE
+            group by coalesce(r.source, '')
+            """)
+    List<Object[]> countBySource();
 }

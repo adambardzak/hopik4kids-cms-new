@@ -1,16 +1,18 @@
 package cz.hopik4kids.cms.kernel.email;
 
+import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.MailException;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 /**
- * System email transport (prd §8): invitations, password reset, notifications.
- * Confirmation emails to parents stay on the website (prd §8, §14.4).
+ * System email transport (prd §8): invitations, password reset, notifications, invoices.
  */
 @Service
 public class EmailService {
@@ -58,7 +60,8 @@ public class EmailService {
         send(to, "Obnovení hesla — Hopík4Kids", body);
     }
 
-    private void send(String to, String subject, String body) {
+    /** Plain-text email. Returns true on success. */
+    public boolean send(String to, String subject, String body) {
         try {
             SimpleMailMessage msg = new SimpleMailMessage();
             msg.setFrom(from);
@@ -66,9 +69,30 @@ public class EmailService {
             msg.setSubject(subject);
             msg.setText(body);
             mailSender.send(msg);
+            return true;
         } catch (MailException e) {
-            // Do not fail the operation if email delivery fails; log for follow-up.
             log.error("Failed to send email '{}' to {}: {}", subject, to, e.getMessage());
+            return false;
+        }
+    }
+
+    /** Email with a single binary attachment (e.g. invoice PDF). Returns true on success. */
+    public boolean sendWithAttachment(String to, String subject, String body,
+                                      String attachmentName, byte[] attachment, String contentType) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(from);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(body, false);
+            helper.addAttachment(attachmentName, new ByteArrayResource(attachment), contentType);
+            mailSender.send(message);
+            return true;
+        } catch (Exception e) {
+            log.error("Failed to send email with attachment '{}' to {}: {}", subject, to, e.getMessage());
+            return false;
         }
     }
 }
+

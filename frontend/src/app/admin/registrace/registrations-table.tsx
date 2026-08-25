@@ -20,6 +20,9 @@ import {
 } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cancelRegistration, setPaymentStatus } from "@/lib/actions";
+import { createInvoiceReturningId } from "@/lib/actions";
+import { BulkEmailDialog } from "@/components/bulk-email-dialog";
+import { WaitlistDialog } from "@/components/waitlist-dialog";
 
 const PAGE_SIZE = 25;
 
@@ -257,6 +260,8 @@ function ProgramGroup({
         >
           <Printer className="h-3.5 w-3.5" /> Docházka
         </a>
+        <BulkEmailDialog programId={programId} programName={name} />
+        <WaitlistDialog programId={programId} programName={name} />
       </div>
       {open && <RegRows rows={rows} onDetail={onDetail} />}
     </div>
@@ -386,6 +391,10 @@ function DetailDialog({
             </dl>
 
             <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-4">
+              <InvoiceButton registrationId={detail.id} disabled={detail.status === "cancelled"} />
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="text-sm text-[var(--muted-foreground)]">Platba:</span>
               {(["unpaid", "paid"] as const).map((s) => (
                 <Button
@@ -426,5 +435,28 @@ function Field({ label, value }: { label: string; value?: string | null }) {
       <dt className="text-[var(--muted-foreground)]">{label}</dt>
       <dd className="font-medium">{value || "—"}</dd>
     </>
+  );
+}
+
+function InvoiceButton({ registrationId, disabled }: { registrationId: string; disabled?: boolean }) {
+  const [pending, start] = useTransition();
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      disabled={pending || disabled}
+      onClick={() =>
+        start(async () => {
+          const res = await createInvoiceReturningId(registrationId);
+          if (res.ok && res.id) {
+            window.open(`/api/billing/invoices/${res.id}/pdf`, "_blank");
+          } else {
+            alert(res.error ?? "Nepodařilo se vystavit fakturu");
+          }
+        })
+      }
+    >
+      {pending ? "Vystavuji…" : "Vystavit fakturu (PDF)"}
+    </Button>
   );
 }

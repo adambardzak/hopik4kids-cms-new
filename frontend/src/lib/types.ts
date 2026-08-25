@@ -38,8 +38,52 @@ export interface Program {
   validFrom?: string | null;
   validTo?: string | null;
   durationMin?: number | null;
+  trainersNeeded?: number | null;
   startDate?: string | null;
   endDate?: string | null;
+  trainerIds?: string[];
+}
+
+export interface Trainer {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export type DocumentCategory = "pravidla" | "metodika" | "checklist" | "formular" | "ostatni";
+
+export interface ShiftSignupTrainer {
+  signupId: string;
+  trainerId: string;
+  trainerName: string;
+  status: string;
+}
+
+export interface ShiftSlot {
+  programId: string;
+  programName: string;
+  type: string;
+  date: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  locationName?: string | null;
+  trainersNeeded: number;
+  approvedCount: number;
+  pendingCount: number;
+  mySignupId?: string | null;
+  myStatus?: string | null;
+  signups: ShiftSignupTrainer[];
+}
+
+export interface DocumentItem {
+  id: string;
+  title: string;
+  category: DocumentCategory;
+  fileUrl?: string | null;
+  fileName?: string | null;
+  content?: string | null;
+  visibility: "trainers" | "admin";
+  sortOrder: number;
 }
 
 export interface Location {
@@ -163,6 +207,60 @@ export interface AttendanceStats {
     excused: number;
     absent: number;
   }[];
+}
+
+export interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  registrationId: string;
+  type: string;
+  payerName: string;
+  payerAddress?: string | null;
+  payerEmail?: string | null;
+  items: string; // JSON array
+  totalAmount: number;
+  issueDate: string;
+  dueDate: string;
+  variableSymbol: string;
+  status: "unpaid" | "paid" | "cancelled";
+  paidAt?: string | null;
+}
+
+export interface SupplierSettings {
+  id?: string;
+  name: string;
+  ico?: string | null;
+  dic?: string | null;
+  address?: string | null;
+  iban?: string | null;
+  accountNumber?: string | null;
+  web?: string | null;
+  email?: string | null;
+  defaultDueDays: number;
+  footerText?: string | null;
+}
+
+export interface WaitlistEntry {
+  id: string;
+  programId: string;
+  programName: string;
+  childName: string;
+  parentName: string;
+  parentPhone: string;
+  parentEmail: string;
+  note?: string | null;
+  status: "waiting" | "offered" | "converted" | "cancelled";
+  createdAt: string;
+}
+
+export interface MarketingStats {
+  sources: { source: string; count: number }[];
+  registrationsWithoutSource: number;
+  returningChildren: number;
+  totalDistinctChildren: number;
+  retentionPct: number;
+  clubsNotInCamp: { childName: string; parentName: string; parentPhone: string; parentEmail: string }[];
+  campChildren: number;
 }
 
 export interface ScheduleEntry {

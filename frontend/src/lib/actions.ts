@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { api, ApiRequestError } from "@/lib/api";
+import type { WaitlistEntry } from "@/lib/types";
 
 export interface ActionResult {
   ok: boolean;
@@ -133,4 +134,142 @@ export async function fetchAttendanceStats(program: string) {
   } catch {
     return { ok: false as const, stats: null };
   }
+}
+
+// --- billing ---
+export async function createInvoice(registrationId: string): Promise<ActionResult> {
+  return run(
+    () => api(`/admin/api/billing/invoices?registration=${registrationId}`, { method: "POST" }),
+    "/admin/fakturace",
+  );
+}
+
+export async function markInvoicePaid(id: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/billing/invoices/${id}/paid`, { method: "POST" }), "/admin/fakturace");
+}
+
+export async function cancelInvoice(id: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/billing/invoices/${id}/cancel`, { method: "POST" }), "/admin/fakturace");
+}
+
+export async function saveSupplierSettings(body: unknown): Promise<ActionResult> {
+  return run(() => api(`/admin/api/billing/supplier`, { method: "PUT", body }), "/admin/fakturace");
+}
+
+/** Create invoice and return its id (for opening the PDF). */
+export async function createInvoiceReturningId(
+  registrationId: string,
+): Promise<{ ok: boolean; id?: string; error?: string }> {
+  try {
+    const inv = await api<{ id: string }>(
+      `/admin/api/billing/invoices?registration=${registrationId}`,
+      { method: "POST" },
+    );
+    return { ok: true, id: inv.id };
+  } catch (e) {
+    if (isRedirect(e)) throw e;
+    if (e instanceof ApiRequestError) return { ok: false, error: e.message };
+    return { ok: false, error: "Neočekávaná chyba" };
+  }
+}
+
+export async function lookupAres(ico: string): Promise<{
+  ok: boolean;
+  data?: { name?: string | null; address?: string | null; dic?: string | null };
+  error?: string;
+}> {
+  try {
+    const { aresLookup } = await import("@/lib/admin-data");
+    const data = await aresLookup(ico);
+    return { ok: true, data };
+  } catch (e) {
+    if (isRedirect(e)) throw e;
+    if (e instanceof ApiRequestError) return { ok: false, error: e.message };
+    return { ok: false, error: "Nepodařilo se načíst z ARESu" };
+  }
+}
+
+export async function sendInvoiceEmail(id: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/billing/invoices/${id}/send`, { method: "POST" }), "/admin/fakturace");
+}
+
+// --- bulk email ---
+export async function fetchBulkRecipients(program: string): Promise<{ ok: boolean; emails: string[] }> {
+  try {
+    const { getBulkRecipients } = await import("@/lib/admin-data");
+    const res = await getBulkRecipients(program);
+    return { ok: true, emails: res.items };
+  } catch {
+    return { ok: false, emails: [] };
+  }
+}
+
+export async function sendBulkEmail(
+  program: string,
+  subject: string,
+  body: string,
+): Promise<{ ok: boolean; result?: { total: number; sent: number; failed: number }; error?: string }> {
+  try {
+    const result = await api<{ total: number; sent: number; failed: number }>("/admin/api/bulk-email", {
+      method: "POST",
+      body: { program, subject, body },
+    });
+    return { ok: true, result };
+  } catch (e) {
+    if (isRedirect(e)) throw e;
+    if (e instanceof ApiRequestError) return { ok: false, error: e.message };
+    return { ok: false, error: "Odeslání selhalo" };
+  }
+}
+
+// --- waitlist ---
+
+export async function fetchWaitlist(program: string): Promise<{ ok: boolean; items: WaitlistEntry[] }> {
+  try {
+    const { listWaitlist } = await import("@/lib/admin-data");
+    const res = await listWaitlist(program);
+    return { ok: true, items: res.items };
+  } catch {
+    return { ok: false, items: [] };
+  }
+}
+
+export async function setWaitlistStatus(id: string, status: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/waitlist/${id}/status?status=${status}`, { method: "POST" }), "/admin/registrace");
+}
+
+export async function deleteWaitlistEntry(id: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/waitlist/${id}`, { method: "DELETE" }), "/admin/registrace");
+}
+
+// --- documents ---
+export async function saveDocument(id: string | null, body: unknown): Promise<ActionResult> {
+  return run(
+    () =>
+      id
+        ? api(`/admin/api/documents/${id}`, { method: "PUT", body })
+        : api(`/admin/api/documents`, { method: "POST", body }),
+    "/admin/dokumenty",
+  );
+}
+
+export async function deleteDocument(id: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/documents/${id}`, { method: "DELETE" }), "/admin/dokumenty");
+}
+
+// --- shifts (prd §7.4) ---
+export async function signupShift(programId: string, date: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/shifts/signup`, { method: "POST", body: { programId, date } }), "/admin/smeny");
+}
+
+export async function cancelShift(signupId: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/shifts/${signupId}`, { method: "DELETE" }), "/admin/smeny");
+}
+
+export async function approveShift(signupId: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/shifts/${signupId}/approve`, { method: "POST" }), "/admin/smeny");
+}
+
+export async function rejectShift(signupId: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/shifts/${signupId}/reject`, { method: "POST" }), "/admin/smeny");
 }

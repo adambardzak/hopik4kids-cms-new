@@ -1,6 +1,7 @@
 package cz.hopik4kids.cms.core.web.dto;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /** Admin create/update payload for a Program (prd §5.6, §6.4). accessCode is plaintext (hashed server-side). */
 public record AdminProgramRequest(
@@ -21,7 +22,9 @@ public record AdminProgramRequest(
         LocalDate validFrom,
         LocalDate validTo,
         Integer durationMin,
+        Integer trainersNeeded,
         LocalDate startDate,
-        LocalDate endDate
+        LocalDate endDate,
+        List<String> trainerIds
 ) {
 }

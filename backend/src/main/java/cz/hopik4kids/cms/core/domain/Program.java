@@ -104,6 +104,10 @@ public class Program extends BaseEntity {
     @Column
     private Integer durationMin;
 
+    /** How many trainers a lesson of this program needs (shift-signup, prd §7.4). */
+    @Column(nullable = false)
+    private int trainersNeeded = 1;
+
     // --- camp ---
 
     @Column
@@ -264,6 +268,14 @@ public class Program extends BaseEntity {
 
     public void setDurationMin(Integer durationMin) {
         this.durationMin = durationMin;
+    }
+
+    public int getTrainersNeeded() {
+        return trainersNeeded;
+    }
+
+    public void setTrainersNeeded(int trainersNeeded) {
+        this.trainersNeeded = trainersNeeded;
     }
 
     public LocalDate getStartDate() {

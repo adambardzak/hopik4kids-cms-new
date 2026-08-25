@@ -3,7 +3,6 @@ package cz.hopik4kids.cms.registrations.service;
 import com.lowagie.text.Document;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
-import com.lowagie.text.FontFactory;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
@@ -12,6 +11,7 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import cz.hopik4kids.cms.core.domain.Program;
 import cz.hopik4kids.cms.core.repository.ProgramRepository;
+import cz.hopik4kids.cms.kernel.pdf.PdfFonts;
 import cz.hopik4kids.cms.kernel.web.ApiException;
 import cz.hopik4kids.cms.registrations.web.dto.AdminRegistrationDto;
 import cz.hopik4kids.cms.usersrbac.service.AuditService;
@@ -65,8 +65,8 @@ public class AttendancePdfService {
             PdfWriter.getInstance(doc, out);
             doc.open();
 
-            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
-            Font metaFont = FontFactory.getFont(FontFactory.HELVETICA, 10, Color.DARK_GRAY);
+            Font titleFont = PdfFonts.bold(16);
+            Font metaFont = PdfFonts.regular(10, Color.DARK_GRAY);
 
             doc.add(new Paragraph(program.getName(), titleFont));
             StringBuilder meta = new StringBuilder();
@@ -90,7 +90,7 @@ public class AttendancePdfService {
 
             String[] headers = {"Dítě", "Narození", "Rodič + telefon", "Alergie / zdrav.",
                     "Dres", "Souhlasy", "Docházka"};
-            Font headFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, Color.WHITE);
+            Font headFont = PdfFonts.bold(9, Color.WHITE);
             for (String h : headers) {
                 PdfPCell cell = new PdfPCell(new Phrase(h, headFont));
                 cell.setBackgroundColor(new Color(37, 99, 235));
@@ -98,7 +98,7 @@ public class AttendancePdfService {
                 table.addCell(cell);
             }
 
-            Font cellFont = FontFactory.getFont(FontFactory.HELVETICA, 9);
+            Font cellFont = PdfFonts.regular(9);
             boolean alt = false;
             for (AdminRegistrationDto r : rows) {
                 Color bg = alt ? new Color(245, 247, 250) : Color.WHITE;

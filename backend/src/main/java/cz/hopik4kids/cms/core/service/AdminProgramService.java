@@ -142,8 +142,16 @@ public class AdminProgramService {
         p.setValidFrom(req.validFrom());
         p.setValidTo(req.validTo());
         p.setDurationMin(req.durationMin());
+        if (req.trainersNeeded() != null) {
+            p.setTrainersNeeded(Math.max(1, req.trainersNeeded()));
+        }
         p.setStartDate(req.startDate());
         p.setEndDate(req.endDate());
+
+        // Trainer assignment (prd §7.5 scoped access). Null = leave unchanged (partial update).
+        if (req.trainerIds() != null) {
+            p.setTrainerIds(new java.util.HashSet<>(req.trainerIds()));
+        }
 
         // Consistency checks.
         if (p.getPrice() < 0) {

@@ -121,4 +121,32 @@ public class ScheduleService {
             return null;
         }
     }
+
+    /**
+     * Lists concrete dated occurrences of a single recurring program within a range.
+     * Used by shift-signup to offer free lessons (prd §7.4). No role scoping here.
+     */
+    @Transactional(readOnly = true)
+    public List<LocalDate> occurrenceDates(Program p, LocalDate from, LocalDate to) {
+        List<LocalDate> dates = new ArrayList<>();
+        if (p.getType() != ProgramType.CLUB && p.getType() != ProgramType.SCHOOL) {
+            return dates;
+        }
+        if (p.getWeekday() == null || p.getTime() == null || p.getTime().isBlank()) {
+            return dates;
+        }
+        for (LocalDate date = from; !date.isAfter(to); date = date.plusDays(1)) {
+            if (date.getDayOfWeek().getValue() != p.getWeekday()) {
+                continue;
+            }
+            if (p.getValidFrom() != null && date.isBefore(p.getValidFrom())) {
+                continue;
+            }
+            if (p.getValidTo() != null && date.isAfter(p.getValidTo())) {
+                continue;
+            }
+            dates.add(date);
+        }
+        return dates;
+    }
 }
