@@ -102,6 +102,10 @@ export interface Registration {
   programId: string;
   programName: string;
   programType: string;
+  programLocationName?: string | null;
+  programWeekday?: number | null;
+  programTime?: string | null;
+  programSchoolPart?: string | null;
   childName: string;
   birthDate: string;
   personalId: string;

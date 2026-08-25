@@ -26,6 +26,19 @@ import { WaitlistDialog } from "@/components/waitlist-dialog";
 
 const PAGE_SIZE = 25;
 
+const WEEKDAYS = ["", "Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
+
+/** Human-readable program discriminator: location · weekday time · school part — to tell same-named programs apart. */
+function programMeta(r: Registration): string {
+  const parts: string[] = [];
+  if (r.programLocationName) parts.push(r.programLocationName);
+  const day = r.programWeekday ? WEEKDAYS[r.programWeekday] : "";
+  const dayTime = [day, r.programTime].filter(Boolean).join(" ");
+  if (dayTime) parts.push(dayTime);
+  if (r.programSchoolPart) parts.push(r.programSchoolPart === "morning" ? "dopolední" : "odpolední");
+  return parts.join(" · ");
+}
+
 const PAYMENT_LABELS: Record<string, { label: string; variant: "success" | "warning" | "danger" }> = {
   paid: { label: "Zaplaceno", variant: "success" },
   unpaid: { label: "Nezaplaceno", variant: "warning" },
@@ -80,9 +93,9 @@ export function RegistrationsTable({
 
   // Group by program unless a single program is already filtered.
   const grouped = useMemo(() => {
-    const map = new Map<string, { name: string; rows: Registration[] }>();
+    const map = new Map<string, { name: string; meta: string; rows: Registration[] }>();
     for (const r of registrations) {
-      if (!map.has(r.programId)) map.set(r.programId, { name: r.programName, rows: [] });
+      if (!map.has(r.programId)) map.set(r.programId, { name: r.programName, meta: programMeta(r), rows: [] });
       map.get(r.programId)!.rows.push(r);
     }
     return Array.from(map.entries()).map(([id, v]) => ({ id, ...v }));
@@ -172,7 +185,7 @@ export function RegistrationsTable({
       ) : showGroups ? (
         <div className="space-y-3">
           {grouped.map((g) => (
-            <ProgramGroup key={g.id} programId={g.id} name={g.name} rows={g.rows} onDetail={setDetail} />
+            <ProgramGroup key={g.id} programId={g.id} name={g.name} meta={g.meta} rows={g.rows} onDetail={setDetail} />
           ))}
         </div>
       ) : (
@@ -224,11 +237,13 @@ function SummaryCard({
 function ProgramGroup({
   programId,
   name,
+  meta,
   rows,
   onDetail,
 }: {
   programId: string;
   name: string;
+  meta: string;
   rows: Registration[];
   onDetail: (r: Registration) => void;
 }) {
@@ -241,7 +256,10 @@ function ProgramGroup({
       <div className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--muted)]">
         <button onClick={() => setOpen((o) => !o)} className="flex flex-1 items-center gap-3 text-left">
           {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          <span className="font-semibold">{name}</span>
+          <span className="flex flex-col">
+            <span className="font-semibold leading-tight">{name}</span>
+            {meta && <span className="text-xs text-[var(--muted-foreground)]">{meta}</span>}
+          </span>
           <span className="flex items-center gap-1 text-sm text-[var(--muted-foreground)]">
             <Users className="h-3.5 w-3.5" /> {active}
           </span>
@@ -375,7 +393,7 @@ function DetailDialog({
               <Field label="Adresa" value={detail.childAddress} />
               <Field label="Pojišťovna" value={detail.healthInsurance} />
               <Field label="Třída" value={detail.className} />
-              <Field label="Program" value={detail.programName} />
+              <Field label="Program" value={[detail.programName, programMeta(detail)].filter(Boolean).join(" — ")} />
               <Field label="Rodič" value={detail.parentName} />
               <Field label="Telefon" value={detail.parentPhone} />
               <Field label="E-mail" value={detail.parentEmail} />
