@@ -29,7 +29,27 @@ function slugify(s: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-type FormState = Partial<Article> & { slugTouched?: boolean };
+type FormState = Partial<Article> & { slugTouched?: boolean; publishDate?: string };
+
+/** Local YYYY-MM-DD for a date input, defaulting to today. */
+function todayISODate(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Instant (ISO string) -> YYYY-MM-DD for the date input. */
+function instantToISODate(instant?: string | null): string | null {
+  if (!instant) return null;
+  const d = new Date(instant);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** YYYY-MM-DD (local) -> Instant ISO string at local noon (avoids TZ day-shift). */
+function dateToInstant(date?: string): string {
+  const day = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : todayISODate();
+  return new Date(`${day}T12:00:00`).toISOString();
+}
 
 export function ArticlesManager({
   articles,
@@ -46,13 +66,13 @@ export function ArticlesManager({
   const [isPending, startTransition] = useTransition();
 
   function openCreate() {
-    setForm({});
+    setForm({ publishDate: todayISODate() });
     setError(null);
     setOpen(true);
   }
 
   function openEdit(a: Article) {
-    setForm({ ...a, slugTouched: true });
+    setForm({ ...a, slugTouched: true, publishDate: instantToISODate(a.publishedAt) ?? todayISODate() });
     setError(null);
     setOpen(true);
   }
@@ -88,9 +108,7 @@ export function ArticlesManager({
       excerpt: form.excerpt || null,
       content: form.content || null,
       coverId: form.coverId || null,
-      publishedAt: publish
-        ? form.publishedAt ?? new Date().toISOString()
-        : null,
+      publishedAt: publish ? dateToInstant(form.publishDate) : null,
     };
     startTransition(async () => {
       const res = await saveArticle(form.id ?? null, body);
@@ -210,6 +228,19 @@ export function ArticlesManager({
                 className="text-sm"
               />
               {uploading && <p className="text-xs text-[var(--muted-foreground)]">Nahrávám…</p>}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label>Datum publikace</Label>
+              <Input
+                type="date"
+                value={form.publishDate ?? todayISODate()}
+                onChange={(e) => setForm((f) => ({ ...f, publishDate: e.target.value }))}
+                className="w-48"
+              />
+              <p className="text-xs text-[var(--muted-foreground)]">
+                Výchozí je dnešek. Pro zpětné přidání aktuality zvol dřívější datum. Uplatní se při publikaci.
+              </p>
             </div>
 
             {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
