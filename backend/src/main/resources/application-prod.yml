@@ -34,3 +34,5 @@ app:
   media:
     storage-dir: ${MEDIA_DIR:/data/media}
     public-base-url: ${MEDIA_BASE_URL}
+  registration:
+    api-key: ${REGISTRATION_API_KEY}

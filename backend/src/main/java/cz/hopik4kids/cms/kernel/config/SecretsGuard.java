@@ -36,6 +36,7 @@ public class SecretsGuard implements ApplicationListener<ApplicationReadyEvent> 
         checkSecret(env, "app.personal-id-encryption-key");
         checkSecret(env, "app.jwt.secret");
         checkSecret(env, "app.bootstrap.owner-password");
+        checkSecret(env, "app.registration.api-key");
     }
 
     private void checkSecret(Environment env, String key) {

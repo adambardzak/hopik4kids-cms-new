@@ -57,6 +57,10 @@ app:
     registration:
       capacity: ${RATE_LIMIT_REGISTRATION_CAPACITY:5}
       refill-minutes: ${RATE_LIMIT_REGISTRATION_REFILL_MINUTES:1}
+  registration:
+    # Shared secret the website's server must send as X-Registration-Key on POST /api/registrations.
+    # Empty in dev = check disabled. Required in prod.
+    api-key: ${REGISTRATION_API_KEY:}
 
 server:
   port: ${PORT:8080}

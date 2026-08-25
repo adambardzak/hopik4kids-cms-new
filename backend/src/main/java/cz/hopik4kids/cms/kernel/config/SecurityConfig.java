@@ -1,5 +1,6 @@
 package cz.hopik4kids.cms.kernel.config;
 
+import cz.hopik4kids.cms.kernel.web.RegistrationKeyFilter;
 import cz.hopik4kids.cms.kernel.web.RegistrationRateLimitFilter;
 import cz.hopik4kids.cms.usersrbac.security.JwtAuthFilter;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,13 +34,16 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final RegistrationRateLimitFilter rateLimitFilter;
+    private final RegistrationKeyFilter registrationKeyFilter;
     private final List<String> allowedOrigins;
 
     public SecurityConfig(JwtAuthFilter jwtAuthFilter,
                           RegistrationRateLimitFilter rateLimitFilter,
+                          RegistrationKeyFilter registrationKeyFilter,
                           @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:3005,http://localhost:3006}") List<String> allowedOrigins) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.rateLimitFilter = rateLimitFilter;
+        this.registrationKeyFilter = registrationKeyFilter;
         this.allowedOrigins = allowedOrigins;
     }
 
@@ -57,7 +61,9 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").authenticated()
                         .anyRequest().permitAll())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(rateLimitFilter, JwtAuthFilter.class);
+                .addFilterBefore(rateLimitFilter, JwtAuthFilter.class)
+                // Shared-secret gate on the registration write endpoint (runs first).
+                .addFilterBefore(registrationKeyFilter, RegistrationRateLimitFilter.class);
         return http.build();
     }
 
