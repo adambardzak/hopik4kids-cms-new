@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { Location, Program } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -79,6 +80,8 @@ export function ProgramsManager({
       time: !isCamp ? form.time || null : null,
       schoolPart: form.type === "school" ? form.schoolPart || null : null,
       durationMin: !isCamp && form.durationMin ? Number(form.durationMin) : null,
+      validFrom: !isCamp ? form.validFrom || null : null,
+      validTo: !isCamp ? form.validTo || null : null,
       startDate: isCamp ? form.startDate || null : null,
       endDate: isCamp ? form.endDate || null : null,
     };
@@ -96,7 +99,8 @@ export function ProgramsManager({
   function remove(p: Program) {
     if (!confirm(`Opravdu smazat program „${p.name}"?`)) return;
     startTransition(async () => {
-      await deleteProgram(p.id);
+      const res = await deleteProgram(p.id);
+      if (!res.ok) alert(res.error ?? "Program nelze smazat (může mít registrace).");
       router.refresh();
     });
   }
@@ -175,26 +179,26 @@ export function ProgramsManager({
           <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-4">
               <Field label="Typ">
-                <select
-                  className="h-10 w-full rounded-md border border-[var(--border)] bg-transparent px-3 text-sm"
+                <Select
+                  className="w-full"
                   value={form.type ?? "club"}
                   onChange={(e) => set("type", e.target.value as Program["type"])}
                 >
                   <option value="club">Kroužek</option>
                   <option value="school">Cvičení ve škole</option>
                   <option value="camp">Kemp</option>
-                </select>
+                </Select>
               </Field>
               <Field label="Stav">
-                <select
-                  className="h-10 w-full rounded-md border border-[var(--border)] bg-transparent px-3 text-sm"
+                <Select
+                  className="w-full"
                   value={form.status ?? "active"}
                   onChange={(e) => set("status", e.target.value as Program["status"])}
                 >
                   <option value="active">Aktivní</option>
                   <option value="hidden">Skrytý</option>
                   <option value="archived">Archivovaný</option>
-                </select>
+                </Select>
               </Field>
             </div>
 
@@ -220,8 +224,8 @@ export function ProgramsManager({
             </div>
 
             <Field label="Místo">
-              <select
-                className="h-10 w-full rounded-md border border-[var(--border)] bg-transparent px-3 text-sm"
+              <Select
+                className="w-full"
                 value={form.locationId ?? ""}
                 onChange={(e) => set("locationId", e.target.value || null)}
               >
@@ -231,36 +235,57 @@ export function ProgramsManager({
                     {l.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </Field>
 
             {!isCamp ? (
-              <div className="grid grid-cols-3 gap-4">
-                <Field label="Den v týdnu">
-                  <select
-                    className="h-10 w-full rounded-md border border-[var(--border)] bg-transparent px-3 text-sm"
-                    value={form.weekday ?? ""}
-                    onChange={(e) => set("weekday", e.target.value ? Number(e.target.value) : null)}
-                  >
-                    <option value="">—</option>
-                    {WEEKDAYS.slice(1).map((d, i) => (
-                      <option key={i + 1} value={i + 1}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="Čas (HH:MM)">
-                  <Input value={form.time ?? ""} placeholder="16:00" onChange={(e) => set("time", e.target.value)} />
-                </Field>
-                <Field label="Délka (min)">
-                  <Input
-                    type="number"
-                    value={form.durationMin ?? ""}
-                    onChange={(e) => set("durationMin", e.target.value ? Number(e.target.value) : null)}
-                  />
-                </Field>
-              </div>
+              <>
+                <div className="grid grid-cols-3 gap-4">
+                  <Field label="Den v týdnu">
+                    <Select
+                      className="w-full"
+                      value={form.weekday ?? ""}
+                      onChange={(e) => set("weekday", e.target.value ? Number(e.target.value) : null)}
+                    >
+                      <option value="">—</option>
+                      {WEEKDAYS.slice(1).map((d, i) => (
+                        <option key={i + 1} value={i + 1}>
+                          {d}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field label="Čas (HH:MM)">
+                    <Input value={form.time ?? ""} placeholder="16:00" onChange={(e) => set("time", e.target.value)} />
+                  </Field>
+                  <Field label="Délka (min)">
+                    <Input
+                      type="number"
+                      value={form.durationMin ?? ""}
+                      onChange={(e) => set("durationMin", e.target.value ? Number(e.target.value) : null)}
+                    />
+                  </Field>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Období od (první lekce)">
+                    <Input
+                      type="date"
+                      value={form.validFrom ?? ""}
+                      onChange={(e) => set("validFrom", e.target.value)}
+                    />
+                  </Field>
+                  <Field label="Období do (poslední lekce)">
+                    <Input
+                      type="date"
+                      value={form.validTo ?? ""}
+                      onChange={(e) => set("validTo", e.target.value)}
+                    />
+                  </Field>
+                </div>
+                <p className="-mt-2 text-xs text-[var(--muted-foreground)]">
+                  Kroužek se v rozvrhu zobrazuje jen v tomto období. Prázdné = bez omezení.
+                </p>
+              </>
             ) : (
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Od">
@@ -274,33 +299,33 @@ export function ProgramsManager({
 
             {form.type === "school" && (
               <Field label="Část dne">
-                <select
-                  className="h-10 w-full rounded-md border border-[var(--border)] bg-transparent px-3 text-sm"
+                <Select
+                  className="w-full"
                   value={form.schoolPart ?? ""}
                   onChange={(e) => set("schoolPart", (e.target.value || null) as Program["schoolPart"])}
                 >
                   <option value="">—</option>
                   <option value="morning">Dopoledne</option>
                   <option value="afternoon">Odpoledne</option>
-                </select>
+                </Select>
               </Field>
             )}
 
             <div className="grid grid-cols-2 gap-4">
               <Field label="Dres">
-                <select
-                  className="h-10 w-full rounded-md border border-[var(--border)] bg-transparent px-3 text-sm"
+                <Select
+                  className="w-full"
                   value={form.shirtPolicy ?? "none"}
                   onChange={(e) => set("shirtPolicy", e.target.value as Program["shirtPolicy"])}
                 >
                   <option value="none">Bez dresu</option>
                   <option value="optional">Volitelný (+500 Kč)</option>
                   <option value="required">Povinný</option>
-                </select>
+                </Select>
               </Field>
               <Field label="Přístup">
-                <select
-                  className="h-10 w-full rounded-md border border-[var(--border)] bg-transparent px-3 text-sm"
+                <Select
+                  className="w-full"
                   value={form.accessMode ?? "public"}
                   onChange={(e) => set("accessMode", e.target.value as Program["accessMode"])}
                 >
@@ -308,7 +333,7 @@ export function ProgramsManager({
                   <option value="notice_only">Jen upozornění</option>
                   <option value="code">Přístupový kód</option>
                   <option value="unlisted">Nelistovaný</option>
-                </select>
+                </Select>
               </Field>
             </div>
 

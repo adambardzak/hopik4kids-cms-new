@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type { Location, ScheduleEntry } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -137,8 +138,8 @@ export function ScheduleView({
 
         <div className="ml-auto flex items-center gap-3">
           <Legend />
-          <select
-            className="h-10 rounded-md border border-[var(--border)] bg-transparent px-3 text-sm"
+          <Select
+            className=""
             value={currentLocation}
             onChange={(e) => go(weekStart, e.target.value)}
           >
@@ -148,7 +149,7 @@ export function ScheduleView({
                 {l.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
       </div>
 

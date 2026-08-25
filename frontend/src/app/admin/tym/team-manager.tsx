@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { Plus } from "lucide-react";
 import type { Role, User } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -99,8 +100,8 @@ export function TeamManager({ users, currentUserId }: { users: User[]; currentUs
                   <TableCell className="font-medium">{u.name}</TableCell>
                   <TableCell>{u.email}</TableCell>
                   <TableCell>
-                    <select
-                      className="h-9 rounded-md border border-[var(--border)] bg-transparent px-2 text-sm disabled:opacity-50"
+                    <Select
+                      className="h-9"
                       value={u.role}
                       disabled={isPending || u.status === "disabled"}
                       onChange={(e) => onRoleChange(u, e.target.value)}
@@ -110,7 +111,7 @@ export function TeamManager({ users, currentUserId }: { users: User[]; currentUs
                           {r.label}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </TableCell>
                   <TableCell>
                     <Badge variant={st.variant}>{st.label}</Badge>
@@ -141,8 +142,8 @@ export function TeamManager({ users, currentUserId }: { users: User[]; currentUs
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>Role</Label>
-              <select
-                className="h-10 rounded-md border border-[var(--border)] bg-transparent px-3 text-sm"
+              <Select
+                className=""
                 value={role}
                 onChange={(e) => setRole(e.target.value as Role)}
               >
@@ -151,7 +152,7 @@ export function TeamManager({ users, currentUserId }: { users: User[]; currentUs
                     {r.label}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
             <div className="flex justify-end gap-2">

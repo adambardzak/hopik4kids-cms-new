@@ -4,6 +4,8 @@ import cz.hopik4kids.cms.core.domain.Program;
 import cz.hopik4kids.cms.core.domain.ProgramStatus;
 import cz.hopik4kids.cms.core.domain.ProgramType;
 import cz.hopik4kids.cms.core.repository.ProgramRepository;
+import cz.hopik4kids.cms.kernel.web.ApiException;
+import cz.hopik4kids.cms.kernel.web.SecurityUtils;
 import cz.hopik4kids.cms.scheduling.web.dto.ScheduleEntryDto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,9 +35,25 @@ public class ScheduleService {
 
     @Transactional(readOnly = true)
     public List<ScheduleEntryDto> forRange(LocalDate from, LocalDate to, String locationId) {
+        // Cap the range to avoid unbounded expansion (prd §11 performance).
+        if (from == null || to == null || from.isAfter(to)) {
+            throw ApiException.badRequest("INVALID_RANGE", "Neplatné datumové rozmezí");
+        }
+        if (from.plusDays(366).isBefore(to)) {
+            throw ApiException.badRequest("RANGE_TOO_LARGE", "Rozsah je příliš velký (max 1 rok)");
+        }
+
         List<ScheduleEntryDto> entries = new ArrayList<>();
 
-        for (Program p : programs.findByStatusWithLocation(ProgramStatus.ACTIVE)) {
+        // Trainers see only their assigned programs (prd §7.5); owner/admin see all.
+        List<Program> source = SecurityUtils.isPrivileged()
+                ? programs.findByStatusWithLocation(ProgramStatus.ACTIVE)
+                : programs.findByTrainer(SecurityUtils.currentUserId());
+
+        for (Program p : source) {
+            if (p.getStatus() != ProgramStatus.ACTIVE) {
+                continue;
+            }
             // Only recurring lessons appear in the schedule (camps are date-range, not weekly).
             if (p.getType() != ProgramType.CLUB && p.getType() != ProgramType.SCHOOL) {
                 continue;

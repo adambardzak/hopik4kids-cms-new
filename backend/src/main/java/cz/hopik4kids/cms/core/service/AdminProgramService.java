@@ -25,15 +25,18 @@ public class AdminProgramService {
 
     private final ProgramRepository programs;
     private final LocationRepository locations;
+    private final cz.hopik4kids.cms.registrations.repository.RegistrationRepository registrations;
     private final PasswordEncoder passwordEncoder;
     private final AuditService audit;
 
     public AdminProgramService(ProgramRepository programs,
                                LocationRepository locations,
+                               cz.hopik4kids.cms.registrations.repository.RegistrationRepository registrations,
                                PasswordEncoder passwordEncoder,
                                AuditService audit) {
         this.programs = programs;
         this.locations = locations;
+        this.registrations = registrations;
         this.passwordEncoder = passwordEncoder;
         this.audit = audit;
     }
@@ -69,6 +72,11 @@ public class AdminProgramService {
     @Transactional
     public void delete(String id) {
         Program p = find(id);
+        long regs = registrations.countByProgramId(id);
+        if (regs > 0) {
+            throw ApiException.conflict("PROGRAM_HAS_REGISTRATIONS",
+                    "Program nelze smazat, má " + regs + " registrací. Nejdřív je zrušte, nebo program archivujte.");
+        }
         programs.delete(p);
         audit.record("delete", "Program", id);
     }
@@ -136,6 +144,32 @@ public class AdminProgramService {
         p.setDurationMin(req.durationMin());
         p.setStartDate(req.startDate());
         p.setEndDate(req.endDate());
+
+        // Consistency checks.
+        if (p.getPrice() < 0) {
+            throw ApiException.badRequest("INVALID_PRICE", "Cena nesmí být záporná");
+        }
+        if (p.getCapacity() != null) {
+            if (p.getCapacity() < 0) {
+                throw ApiException.badRequest("INVALID_CAPACITY", "Kapacita nesmí být záporná");
+            }
+            if (p.getCapacity() < p.getSpotsTaken()) {
+                throw ApiException.badRequest("CAPACITY_BELOW_TAKEN",
+                        "Kapacitu nelze snížit pod počet přihlášených dětí (" + p.getSpotsTaken() + ")");
+            }
+        }
+        if (p.getWeekday() != null && (p.getWeekday() < 1 || p.getWeekday() > 7)) {
+            throw ApiException.badRequest("INVALID_WEEKDAY", "Den v týdnu musí být 1–7");
+        }
+        if (p.getTime() != null && !p.getTime().matches("^([01]\\d|2[0-3]):[0-5]\\d$")) {
+            throw ApiException.badRequest("INVALID_TIME", "Čas musí být ve tvaru HH:MM");
+        }
+        if (p.getValidFrom() != null && p.getValidTo() != null && p.getValidFrom().isAfter(p.getValidTo())) {
+            throw ApiException.badRequest("INVALID_PERIOD", "Období 'od' nesmí být po 'do'");
+        }
+        if (p.getStartDate() != null && p.getEndDate() != null && p.getStartDate().isAfter(p.getEndDate())) {
+            throw ApiException.badRequest("INVALID_DATES", "Datum 'od' nesmí být po 'do'");
+        }
     }
 
     private static String blankToNull(String s) {

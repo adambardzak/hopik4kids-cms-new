@@ -106,7 +106,8 @@ export function ArticlesManager({
   function remove(a: Article) {
     if (!confirm(`Opravdu smazat článek „${a.title}"?`)) return;
     startTransition(async () => {
-      await deleteArticle(a.id);
+      const res = await deleteArticle(a.id);
+      if (!res.ok) alert(res.error ?? "Článek se nepodařilo smazat.");
       router.refresh();
     });
   }

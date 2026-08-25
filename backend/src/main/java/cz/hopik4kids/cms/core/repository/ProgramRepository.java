@@ -30,6 +30,14 @@ public interface ProgramRepository extends JpaRepository<Program, String> {
 
     Optional<Program> findBySlug(String slug);
 
+    /** Programs a trainer is assigned to. */
+    @Query("select p from Program p left join fetch p.location where :trainerId member of p.trainerIds")
+    List<Program> findByTrainer(@Param("trainerId") String trainerId);
+
+    /** Whether a trainer is assigned to a program. */
+    @Query("select count(p) > 0 from Program p where p.id = :programId and :trainerId member of p.trainerIds")
+    boolean isTrainerAssigned(@Param("programId") String programId, @Param("trainerId") String trainerId);
+
     /**
      * Pessimistic row lock for the capacity check + spotsTaken mutation (prd §4.2) -
      * prevents overbooking under concurrent registration.

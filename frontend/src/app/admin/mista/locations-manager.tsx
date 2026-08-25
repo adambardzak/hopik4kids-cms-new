@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { Location } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -147,15 +148,15 @@ export function LocationsManager({
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>Typ místa</Label>
-              <select
-                className="h-10 rounded-md border border-[var(--border)] bg-transparent px-3 text-sm"
+              <Select
+                className=""
                 value={form.kind ?? "kindergarten"}
                 onChange={(e) => set("kind", e.target.value as Location["kind"])}
               >
                 <option value="kindergarten">Školka</option>
                 <option value="school">Škola</option>
                 <option value="venue">Sportoviště</option>
-              </select>
+              </Select>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>Adresa</Label>

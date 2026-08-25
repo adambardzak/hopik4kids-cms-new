@@ -1,5 +1,7 @@
-import { getToken } from "./session";
+import { getToken, TOKEN_COOKIE } from "./session";
 import type { ApiError } from "./types";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
 
@@ -42,6 +44,17 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   });
 
   if (res.status === 204) return undefined as T;
+
+  // Session expired or token rejected — clear cookie and send the user to login.
+  if (res.status === 401 && auth) {
+    try {
+      const store = await cookies();
+      store.delete(TOKEN_COOKIE);
+    } catch {
+      /* not in a request scope */
+    }
+    redirect("/login");
+  }
 
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;

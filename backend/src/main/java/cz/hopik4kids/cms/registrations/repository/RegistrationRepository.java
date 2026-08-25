@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 
 public interface RegistrationRepository extends JpaRepository<Registration, String> {
@@ -33,4 +34,48 @@ public interface RegistrationRepository extends JpaRepository<Registration, Stri
     List<Registration> findForAdmin(@Param("programId") String programId,
                                     @Param("paymentStatus") PaymentStatus paymentStatus,
                                     @Param("q") String q);
+
+    // --- dashboard metrics (prd §6A.1) ---
+
+    /** Active registrations created on/after the given instant. */
+    long countByStatusAndCreatedAtGreaterThanEqual(
+            cz.hopik4kids.cms.registrations.domain.RegistrationStatus status, Instant since);
+
+    long countByStatus(cz.hopik4kids.cms.registrations.domain.RegistrationStatus status);
+
+    /** Sum of priceSnapshot over active registrations with the given payment status. */
+    @Query("""
+            select coalesce(sum(r.priceSnapshot), 0) from Registration r
+            where r.status = cz.hopik4kids.cms.registrations.domain.RegistrationStatus.ACTIVE
+              and r.paymentStatus = :paymentStatus
+            """)
+    long sumPriceByPaymentStatus(@Param("paymentStatus") PaymentStatus paymentStatus);
+
+    /** Count of active registrations with the given payment status. */
+    @Query("""
+            select count(r) from Registration r
+            where r.status = cz.hopik4kids.cms.registrations.domain.RegistrationStatus.ACTIVE
+              and r.paymentStatus = :paymentStatus
+            """)
+    long countActiveByPaymentStatus(@Param("paymentStatus") PaymentStatus paymentStatus);
+
+    /** Registrations with a media consent flag (active only). */
+    @Query("""
+            select count(r) from Registration r
+            where r.status = cz.hopik4kids.cms.registrations.domain.RegistrationStatus.ACTIVE
+              and r.consentMedia = :consent
+            """)
+    long countActiveByConsentMedia(@Param("consent") boolean consent);
+
+    /** Active registrations of a program with child fetched (for the attendance roster). */
+    @Query("""
+            select r from Registration r
+            join fetch r.child c
+            where r.program.id = :programId
+              and r.status = cz.hopik4kids.cms.registrations.domain.RegistrationStatus.ACTIVE
+            order by c.fullName
+            """)
+    List<Registration> findActiveWithChildByProgram(@Param("programId") String programId);
+
+    long countByProgramId(String programId);
 }

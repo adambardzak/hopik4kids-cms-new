@@ -114,6 +114,57 @@ export interface Media {
   height?: number | null;
 }
 
+export interface UnderfilledProgram {
+  id: string;
+  name: string;
+  type: string;
+  capacity: number;
+  spotsTaken: number;
+  occupancyPct: number;
+}
+
+export interface DashboardStats {
+  registrationsToday: number;
+  registrationsThisWeek: number;
+  activePrograms: number;
+  totalActiveRegistrations: number;
+  totalCapacity: number;
+  totalSpotsTaken: number;
+  confirmedRevenue: number;
+  expectedRevenue: number;
+  potentialRevenue: number;
+  unpaidCount: number;
+  unpaidAmount: number;
+  withoutMediaConsent: number;
+  underfilled: UnderfilledProgram[];
+}
+
+export type AttendanceStatus = "present" | "excused" | "absent";
+
+export interface AttendanceRow {
+  childId: string;
+  childName: string;
+  status: AttendanceStatus | null;
+  note?: string | null;
+}
+
+export interface AttendanceStats {
+  children: {
+    childId: string;
+    childName: string;
+    present: number;
+    excused: number;
+    absent: number;
+    totalRecorded: number;
+  }[];
+  lessons: {
+    date: string;
+    present: number;
+    excused: number;
+    absent: number;
+  }[];
+}
+
 export interface ScheduleEntry {
   programId: string;
   programName: string;

@@ -2,6 +2,8 @@ package cz.hopik4kids.cms.core.domain;
 
 import cz.hopik4kids.cms.kernel.domain.BaseEntity;
 import jakarta.persistence.Column;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -11,6 +13,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Everything one can register for (prd §3B.1): unifies the old Course + Camp.
@@ -38,6 +42,12 @@ public class Program extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id")
     private Location location;
+
+    /** Trainers assigned to this program (user ids). Used for scoped access (prd §7.5). */
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "program_trainer", joinColumns = @JoinColumn(name = "program_id"))
+    @Column(name = "trainer_id")
+    private Set<String> trainerIds = new HashSet<>();
 
     @Column(nullable = false)
     private int price;
@@ -134,6 +144,14 @@ public class Program extends BaseEntity {
 
     public void setLocation(Location location) {
         this.location = location;
+    }
+
+    public Set<String> getTrainerIds() {
+        return trainerIds;
+    }
+
+    public void setTrainerIds(Set<String> trainerIds) {
+        this.trainerIds = trainerIds;
     }
 
     public int getPrice() {

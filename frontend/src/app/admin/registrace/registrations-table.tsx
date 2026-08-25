@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Search, ChevronDown, ChevronRight, Users, Eye, FileSpreadsheet, FileText } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, Users, Eye, FileSpreadsheet, FileText, Printer } from "lucide-react";
 import type { Program, Registration } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -114,8 +115,8 @@ export function RegistrationsTable({
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <select
-          className="h-10 rounded-md border border-[var(--border)] bg-transparent px-3 text-sm"
+        <Select
+          className=""
           value={filters.program}
           onChange={(e) => pushFilters({ program: e.target.value })}
         >
@@ -125,9 +126,9 @@ export function RegistrationsTable({
               {p.name}
             </option>
           ))}
-        </select>
-        <select
-          className="h-10 rounded-md border border-[var(--border)] bg-transparent px-3 text-sm"
+        </Select>
+        <Select
+          className=""
           value={filters.paymentStatus}
           onChange={(e) => pushFilters({ paymentStatus: e.target.value })}
         >
@@ -135,7 +136,7 @@ export function RegistrationsTable({
           <option value="unpaid">Nezaplaceno</option>
           <option value="paid">Zaplaceno</option>
           <option value="cancelled">Storno</option>
-        </select>
+        </Select>
         <div className="ml-auto flex gap-2">
           <Button
             size="sm"
@@ -151,6 +152,13 @@ export function RegistrationsTable({
               <FileText className="h-4 w-4" /> CSV
             </a>
           </Button>
+          {filters.program && (
+            <Button variant="outline" size="sm" asChild>
+              <a href={`/api/programs/${filters.program}/attendance`} target="_blank" rel="noreferrer">
+                <Printer className="h-4 w-4" /> Docházka PDF
+              </a>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -161,7 +169,7 @@ export function RegistrationsTable({
       ) : showGroups ? (
         <div className="space-y-3">
           {grouped.map((g) => (
-            <ProgramGroup key={g.id} name={g.name} rows={g.rows} onDetail={setDetail} />
+            <ProgramGroup key={g.id} programId={g.id} name={g.name} rows={g.rows} onDetail={setDetail} />
           ))}
         </div>
       ) : (
@@ -211,10 +219,12 @@ function SummaryCard({
 }
 
 function ProgramGroup({
+  programId,
   name,
   rows,
   onDetail,
 }: {
+  programId: string;
   name: string;
   rows: Registration[];
   onDetail: (r: Registration) => void;
@@ -225,21 +235,29 @@ function ProgramGroup({
 
   return (
     <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--background)]">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-[var(--muted)]"
-      >
-        {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        <span className="font-semibold">{name}</span>
-        <span className="flex items-center gap-1 text-sm text-[var(--muted-foreground)]">
-          <Users className="h-3.5 w-3.5" /> {active}
-        </span>
-        {unpaid > 0 && (
-          <Badge variant="warning" className="ml-1">
-            {unpaid}× nezaplaceno
-          </Badge>
-        )}
-      </button>
+      <div className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--muted)]">
+        <button onClick={() => setOpen((o) => !o)} className="flex flex-1 items-center gap-3 text-left">
+          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          <span className="font-semibold">{name}</span>
+          <span className="flex items-center gap-1 text-sm text-[var(--muted-foreground)]">
+            <Users className="h-3.5 w-3.5" /> {active}
+          </span>
+          {unpaid > 0 && (
+            <Badge variant="warning" className="ml-1">
+              {unpaid}× nezaplaceno
+            </Badge>
+          )}
+        </button>
+        <a
+          href={`/api/programs/${programId}/attendance`}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-1.5 rounded-md border border-[var(--border)] px-2.5 py-1.5 text-xs font-medium hover:bg-[var(--background)]"
+          title="Docházkový list (PDF)"
+        >
+          <Printer className="h-3.5 w-3.5" /> Docházka
+        </a>
+      </div>
       {open && <RegRows rows={rows} onDetail={onDetail} />}
     </div>
   );

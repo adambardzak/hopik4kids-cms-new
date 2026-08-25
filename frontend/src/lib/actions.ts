@@ -8,12 +8,24 @@ export interface ActionResult {
   error?: string;
 }
 
+/** Next's redirect() throws a special error whose digest starts with NEXT_REDIRECT — must re-throw. */
+function isRedirect(e: unknown): boolean {
+  return (
+    typeof e === "object" &&
+    e !== null &&
+    "digest" in e &&
+    typeof (e as { digest: unknown }).digest === "string" &&
+    (e as { digest: string }).digest.startsWith("NEXT_REDIRECT")
+  );
+}
+
 async function run(fn: () => Promise<unknown>, revalidate?: string): Promise<ActionResult> {
   try {
     await fn();
     if (revalidate) revalidatePath(revalidate);
     return { ok: true };
   } catch (e) {
+    if (isRedirect(e)) throw e; // let session-expiry redirect propagate
     if (e instanceof ApiRequestError) return { ok: false, error: e.message };
     return { ok: false, error: "Neočekávaná chyba" };
   }
@@ -87,4 +99,38 @@ export async function changeUserRole(id: string, role: string): Promise<ActionRe
 
 export async function deactivateUser(id: string): Promise<ActionResult> {
   return run(() => api(`/admin/api/users/${id}/deactivate`, { method: "POST" }), "/admin/tym");
+}
+
+// --- attendance ---
+export async function saveAttendance(
+  program: string,
+  date: string,
+  entries: { childId: string; status: string | null; note?: string | null }[],
+): Promise<ActionResult> {
+  return run(() =>
+    api(`/admin/api/attendance?program=${program}&date=${date}`, {
+      method: "PUT",
+      body: { entries },
+    }),
+  );
+}
+
+export async function fetchAttendanceRoster(program: string, date: string) {
+  const { getAttendanceRoster } = await import("@/lib/admin-data");
+  try {
+    const res = await getAttendanceRoster(program, date);
+    return { ok: true as const, items: res.items };
+  } catch {
+    return { ok: false as const, items: [] };
+  }
+}
+
+export async function fetchAttendanceStats(program: string) {
+  const { getAttendanceStats } = await import("@/lib/admin-data");
+  try {
+    const stats = await getAttendanceStats(program);
+    return { ok: true as const, stats };
+  } catch {
+    return { ok: false as const, stats: null };
+  }
 }

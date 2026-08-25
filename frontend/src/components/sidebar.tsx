@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, LayoutDashboard, Users2, CalendarDays, CalendarClock, MapPin, Newspaper, ClipboardList, type LucideIcon } from "lucide-react";
+import { LogOut, LayoutDashboard, Users2, CalendarDays, CalendarClock, ClipboardCheck, MapPin, Newspaper, ClipboardList, type LucideIcon } from "lucide-react";
 import type { IconKey, NavItem } from "@/lib/nav";
 import type { Session } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ const ICONS: Record<IconKey, LucideIcon> = {
   articles: Newspaper,
   team: Users2,
   schedule: CalendarClock,
+  attendance: ClipboardCheck,
 };
 
 const ROLE_LABELS: Record<string, string> = {
