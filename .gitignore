@@ -1,0 +1,26 @@
+# Java / backend
+backend/target/
+backend/media-uploads/
+*.class
+
+# Node / frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/next-env.d.ts
+frontend/*.tsbuildinfo
+
+# Env / secrets — never commit
+.env
+.env.local
+.env*.local
+*.env
+
+# Docker / data
+pgdata/
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store

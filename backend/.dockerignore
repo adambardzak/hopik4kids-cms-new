@@ -1,0 +1,5 @@
+target/
+media-uploads/
+*.iml
+.idea/
+.DS_Store
