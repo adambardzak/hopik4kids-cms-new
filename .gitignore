@@ -24,3 +24,5 @@ pgdata/
 *.iml
 .vscode/
 .DS_Store
+deploy/.env.prod
+*.env.prod
