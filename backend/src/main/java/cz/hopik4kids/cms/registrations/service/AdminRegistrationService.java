@@ -31,9 +31,9 @@ public class AdminRegistrationService {
     }
 
     @Transactional(readOnly = true)
-    public List<AdminRegistrationDto> list(String programId, String paymentStatus) {
+    public List<AdminRegistrationDto> list(String programId, String paymentStatus, String q) {
         PaymentStatus ps = EnumParser.parse(PaymentStatus.class, paymentStatus, "paymentStatus");
-        return registrations.findForAdmin(blankToNull(programId), ps).stream()
+        return registrations.findForAdmin(blankToNull(programId), ps, blankToNull(q)).stream()
                 .map(AdminRegistrationDto::from)
                 .toList();
     }

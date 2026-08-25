@@ -1,7 +1,7 @@
 import type { Role } from "./types";
 
 /** Icon keys resolved to Lucide components in the (client) Sidebar - keeps nav data serializable. */
-export type IconKey = "dashboard" | "registrations" | "programs" | "locations" | "articles" | "team";
+export type IconKey = "dashboard" | "registrations" | "programs" | "locations" | "articles" | "team" | "schedule";
 
 export interface NavItem {
   href: string;
@@ -16,6 +16,7 @@ export interface NavItem {
  */
 export const NAV_ITEMS: NavItem[] = [
   { href: "/admin", label: "Přehled", icon: "dashboard", roles: ["owner", "admin", "trainer", "accountant", "viewer"] },
+  { href: "/admin/rozvrh", label: "Rozvrh", icon: "schedule", roles: ["owner", "admin", "trainer"] },
   { href: "/admin/registrace", label: "Registrace", icon: "registrations", roles: ["owner", "admin", "trainer", "viewer"] },
   { href: "/admin/programy", label: "Programy", icon: "programs", roles: ["owner", "admin"] },
   { href: "/admin/mista", label: "Místa", icon: "locations", roles: ["owner", "admin"] },

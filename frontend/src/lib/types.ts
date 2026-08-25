@@ -47,6 +47,9 @@ export interface Location {
   name: string;
   kind: "kindergarten" | "school" | "venue";
   address?: string | null;
+  contactName?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
   note?: string | null;
 }
 
@@ -109,4 +112,26 @@ export interface Media {
   alt?: string | null;
   width?: number | null;
   height?: number | null;
+}
+
+export interface ScheduleEntry {
+  programId: string;
+  programName: string;
+  type: "club" | "school";
+  date: string; // ISO date
+  weekday: number; // 1=Mon..7=Sun
+  startTime: string; // "HH:MM"
+  endTime?: string | null;
+  durationMin?: number | null;
+  schoolPart?: "morning" | "afternoon" | null;
+  locationId?: string | null;
+  locationName?: string | null;
+  locationAddress?: string | null;
+  contactName?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  validFrom?: string | null;
+  validTo?: string | null;
+  capacity?: number | null;
+  spotsTaken: number;
 }

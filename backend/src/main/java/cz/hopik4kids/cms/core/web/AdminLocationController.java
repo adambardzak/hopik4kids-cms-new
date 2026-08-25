@@ -89,6 +89,9 @@ public class AdminLocationController {
             throw ApiException.badRequest("MISSING_KIND", "Typ místa je povinný");
         }
         l.setAddress(req.address());
+        l.setContactName(req.contactName());
+        l.setContactPhone(req.contactPhone());
+        l.setContactEmail(req.contactEmail());
         l.setNote(req.note());
     }
 }

@@ -2,12 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { Location } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { IconAction } from "@/components/ui/icon-action";
 import {
   Table,
   TableBody,
@@ -62,6 +63,9 @@ export function LocationsManager({
       name: form.name,
       kind: form.kind,
       address: form.address || null,
+      contactName: form.contactName || null,
+      contactPhone: form.contactPhone || null,
+      contactEmail: form.contactEmail || null,
       note: form.note || null,
     };
     startTransition(async () => {
@@ -114,12 +118,15 @@ export function LocationsManager({
                     {l.address || "—"}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => openEdit(l)}>
-                      Upravit
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => remove(l)}>
-                      Smazat
-                    </Button>
+                    <div className="flex justify-end gap-1">
+                      <IconAction label="Upravit" icon={Pencil} onClick={() => openEdit(l)} />
+                      <IconAction
+                        label="Smazat"
+                        icon={Trash2}
+                        onClick={() => remove(l)}
+                        className="text-[var(--destructive)]"
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -154,6 +161,30 @@ export function LocationsManager({
               <Label>Adresa</Label>
               <Input value={form.address ?? ""} onChange={(e) => set("address", e.target.value)} />
             </div>
+
+            <div className="rounded-md border border-[var(--border)] p-3">
+              <p className="mb-2 text-sm font-medium">Kontaktní osoba</p>
+              <div className="grid gap-3">
+                <Input
+                  placeholder="Jméno (např. paní ředitelka)"
+                  value={form.contactName ?? ""}
+                  onChange={(e) => set("contactName", e.target.value)}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    placeholder="Telefon"
+                    value={form.contactPhone ?? ""}
+                    onChange={(e) => set("contactPhone", e.target.value)}
+                  />
+                  <Input
+                    placeholder="E-mail"
+                    value={form.contactEmail ?? ""}
+                    onChange={(e) => set("contactEmail", e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="flex flex-col gap-1.5">
               <Label>Poznámka</Label>
               <Input value={form.note ?? ""} onChange={(e) => set("note", e.target.value)} />

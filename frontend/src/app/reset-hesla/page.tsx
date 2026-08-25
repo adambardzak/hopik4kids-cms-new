@@ -127,6 +127,8 @@ function Shell({ title, children }: { title: string; children: React.ReactNode }
     <div className="flex min-h-screen items-center justify-center bg-[var(--muted)] p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="Hopík4Kids" className="mb-2 h-12 w-auto" />
           <CardTitle>{title}</CardTitle>
         </CardHeader>
         <CardContent>{children}</CardContent>

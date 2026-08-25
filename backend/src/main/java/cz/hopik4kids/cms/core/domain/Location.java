@@ -22,6 +22,16 @@ public class Location extends BaseEntity {
     @Column
     private String address;
 
+    /** Contact person at the venue (e.g. kindergarten coordinator) — prd §6A.8 request. */
+    @Column
+    private String contactName;
+
+    @Column
+    private String contactPhone;
+
+    @Column
+    private String contactEmail;
+
     @Column(columnDefinition = "text")
     private String note;
 
@@ -47,6 +57,30 @@ public class Location extends BaseEntity {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public String getContactName() {
+        return contactName;
+    }
+
+    public void setContactName(String contactName) {
+        this.contactName = contactName;
+    }
+
+    public String getContactPhone() {
+        return contactPhone;
+    }
+
+    public void setContactPhone(String contactPhone) {
+        this.contactPhone = contactPhone;
+    }
+
+    public String getContactEmail() {
+        return contactEmail;
+    }
+
+    public void setContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
     }
 
     public String getNote() {

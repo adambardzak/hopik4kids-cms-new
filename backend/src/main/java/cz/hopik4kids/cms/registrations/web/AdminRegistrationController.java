@@ -29,8 +29,9 @@ public class AdminRegistrationController {
     @GetMapping
     public PageResponse<AdminRegistrationDto> list(
             @RequestParam(required = false) String program,
-            @RequestParam(required = false) String paymentStatus) {
-        return PageResponse.ofAll(service.list(program, paymentStatus));
+            @RequestParam(required = false) String paymentStatus,
+            @RequestParam(required = false) String q) {
+        return PageResponse.ofAll(service.list(program, paymentStatus, q));
     }
 
     @GetMapping("/{id}")

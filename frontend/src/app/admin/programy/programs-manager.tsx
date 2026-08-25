@@ -2,12 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { Location, Program } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { IconAction } from "@/components/ui/icon-action";
 import {
   Table,
   TableBody,
@@ -148,12 +149,15 @@ export function ProgramsManager({
                       <Badge variant={st.variant}>{st.label}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => openEdit(p)}>
-                        Upravit
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => remove(p)}>
-                        Smazat
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        <IconAction label="Upravit" icon={Pencil} onClick={() => openEdit(p)} />
+                        <IconAction
+                          label="Smazat"
+                          icon={Trash2}
+                          onClick={() => remove(p)}
+                          className="text-[var(--destructive)]"
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 );

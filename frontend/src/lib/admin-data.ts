@@ -5,15 +5,19 @@ import type {
   PageResponse,
   Program,
   Registration,
+  ScheduleEntry,
   User,
 } from "./types";
 
 // --- registrations ---
-export function listRegistrations(params: { program?: string; paymentStatus?: string } = {}) {
-  const q = new URLSearchParams();
-  if (params.program) q.set("program", params.program);
-  if (params.paymentStatus) q.set("paymentStatus", params.paymentStatus);
-  const qs = q.toString();
+export function listRegistrations(
+  params: { program?: string; paymentStatus?: string; q?: string } = {},
+) {
+  const query = new URLSearchParams();
+  if (params.program) query.set("program", params.program);
+  if (params.paymentStatus) query.set("paymentStatus", params.paymentStatus);
+  if (params.q) query.set("q", params.q);
+  const qs = query.toString();
   return api<PageResponse<Registration>>(`/admin/api/registrations${qs ? `?${qs}` : ""}`);
 }
 
@@ -47,4 +51,13 @@ export function getArticle(id: string) {
 // --- users ---
 export function listUsers() {
   return api<PageResponse<User>>("/admin/api/users");
+}
+
+// --- schedule ---
+export function listSchedule(params: { from: string; to: string; location?: string }) {
+  const query = new URLSearchParams();
+  query.set("from", params.from);
+  query.set("to", params.to);
+  if (params.location) query.set("location", params.location);
+  return api<PageResponse<ScheduleEntry>>(`/admin/api/schedule?${query.toString()}`);
 }

@@ -34,7 +34,7 @@ public class RegistrationExportService {
     }
 
     public byte[] exportCsv(String programId, String paymentStatus) {
-        List<AdminRegistrationDto> rows = registrations.list(programId, paymentStatus);
+        List<AdminRegistrationDto> rows = registrations.list(programId, paymentStatus, null);
         StringBuilder sb = new StringBuilder("\uFEFF");
         sb.append(String.join(";", HEADERS)).append('\n');
         for (AdminRegistrationDto r : rows) {
@@ -51,7 +51,7 @@ public class RegistrationExportService {
     }
 
     public byte[] exportXlsx(String programId, String paymentStatus) {
-        List<AdminRegistrationDto> rows = registrations.list(programId, paymentStatus);
+        List<AdminRegistrationDto> rows = registrations.list(programId, paymentStatus, null);
         try (Workbook wb = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = wb.createSheet("Registrace");
             Row header = sheet.createRow(0);
