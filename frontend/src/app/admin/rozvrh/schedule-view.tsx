@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -13,12 +13,20 @@ import {
   Phone,
   Mail,
   User as UserIcon,
+  EyeOff,
+  Plus,
+  CalendarX,
+  CalendarClock,
+  Trash2,
 } from "lucide-react";
-import type { Location, ScheduleEntry } from "@/lib/types";
+import type { Location, Program, ScheduleEntry } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { cancelLesson, moveLesson, addOneOffLesson, deleteOverride } from "@/lib/actions";
 
 const DAYS = ["Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"];
 
@@ -68,16 +76,34 @@ function formatDate(iso?: string | null): string {
 export function ScheduleView({
   entries,
   locations,
+  programs,
   weekStart,
   currentLocation,
 }: {
   entries: ScheduleEntry[];
   locations: Location[];
+  programs: Program[];
   weekStart: string;
   currentLocation: string;
 }) {
   const router = useRouter();
   const [detail, setDetail] = useState<ScheduleEntry | null>(null);
+  const [isPending, startAction] = useTransition();
+  const [moveFor, setMoveFor] = useState<ScheduleEntry | null>(null);
+  const [oneOffOpen, setOneOffOpen] = useState(false);
+
+  function runAction(fn: () => Promise<{ ok: boolean; error?: string }>, onDone?: () => void) {
+    startAction(async () => {
+      const res = await fn();
+      if (!res.ok) {
+        alert(res.error ?? "Akce selhala");
+        return;
+      }
+      onDone?.();
+      setDetail(null);
+      router.refresh();
+    });
+  }
 
   function go(week: string, location = currentLocation) {
     const q = new URLSearchParams();
@@ -164,6 +190,9 @@ export function ScheduleView({
 
         <div className="ml-auto flex items-center gap-3">
           <Legend />
+          <Button size="sm" onClick={() => setOneOffOpen(true)}>
+            <Plus className="h-4 w-4" /> Přidat akci
+          </Button>
           <Select
             className=""
             value={currentLocation}
@@ -276,6 +305,7 @@ export function ScheduleView({
                     const width = ((end - start) / TOTAL_MIN) * 100;
                     const style = TYPE_STYLE[e.type] ?? TYPE_STYLE.club;
                     const full = e.capacity != null && e.spotsTaken >= e.capacity;
+                    const hidden = e.status === "hidden";
                     // Ensure the block is wide enough to show the name; clamp so it stays in view.
                     const displayWidth = Math.min(Math.max(width, 12), 100 - left);
                     // Vertical lane packing: each overlapping lesson gets its own row within the day.
@@ -285,21 +315,24 @@ export function ScheduleView({
                       <button
                         key={e.programId + idx}
                         onClick={() => setDetail(e)}
-                        className={`group absolute flex overflow-hidden rounded-lg border border-black/5 text-left shadow-sm transition-all hover:z-10 hover:scale-[1.02] hover:shadow-md ${style.bg}`}
+                        className={`group absolute flex overflow-hidden rounded-lg border text-left shadow-sm transition-all hover:z-10 hover:scale-[1.02] hover:shadow-md ${
+                          hidden ? "border-dashed border-[var(--border)] bg-[var(--muted)]/60 opacity-70" : `border-black/5 ${style.bg}`
+                        }`}
                         style={{
                           left: `${left}%`,
                           width: `${displayWidth}%`,
                           top: `calc(${top}% + 4px)`,
                           height: `calc(${laneHeight}% - 8px)`,
                         }}
-                        title={`${e.programName} · ${e.startTime}${e.endTime ? "–" + e.endTime : ""}${
+                        title={`${e.programName}${hidden ? " (skrytý)" : ""} · ${e.startTime}${e.endTime ? "–" + e.endTime : ""}${
                           e.locationName ? " · " + e.locationName : ""
                         }${e.capacity != null ? ` · ${e.spotsTaken}/${e.capacity}` : ""}`}
                       >
-                        <span className={`w-1.5 shrink-0 ${full ? "bg-red-500" : style.bar}`} aria-hidden />
-                        <span className={`flex min-w-0 flex-col justify-center gap-0.5 px-2 py-1 ${style.text}`}>
-                          <span className="truncate text-xs font-semibold leading-tight">
-                            {e.programName}
+                        <span className={`w-1.5 shrink-0 ${full ? "bg-red-500" : hidden ? "bg-[var(--muted-foreground)]/40" : style.bar}`} aria-hidden />
+                        <span className={`flex min-w-0 flex-col justify-center gap-0.5 px-2 py-1 ${hidden ? "text-[var(--muted-foreground)]" : style.text}`}>
+                          <span className="flex items-center gap-1 truncate text-xs font-semibold leading-tight">
+                            {hidden && <EyeOff className="h-2.5 w-2.5 shrink-0" />}
+                            <span className="truncate">{e.programName}</span>
                           </span>
                           <span className="flex items-center gap-1.5 text-[10px] font-medium opacity-75">
                             <span className="flex items-center gap-0.5 whitespace-nowrap">
@@ -340,6 +373,9 @@ export function ScheduleView({
                 <DialogTitle className="flex items-center gap-2">
                   {detail.programName}
                   <Badge variant="info">{(TYPE_STYLE[detail.type] ?? TYPE_STYLE.club).label}</Badge>
+                  {detail.overrideType === "one_off" && <Badge variant="warning">Jednorázová</Badge>}
+                  {detail.overrideType === "moved" && <Badge variant="warning">Přesunuto</Badge>}
+                  {detail.status === "hidden" && <Badge variant="default">Skrytý</Badge>}
                 </DialogTitle>
               </DialogHeader>
 
@@ -394,18 +430,71 @@ export function ScheduleView({
                 )}
               </div>
 
-              <div className="mt-4 flex justify-end gap-2 border-t border-[var(--border)] pt-4">
-                <Button variant="outline" size="sm" asChild>
-                  <Link href={`/admin/registrace?program=${detail.programId}`}>Registrace</Link>
-                </Button>
-                <Button size="sm" asChild>
-                  <Link href="/admin/programy">Upravit program</Link>
-                </Button>
+              <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-[var(--border)] pt-4">
+                {detail.overrideId ? (
+                  // One-off or moved lesson: allow removing the override.
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-[var(--destructive)]"
+                    disabled={isPending}
+                    onClick={() => {
+                      if (confirm("Opravdu odstranit tuto úpravu termínu?"))
+                        runAction(() => deleteOverride(detail.overrideId!));
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" /> Odebrat
+                  </Button>
+                ) : (
+                  // Regular recurring occurrence: cancel or move this specific date.
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-[var(--destructive)]"
+                      disabled={isPending}
+                      onClick={() => {
+                        if (confirm(`Zrušit termín ${formatDate(detail.date)} (${detail.programName})? Např. svátek nebo zavřeno.`))
+                          runAction(() => cancelLesson(detail.programId, detail.date, "zrušeno"));
+                      }}
+                    >
+                      <CalendarX className="h-4 w-4" /> Zrušit termín
+                    </Button>
+                    <Button variant="outline" size="sm" disabled={isPending} onClick={() => setMoveFor(detail)}>
+                      <CalendarClock className="h-4 w-4" /> Přesunout
+                    </Button>
+                  </>
+                )}
+                {detail.programId && (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/admin/registrace?program=${detail.programId}`}>Registrace</Link>
+                  </Button>
+                )}
               </div>
             </>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Move a recurring occurrence */}
+      <MoveDialog
+        entry={moveFor}
+        locations={locations}
+        onClose={() => setMoveFor(null)}
+        onSubmit={(body) => runAction(() => moveLesson(body), () => setMoveFor(null))}
+        pending={isPending}
+      />
+
+      {/* Add a one-off lesson/event */}
+      <OneOffDialog
+        open={oneOffOpen}
+        programs={programs}
+        locations={locations}
+        defaultLocation={currentLocation}
+        onClose={() => setOneOffOpen(false)}
+        onSubmit={(body) => runAction(() => addOneOffLesson(body), () => setOneOffOpen(false))}
+        pending={isPending}
+      />
     </div>
   );
 }
@@ -443,5 +532,221 @@ function Row({
         <span className="font-medium">{children}</span>
       </div>
     </div>
+  );
+}
+
+function MoveDialog({
+  entry,
+  locations,
+  onClose,
+  onSubmit,
+  pending,
+}: {
+  entry: ScheduleEntry | null;
+  locations: Location[];
+  onClose: () => void;
+  onSubmit: (body: {
+    programId: string;
+    originalDate: string;
+    newDate: string;
+    newTime: string;
+    durationMin?: number | null;
+    locationId?: string | null;
+  }) => void;
+  pending: boolean;
+}) {
+  const [newDate, setNewDate] = useState("");
+  const [newTime, setNewTime] = useState("");
+  const [locationId, setLocationId] = useState("");
+
+  useEffect(() => {
+    if (entry) {
+      setNewDate(entry.date);
+      setNewTime(entry.startTime ?? "");
+      setLocationId(entry.locationId ?? "");
+    }
+  }, [entry]);
+
+  return (
+    <Dialog open={entry !== null} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        {entry && (
+          <>
+            <DialogHeader>
+              <DialogTitle>Přesunout termín</DialogTitle>
+            </DialogHeader>
+            <p className="mb-3 text-sm text-[var(--muted-foreground)]">
+              {entry.programName} — původně {formatDate(entry.date)} {entry.startTime}
+            </p>
+            <div className="grid gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label>Nové datum</Label>
+                  <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label>Nový čas</Label>
+                  <Input type="time" value={newTime} onChange={(e) => setNewTime(e.target.value)} />
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label>Místo (nepovinné)</Label>
+                <Select value={locationId} onChange={(e) => setLocationId(e.target.value)}>
+                  <option value="">Beze změny</option>
+                  {locations.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <div className="mt-2 flex justify-end gap-2">
+                <Button variant="outline" onClick={onClose} disabled={pending}>
+                  Zrušit
+                </Button>
+                <Button
+                  disabled={pending || !newDate || !newTime}
+                  onClick={() =>
+                    onSubmit({
+                      programId: entry.programId,
+                      originalDate: entry.date,
+                      newDate,
+                      newTime,
+                      durationMin: entry.durationMin ?? null,
+                      locationId: locationId || null,
+                    })
+                  }
+                >
+                  Přesunout
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function OneOffDialog({
+  open,
+  programs,
+  locations,
+  defaultLocation,
+  onClose,
+  onSubmit,
+  pending,
+}: {
+  open: boolean;
+  programs: Program[];
+  locations: Location[];
+  defaultLocation: string;
+  onClose: () => void;
+  onSubmit: (body: {
+    programId?: string | null;
+    title?: string | null;
+    date: string;
+    time: string;
+    durationMin?: number | null;
+    locationId?: string | null;
+  }) => void;
+  pending: boolean;
+}) {
+  const [programId, setProgramId] = useState("");
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [duration, setDuration] = useState("");
+  const [locationId, setLocationId] = useState(defaultLocation);
+
+  useEffect(() => {
+    if (open) {
+      setProgramId("");
+      setTitle("");
+      setDate("");
+      setTime("");
+      setDuration("");
+      setLocationId(defaultLocation);
+    }
+  }, [open, defaultLocation]);
+
+  const recurring = programs.filter((p) => p.weekday && p.time);
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Přidat jednorázovou akci</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <div className="flex flex-col gap-1.5">
+            <Label>Program (náhradní lekce) — nebo nech prázdné pro vlastní akci</Label>
+            <Select value={programId} onChange={(e) => setProgramId(e.target.value)}>
+              <option value="">— vlastní akce (název níže) —</option>
+              {recurring.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+          {!programId && (
+            <div className="flex flex-col gap-1.5">
+              <Label>Název akce</Label>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ukázková hodina pro rodiče"
+              />
+            </div>
+          )}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label>Datum</Label>
+              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>Čas</Label>
+              <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>Délka (min)</Label>
+              <Input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="60" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label>Místo (nepovinné)</Label>
+            <Select value={locationId} onChange={(e) => setLocationId(e.target.value)}>
+              <option value="">Bez místa</option>
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="mt-2 flex justify-end gap-2">
+            <Button variant="outline" onClick={onClose} disabled={pending}>
+              Zrušit
+            </Button>
+            <Button
+              disabled={pending || !date || !time || (!programId && !title.trim())}
+              onClick={() =>
+                onSubmit({
+                  programId: programId || null,
+                  title: programId ? null : title,
+                  date,
+                  time,
+                  durationMin: duration ? Number(duration) : null,
+                  locationId: locationId || null,
+                })
+              }
+            >
+              Přidat
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

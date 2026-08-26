@@ -1,4 +1,4 @@
-import { listLocations, listSchedule } from "@/lib/admin-data";
+import { listLocations, listSchedule, listPrograms } from "@/lib/admin-data";
 import { PageHeader } from "@/components/page-header";
 import { ScheduleView } from "./schedule-view";
 
@@ -29,9 +29,10 @@ export default async function RozvrhPage({
   const from = iso(monday);
   const to = iso(sunday);
 
-  const [{ items: entries }, { items: locations }] = await Promise.all([
+  const [{ items: entries }, { items: locations }, { items: programs }] = await Promise.all([
     listSchedule({ from, to, location: sp.location }),
     listLocations(),
+    listPrograms(),
   ]);
 
   return (
@@ -44,6 +45,7 @@ export default async function RozvrhPage({
         <ScheduleView
           entries={entries}
           locations={locations}
+          programs={programs}
           weekStart={from}
           currentLocation={sp.location ?? ""}
         />

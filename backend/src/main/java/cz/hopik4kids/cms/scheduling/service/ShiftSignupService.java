@@ -73,7 +73,7 @@ public class ShiftSignupService {
         Map<String, String> trainerNames = new HashMap<>();
 
         List<ShiftSlotDto> slots = new ArrayList<>();
-        for (Program p : programs.findByStatusWithLocation(ProgramStatus.ACTIVE)) {
+        for (Program p : programs.findInternallyVisibleWithLocation()) {
             LocalTime start = parseTime(p.getTime());
             String startStr = start == null ? null : start.format(HHMM);
             String endStr = (start != null && p.getDurationMin() != null)
@@ -122,8 +122,8 @@ public class ShiftSignupService {
         String me = SecurityUtils.currentUserId();
         Program p = programs.findById(programId)
                 .orElseThrow(() -> ApiException.badRequest("INVALID_PROGRAM", "Program nenalezen"));
-        if (p.getStatus() != ProgramStatus.ACTIVE) {
-            throw ApiException.badRequest("PROGRAM_INACTIVE", "Program není aktivní");
+        if (p.getStatus() == ProgramStatus.ARCHIVED) {
+            throw ApiException.badRequest("PROGRAM_INACTIVE", "Program je archivovaný");
         }
         // The (program, date) must be a real occurrence of this program.
         if (schedule.occurrenceDates(p, date, date).isEmpty()) {

@@ -273,3 +273,24 @@ export async function approveShift(signupId: string): Promise<ActionResult> {
 export async function rejectShift(signupId: string): Promise<ActionResult> {
   return run(() => api(`/admin/api/shifts/${signupId}/reject`, { method: "POST" }), "/admin/smeny");
 }
+
+// --- schedule overrides (prd §7.4) ---
+export async function cancelLesson(programId: string, originalDate: string, note?: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/schedule/overrides/cancel`, { method: "POST", body: { programId, originalDate, note } }), "/admin/rozvrh");
+}
+
+export async function moveLesson(body: {
+  programId: string; originalDate: string; newDate: string; newTime: string; durationMin?: number | null; locationId?: string | null; note?: string;
+}): Promise<ActionResult> {
+  return run(() => api(`/admin/api/schedule/overrides/move`, { method: "POST", body }), "/admin/rozvrh");
+}
+
+export async function addOneOffLesson(body: {
+  programId?: string | null; title?: string | null; date: string; time: string; durationMin?: number | null; locationId?: string | null; note?: string;
+}): Promise<ActionResult> {
+  return run(() => api(`/admin/api/schedule/overrides/one-off`, { method: "POST", body }), "/admin/rozvrh");
+}
+
+export async function deleteOverride(id: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/schedule/overrides/${id}`, { method: "DELETE" }), "/admin/rozvrh");
+}

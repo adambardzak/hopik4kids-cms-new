@@ -3,9 +3,14 @@ package cz.hopik4kids.cms.scheduling.service;
 import cz.hopik4kids.cms.core.domain.Program;
 import cz.hopik4kids.cms.core.domain.ProgramStatus;
 import cz.hopik4kids.cms.core.domain.ProgramType;
+import cz.hopik4kids.cms.core.domain.Location;
+import cz.hopik4kids.cms.core.repository.LocationRepository;
 import cz.hopik4kids.cms.core.repository.ProgramRepository;
 import cz.hopik4kids.cms.kernel.web.ApiException;
 import cz.hopik4kids.cms.kernel.web.SecurityUtils;
+import cz.hopik4kids.cms.scheduling.domain.LessonOverride;
+import cz.hopik4kids.cms.scheduling.domain.LessonOverrideType;
+import cz.hopik4kids.cms.scheduling.repository.LessonOverrideRepository;
 import cz.hopik4kids.cms.scheduling.web.dto.ScheduleEntryDto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,12 +20,15 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Builds the weekly schedule (prd §6A.8 A) by expanding recurring club/school programs into
- * concrete dated occurrences for a date range. Used to see which slots are taken and therefore
- * which are free to offer to a kindergarten.
+ * concrete dated occurrences for a date range, then applying overrides (cancel/move/one-off, prd §7.4).
  */
 @Service
 public class ScheduleService {
@@ -28,9 +36,14 @@ public class ScheduleService {
     private static final DateTimeFormatter HHMM = DateTimeFormatter.ofPattern("HH:mm");
 
     private final ProgramRepository programs;
+    private final LessonOverrideRepository overrides;
+    private final LocationRepository locations;
 
-    public ScheduleService(ProgramRepository programs) {
+    public ScheduleService(ProgramRepository programs, LessonOverrideRepository overrides,
+                           LocationRepository locations) {
         this.programs = programs;
+        this.overrides = overrides;
+        this.locations = locations;
     }
 
     @Transactional(readOnly = true)
@@ -45,13 +58,24 @@ public class ScheduleService {
 
         List<ScheduleEntryDto> entries = new ArrayList<>();
 
-        // Trainers see only their assigned programs (prd §7.5); owner/admin see all.
+        // Load overrides once and index cancelled/moved originals by program|date so we can skip them.
+        List<LessonOverride> allOverrides = overrides.findInRange(from, to);
+        Set<String> suppressed = new HashSet<>(); // program|originalDate that should NOT be generated
+        for (LessonOverride o : allOverrides) {
+            if ((o.getType() == LessonOverrideType.CANCELLED || o.getType() == LessonOverrideType.MOVED)
+                    && o.getProgramId() != null && o.getOriginalDate() != null) {
+                suppressed.add(o.getProgramId() + "|" + o.getOriginalDate());
+            }
+        }
+
+        // Trainers see only their assigned programs (prd §7.5); owner/admin see all internally visible (incl. hidden).
         List<Program> source = SecurityUtils.isPrivileged()
-                ? programs.findByStatusWithLocation(ProgramStatus.ACTIVE)
+                ? programs.findInternallyVisibleWithLocation()
                 : programs.findByTrainer(SecurityUtils.currentUserId());
 
         for (Program p : source) {
-            if (p.getStatus() != ProgramStatus.ACTIVE) {
+            // Hidden programs are shown internally (schedule/shifts); only archived are excluded.
+            if (p.getStatus() == ProgramStatus.ARCHIVED) {
                 continue;
             }
             // Only recurring lessons appear in the schedule (camps are date-range, not weekly).
@@ -83,11 +107,16 @@ public class ScheduleService {
                 if (p.getValidTo() != null && date.isAfter(p.getValidTo())) {
                     continue;
                 }
+                // Skip occurrences cancelled or moved away from this date.
+                if (suppressed.contains(p.getId() + "|" + date)) {
+                    continue;
+                }
 
                 entries.add(new ScheduleEntryDto(
                         p.getId(),
                         p.getName(),
                         p.getType().name().toLowerCase(),
+                        p.getStatus().name().toLowerCase(),
                         date,
                         p.getWeekday(),
                         start.format(HHMM),
@@ -103,14 +132,79 @@ public class ScheduleService {
                         p.getValidFrom(),
                         p.getValidTo(),
                         p.getCapacity(),
-                        p.getSpotsTaken()
+                        p.getSpotsTaken(),
+                        null,
+                        null,
+                        null
                 ));
             }
         }
 
+        // Apply MOVED (new slot) and ONE_OFF overrides.
+        Map<String, Program> programById = new HashMap<>();
+        Map<String, Location> locationById = new HashMap<>();
+        for (LessonOverride o : allOverrides) {
+            if (o.getType() == LessonOverrideType.CANCELLED) {
+                continue; // pure removal, handled by suppressed set
+            }
+            LocalDate d = o.getDate();
+            if (d == null || d.isBefore(from) || d.isAfter(to)) {
+                continue;
+            }
+            Program p = o.getProgramId() == null ? null
+                    : programById.computeIfAbsent(o.getProgramId(),
+                            id -> programs.findById(id).orElse(null));
+            // Trainers only see overrides for their programs (or program-less one-offs stay visible to all).
+            if (!SecurityUtils.isPrivileged() && p != null
+                    && !programs.isTrainerAssigned(p.getId(), SecurityUtils.currentUserId())) {
+                continue;
+            }
+            String locId = o.getLocationId() != null ? o.getLocationId()
+                    : (p != null && p.getLocation() != null ? p.getLocation().getId() : null);
+            Location loc = locId == null ? null
+                    : locationById.computeIfAbsent(locId, id -> locations.findById(id).orElse(null));
+            if (locationId != null && !locationId.isBlank()
+                    && (loc == null || !locationId.equals(loc.getId()))) {
+                continue;
+            }
+            LocalTime start = parseTime(o.getTime());
+            Integer duration = o.getDurationMin() != null ? o.getDurationMin()
+                    : (p != null ? p.getDurationMin() : null);
+            String end = (start != null && duration != null) ? start.plusMinutes(duration).format(HHMM) : null;
+            String name = o.getTitle() != null && !o.getTitle().isBlank() ? o.getTitle()
+                    : (p != null ? p.getName() : "Jednorázová akce");
+            String type = p != null ? p.getType().name().toLowerCase() : "club";
+
+            entries.add(new ScheduleEntryDto(
+                    p != null ? p.getId() : null,
+                    name,
+                    type,
+                    p != null ? p.getStatus().name().toLowerCase() : "active",
+                    d,
+                    d.getDayOfWeek().getValue(),
+                    start != null ? start.format(HHMM) : null,
+                    end,
+                    duration,
+                    p != null && p.getSchoolPart() != null ? p.getSchoolPart().name().toLowerCase() : null,
+                    loc == null ? null : loc.getId(),
+                    loc == null ? null : loc.getName(),
+                    loc == null ? null : loc.getAddress(),
+                    loc == null ? null : loc.getContactName(),
+                    loc == null ? null : loc.getContactPhone(),
+                    loc == null ? null : loc.getContactEmail(),
+                    null,
+                    null,
+                    p != null ? p.getCapacity() : null,
+                    p != null ? p.getSpotsTaken() : 0,
+                    o.getId(),
+                    o.getType().name().toLowerCase(),
+                    o.getTitle()
+            ));
+        }
+
         entries.sort(Comparator
                 .comparing(ScheduleEntryDto::date)
-                .thenComparing(ScheduleEntryDto::startTime));
+                .thenComparing(e -> e.startTime() == null ? "" : e.startTime()));
         return entries;
     }
 

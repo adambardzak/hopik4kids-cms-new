@@ -271,6 +271,10 @@ export interface ScheduleEntry {
   programId: string;
   programName: string;
   type: "club" | "school";
+  status?: "active" | "hidden" | "archived";
+  overrideId?: string | null;
+  overrideType?: "cancelled" | "moved" | "one_off" | null;
+  title?: string | null;
   date: string; // ISO date
   weekday: number; // 1=Mon..7=Sun
   startTime: string; // "HH:MM"

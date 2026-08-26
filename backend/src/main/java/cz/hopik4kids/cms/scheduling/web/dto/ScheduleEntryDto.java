@@ -11,6 +11,7 @@ public record ScheduleEntryDto(
         String programId,
         String programName,
         String type,
+        String status,
         LocalDate date,
         int weekday,
         String startTime,
@@ -26,6 +27,9 @@ public record ScheduleEntryDto(
         LocalDate validFrom,
         LocalDate validTo,
         Integer capacity,
-        int spotsTaken
+        int spotsTaken,
+        String overrideId,
+        String overrideType,
+        String title
 ) {
 }

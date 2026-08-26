@@ -21,6 +21,10 @@ public interface ProgramRepository extends JpaRepository<Program, String> {
     @Query("select p from Program p left join fetch p.location where p.status = :status")
     List<Program> findByStatusWithLocation(@Param("status") ProgramStatus status);
 
+    /** Internally visible programs (ACTIVE + HIDDEN) for schedule/shifts/attendance — excludes ARCHIVED. */
+    @Query("select p from Program p left join fetch p.location where p.status <> cz.hopik4kids.cms.core.domain.ProgramStatus.ARCHIVED")
+    List<Program> findInternallyVisibleWithLocation();
+
     @Query("select p from Program p left join fetch p.location where p.type = :type and p.status = :status")
     List<Program> findByTypeAndStatusWithLocation(@Param("type") ProgramType type,
                                                   @Param("status") ProgramStatus status);
