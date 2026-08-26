@@ -23,6 +23,8 @@ public record PublicProgramDto(
         String time,
         String schoolPart,
         Integer durationMin,
+        LocalDate validFrom,
+        LocalDate validTo,
         LocalDate startDate,
         LocalDate endDate,
         PublicLocationDto location
@@ -43,6 +45,8 @@ public record PublicProgramDto(
                 p.getTime(),
                 p.getSchoolPart() == null ? null : p.getSchoolPart().name().toLowerCase(),
                 p.getDurationMin(),
+                p.getValidFrom(),
+                p.getValidTo(),
                 p.getStartDate(),
                 p.getEndDate(),
                 includeLocation && p.getLocation() != null ? PublicLocationDto.from(p.getLocation()) : null
