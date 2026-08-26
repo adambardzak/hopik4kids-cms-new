@@ -94,6 +94,32 @@ export function ScheduleView({
     return map;
   }, [entries]);
 
+  // Assign overlapping lessons to horizontal lanes (stacked rows) so they don't cover each other.
+  const laneByDay = useMemo(() => {
+    const result: Record<number, { entry: ScheduleEntry; lane: number }[]> = {};
+    const counts: Record<number, number> = {};
+    for (const [wd, list] of Object.entries(byDay)) {
+      const weekday = Number(wd);
+      const sorted = [...list].sort((a, b) => toMinutes(a.startTime) - toMinutes(b.startTime));
+      const laneEnds: number[] = []; // last end-minute per lane
+      const placed = sorted.map((e) => {
+        const start = toMinutes(e.startTime);
+        const end = e.endTime ? toMinutes(e.endTime) : start + 45;
+        let lane = laneEnds.findIndex((endMin) => endMin <= start);
+        if (lane === -1) {
+          lane = laneEnds.length;
+          laneEnds.push(end);
+        } else {
+          laneEnds[lane] = end;
+        }
+        return { entry: e, lane };
+      });
+      result[weekday] = placed;
+      counts[weekday] = Math.max(1, laneEnds.length);
+    }
+    return { result, counts };
+  }, [byDay]);
+
   const hourMarks: number[] = [];
   for (let h = START_HOUR; h <= END_HOUR; h++) hourMarks.push(h);
 
@@ -184,6 +210,8 @@ export function ScheduleView({
           {DAYS.map((day, i) => {
             const weekday = i + 1;
             const dayEntries = byDay[weekday] ?? [];
+            const placed = laneByDay.result[weekday] ?? [];
+            const laneCount = laneByDay.counts[weekday] ?? 1;
             const weekend = weekday >= 6;
             const dayIso = addDays(weekStart, i);
             const isToday = dayIso === todayIso;
@@ -191,6 +219,7 @@ export function ScheduleView({
             return (
               <div
                 key={day}
+                style={{ flexGrow: laneCount }}
                 className={`flex min-h-0 flex-1 border-b border-[var(--border)] last:border-b-0 ${
                   isToday ? "bg-blue-50/50" : weekend ? "bg-[var(--muted)]/30" : ""
                 }`}
@@ -240,7 +269,7 @@ export function ScheduleView({
                     </span>
                   )}
                   {/* lessons */}
-                  {dayEntries.map((e, idx) => {
+                  {placed.map(({ entry: e, lane }, idx) => {
                     const start = toMinutes(e.startTime);
                     const end = e.endTime ? toMinutes(e.endTime) : start + 45;
                     const left = leftPct(start);
@@ -249,12 +278,20 @@ export function ScheduleView({
                     const full = e.capacity != null && e.spotsTaken >= e.capacity;
                     // Ensure the block is wide enough to show the name; clamp so it stays in view.
                     const displayWidth = Math.min(Math.max(width, 12), 100 - left);
+                    // Vertical lane packing: each overlapping lesson gets its own row within the day.
+                    const laneHeight = 100 / laneCount;
+                    const top = lane * laneHeight;
                     return (
                       <button
                         key={e.programId + idx}
                         onClick={() => setDetail(e)}
-                        className={`group absolute inset-y-2 flex overflow-hidden rounded-lg border border-black/5 text-left shadow-sm transition-all hover:z-10 hover:scale-[1.02] hover:shadow-md ${style.bg}`}
-                        style={{ left: `${left}%`, width: `${displayWidth}%` }}
+                        className={`group absolute flex overflow-hidden rounded-lg border border-black/5 text-left shadow-sm transition-all hover:z-10 hover:scale-[1.02] hover:shadow-md ${style.bg}`}
+                        style={{
+                          left: `${left}%`,
+                          width: `${displayWidth}%`,
+                          top: `calc(${top}% + 4px)`,
+                          height: `calc(${laneHeight}% - 8px)`,
+                        }}
                         title={`${e.programName} · ${e.startTime}${e.endTime ? "–" + e.endTime : ""}${
                           e.locationName ? " · " + e.locationName : ""
                         }${e.capacity != null ? ` · ${e.spotsTaken}/${e.capacity}` : ""}`}

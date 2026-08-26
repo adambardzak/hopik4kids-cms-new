@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import type { Location, Program, Trainer } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,11 @@ export function ProgramsManager({
   const [form, setForm] = useState<FormState>({});
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const locationName = useMemo(() => {
+    const m = new Map(locations.map((l) => [l.id, l.name]));
+    return (id?: string | null) => (id ? m.get(id) ?? "—" : "—");
+  }, [locations]);
 
   function openCreate() {
     setForm({ type: "club", status: "active", shirtPolicy: "optional", accessMode: "public", price: 0 });
@@ -125,6 +130,7 @@ export function ProgramsManager({
             <TableHeader>
               <TableRow>
                 <TableHead>Název</TableHead>
+                <TableHead>Místo</TableHead>
                 <TableHead>Typ</TableHead>
                 <TableHead>Termín</TableHead>
                 <TableHead>Cena</TableHead>
@@ -140,6 +146,7 @@ export function ProgramsManager({
                 return (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{p.name}</TableCell>
+                    <TableCell className="text-sm text-[var(--muted-foreground)]">{locationName(p.locationId)}</TableCell>
                     <TableCell>{TYPE_LABELS[p.type]}</TableCell>
                     <TableCell className="text-sm">
                       {p.type === "camp"
