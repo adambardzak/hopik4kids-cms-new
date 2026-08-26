@@ -79,6 +79,11 @@ public interface RegistrationRepository extends JpaRepository<Registration, Stri
 
     long countByProgramId(String programId);
 
+    long countByProgramIdAndStatus(String programId,
+            cz.hopik4kids.cms.registrations.domain.RegistrationStatus status);
+
+    List<Registration> findByProgramId(String programId);
+
     /** Distinct parent emails of active registrations in a program (for bulk email, prd §6A.3). */
     @Query("""
             select distinct pa.email from Registration r

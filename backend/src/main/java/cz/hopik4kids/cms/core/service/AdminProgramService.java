@@ -13,6 +13,9 @@ import cz.hopik4kids.cms.core.web.dto.AdminProgramDto;
 import cz.hopik4kids.cms.core.web.dto.AdminProgramRequest;
 import cz.hopik4kids.cms.kernel.web.ApiException;
 import cz.hopik4kids.cms.kernel.web.EnumParser;
+import cz.hopik4kids.cms.registrations.domain.RegistrationStatus;
+import cz.hopik4kids.cms.registrations.repository.WaitlistEntryRepository;
+import cz.hopik4kids.cms.scheduling.repository.AttendanceRecordRepository;
 import cz.hopik4kids.cms.usersrbac.service.AuditService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,17 +29,23 @@ public class AdminProgramService {
     private final ProgramRepository programs;
     private final LocationRepository locations;
     private final cz.hopik4kids.cms.registrations.repository.RegistrationRepository registrations;
+    private final WaitlistEntryRepository waitlist;
+    private final AttendanceRecordRepository attendance;
     private final PasswordEncoder passwordEncoder;
     private final AuditService audit;
 
     public AdminProgramService(ProgramRepository programs,
                                LocationRepository locations,
                                cz.hopik4kids.cms.registrations.repository.RegistrationRepository registrations,
+                               WaitlistEntryRepository waitlist,
+                               AttendanceRecordRepository attendance,
                                PasswordEncoder passwordEncoder,
                                AuditService audit) {
         this.programs = programs;
         this.locations = locations;
         this.registrations = registrations;
+        this.waitlist = waitlist;
+        this.attendance = attendance;
         this.passwordEncoder = passwordEncoder;
         this.audit = audit;
     }
@@ -72,10 +81,24 @@ public class AdminProgramService {
     @Transactional
     public void delete(String id) {
         Program p = find(id);
-        long regs = registrations.countByProgramId(id);
-        if (regs > 0) {
+        // Only active registrations block deletion; cancelled (soft-deleted) ones must not.
+        long active = registrations.countByProgramIdAndStatus(id, RegistrationStatus.ACTIVE);
+        if (active > 0) {
             throw ApiException.conflict("PROGRAM_HAS_REGISTRATIONS",
-                    "Program nelze smazat, má " + regs + " registrací. Nejdřív je zrušte, nebo program archivujte.");
+                    "Program nelze smazat, má " + active + " aktivních registrací. Nejdřív je zrušte, nebo program archivujte.");
+        }
+        // Remove leftover dependents without ON DELETE CASCADE (cancelled registrations, waitlist, attendance).
+        var cancelled = registrations.findByProgramId(id);
+        if (!cancelled.isEmpty()) {
+            registrations.deleteAll(cancelled);
+        }
+        var waits = waitlist.findByProgramIdOrderByCreatedAtAsc(id);
+        if (!waits.isEmpty()) {
+            waitlist.deleteAll(waits);
+        }
+        var att = attendance.findByProgramId(id);
+        if (!att.isEmpty()) {
+            attendance.deleteAll(att);
         }
         programs.delete(p);
         audit.record("delete", "Program", id);
