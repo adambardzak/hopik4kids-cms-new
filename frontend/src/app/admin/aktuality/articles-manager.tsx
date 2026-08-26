@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { deleteArticle, saveArticle } from "@/lib/actions";
+import { RichTextEditor } from "@/components/rich-text-editor";
 
 function slugify(s: string): string {
   return s
@@ -208,11 +209,10 @@ export function ArticlesManager({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>Obsah (HTML)</Label>
-              <textarea
-                className="min-h-40 rounded-md border border-[var(--border)] bg-transparent px-3 py-2 font-mono text-xs"
+              <Label>Obsah</Label>
+              <RichTextEditor
                 value={form.content ?? ""}
-                onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
+                onChange={(html) => setForm((f) => ({ ...f, content: html }))}
               />
             </div>
             <div className="flex flex-col gap-1.5">

@@ -99,7 +99,7 @@ public class AdminArticleController {
                     throw ApiException.conflict("SLUG_TAKEN", "Slug už existuje");
                 });
         a.setExcerpt(req.excerpt());
-        a.setContent(req.content());
+        a.setContent(cz.hopik4kids.cms.kernel.web.HtmlSanitizer.sanitize(req.content()));
         a.setPublishedAt(req.publishedAt());
         if (req.coverId() != null && !req.coverId().isBlank()) {
             Media cover = media.findById(req.coverId())
