@@ -125,7 +125,7 @@ export function RegistrationsTable({
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-foreground)]" />
           <Input
-            className="w-64 pl-9"
+            className="w-full pl-9 sm:w-64"
             placeholder="Hledat dítě, rodiče, e-mail…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -387,7 +387,7 @@ function DetailDialog({
             <DialogHeader>
               <DialogTitle>{detail.childName}</DialogTitle>
             </DialogHeader>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <dl className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
               <Field label="Datum narození" value={new Date(detail.birthDate).toLocaleDateString("cs-CZ")} />
               <Field label="Rodné číslo" value={detail.personalId} />
               <Field label="Adresa" value={detail.childAddress} />

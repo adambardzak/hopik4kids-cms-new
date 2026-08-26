@@ -250,7 +250,7 @@ function SupplierForm({ supplier }: { supplier: SupplierSettings }) {
         <Field label="Název">
           <Input value={form.name ?? ""} onChange={(e) => set("name", e.target.value)} />
         </Field>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="IČO">
             <div className="flex gap-2">
               <Input value={form.ico ?? ""} onChange={(e) => set("ico", e.target.value)} />
@@ -274,7 +274,7 @@ function SupplierForm({ supplier }: { supplier: SupplierSettings }) {
         <Field label="Adresa">
           <Input value={form.address ?? ""} onChange={(e) => set("address", e.target.value)} />
         </Field>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="IBAN (pro QR platbu)">
             <Input
               value={form.iban ?? ""}
@@ -294,7 +294,7 @@ function SupplierForm({ supplier }: { supplier: SupplierSettings }) {
             onChange={(e) => set("defaultDueDays", Number(e.target.value))}
           />
         </Field>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Web">
             <Input value={form.web ?? ""} placeholder="www.hopik4kids.cz" onChange={(e) => set("web", e.target.value)} />
           </Field>

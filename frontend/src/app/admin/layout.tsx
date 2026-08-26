@@ -12,9 +12,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex h-screen flex-col overflow-hidden md:flex-row">
         <Sidebar items={items} session={session} />
-        <main className="flex-1 overflow-auto bg-[var(--muted)] p-8">{children}</main>
+        <main className="flex-1 overflow-auto bg-[var(--muted)] p-4 md:p-8">{children}</main>
       </div>
     </TooltipProvider>
   );

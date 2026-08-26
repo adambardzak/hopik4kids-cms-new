@@ -113,7 +113,7 @@ export function DocumentsView({ documents, canEdit }: { documents: DocumentItem[
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-foreground)]" />
-          <Input className="w-64 pl-9" placeholder="Hledat dokument…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Input className="w-full pl-9 sm:w-64" placeholder="Hledat dokument…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         {canEdit && (
           <Button className="ml-auto" onClick={openCreate}>
@@ -196,7 +196,7 @@ export function DocumentsView({ documents, canEdit }: { documents: DocumentItem[
               <Label>Název</Label>
               <Input value={form.title ?? ""} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
                 <Label>Kategorie</Label>
                 <Select

@@ -188,7 +188,7 @@ export function ProgramsManager({
             <DialogTitle>{form.id ? "Upravit program" : "Nový program"}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Typ">
                 <Select
                   className="w-full"
@@ -217,7 +217,7 @@ export function ProgramsManager({
               <Input value={form.name ?? ""} onChange={(e) => set("name", e.target.value)} />
             </Field>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Cena (Kč)">
                 <Input
                   type="number"
@@ -251,7 +251,7 @@ export function ProgramsManager({
 
             {!isCamp ? (
               <>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <Field label="Den v týdnu">
                     <Select
                       className="w-full"
@@ -285,7 +285,7 @@ export function ProgramsManager({
                     />
                   </Field>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <Field label="Období od (první lekce)">
                     <Input
                       type="date"
@@ -306,7 +306,7 @@ export function ProgramsManager({
                 </p>
               </>
             ) : (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field label="Od">
                   <Input type="date" value={form.startDate ?? ""} onChange={(e) => set("startDate", e.target.value)} />
                 </Field>
@@ -330,7 +330,7 @@ export function ProgramsManager({
               </Field>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Dres">
                 <Select
                   className="w-full"

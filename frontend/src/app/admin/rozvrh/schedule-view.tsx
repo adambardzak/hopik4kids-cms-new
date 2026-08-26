@@ -214,8 +214,10 @@ export function ScheduleView({
         </div>
       )}
 
-      {/* Horizontal week grid — days as rows, time on the x-axis. */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--background)] shadow-sm">
+      {/* Horizontal week grid — days as rows, time on the x-axis.
+          On mobile it stays legible by enforcing a min width and scrolling horizontally. */}
+      <div className="min-h-0 flex-1 overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--background)] shadow-sm">
+        <div className="flex h-full min-w-[720px] flex-col overflow-hidden">
         {/* Time header */}
         <div className="flex border-b border-[var(--border)] bg-[var(--muted)]/40">
           <div className="flex w-16 shrink-0 items-center justify-center border-r border-[var(--border)] text-[10px] font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
@@ -361,6 +363,7 @@ export function ScheduleView({
               </div>
             );
           })}
+        </div>
         </div>
       </div>
 
@@ -579,7 +582,7 @@ function MoveDialog({
               {entry.programName} — původně {formatDate(entry.date)} {entry.startTime}
             </p>
             <div className="grid gap-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
                   <Label>Nové datum</Label>
                   <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
@@ -700,7 +703,7 @@ function OneOffDialog({
               />
             </div>
           )}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="flex flex-col gap-1.5">
               <Label>Datum</Label>
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />

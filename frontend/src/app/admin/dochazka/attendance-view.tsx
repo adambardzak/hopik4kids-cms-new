@@ -169,7 +169,7 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1.5">
           <Label>Program</Label>
-          <Select value={programId} onChange={(e) => onProgramChange(e.target.value)} className="w-64">
+          <Select value={programId} onChange={(e) => onProgramChange(e.target.value)} className="w-full sm:w-64">
             {programs.map((p) => (
               <option key={p.id} value={p.id}>
                 {WEEKDAYS[p.weekday ?? 0]} {p.time ?? ""} · {p.name}
@@ -216,7 +216,7 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Dítě</TableHead>
-                  <TableHead className="w-[320px]">Stav</TableHead>
+                  <TableHead className="min-w-[240px]">Stav</TableHead>
                   <TableHead>Poznámka</TableHead>
                 </TableRow>
               </TableHeader>
