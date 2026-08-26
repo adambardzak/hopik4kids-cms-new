@@ -1,61 +1,51 @@
 // Service worker for the Hopík4Kids admin PWA.
-// Strategy: network-first for navigations (admin is dynamic and auth-gated), cache-first for
-// static assets. Keeps the app installable and resilient to flaky mobile connections.
-const CACHE = "hopik-admin-v1";
-const ASSETS = [
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
-  "/icons/apple-touch-icon.png",
-];
+// Conservative by design: it ONLY caches immutable static assets (Next build output + icons).
+// Navigations, pages, API and auth are left entirely to the network/browser — the SW never
+// intercepts them, so it can't break dynamic/auth-gated rendering (only static caching).
+const CACHE = "hopik-admin-v2";
+const STATIC_PREFIXES = ["/_next/static/", "/icons/"];
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
+self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    )
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
 
-  const url = new URL(request.url);
-  // Never cache API/auth traffic — always go to network.
-  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/admin/api/")) {
+  let url;
+  try {
+    url = new URL(request.url);
+  } catch {
     return;
   }
 
-  // Cache-first for Next static assets and our icons.
-  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/")) {
-    event.respondWith(
-      caches.match(request).then(
-        (cached) =>
-          cached ||
-          fetch(request).then((res) => {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(request, copy));
-            return res;
-          })
-      )
-    );
-    return;
-  }
+  // Only handle same-origin immutable static assets. Everything else falls through to the network.
+  const isStatic =
+    url.origin === self.location.origin &&
+    STATIC_PREFIXES.some((p) => url.pathname.startsWith(p));
+  if (!isStatic) return;
 
-  // Network-first for everything else (pages), fall back to cache when offline.
   event.respondWith(
-    fetch(request)
-      .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(request, copy));
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
+      return fetch(request).then((res) => {
+        // Only cache successful, basic responses.
+        if (res && res.ok && res.type === "basic") {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(request, copy));
+        }
         return res;
-      })
-      .catch(() => caches.match(request))
+      });
+    })
   );
 });
