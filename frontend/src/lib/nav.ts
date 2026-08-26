@@ -20,7 +20,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/admin/dochazka", label: "Docházka", icon: "attendance", roles: ["owner", "admin", "trainer"] },
   { href: "/admin/smeny", label: "Směny", icon: "shifts", roles: ["owner", "admin", "trainer"] },
   { href: "/admin/dokumenty", label: "Dokumenty", icon: "documents", roles: ["owner", "admin", "trainer"] },
-  { href: "/admin/registrace", label: "Registrace", icon: "registrations", roles: ["owner", "admin", "trainer", "viewer"] },
+  { href: "/admin/registrace", label: "Registrace", icon: "registrations", roles: ["owner", "admin", "viewer"] },
   { href: "/admin/fakturace", label: "Fakturace", icon: "billing", roles: ["owner", "admin", "accountant"] },
   { href: "/admin/marketing", label: "Marketing", icon: "marketing", roles: ["owner", "admin"] },
   { href: "/admin/programy", label: "Programy", icon: "programs", roles: ["owner", "admin"] },

@@ -16,10 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Admin Program CRUD (prd §5.6, §6.4). Restricted to owner/admin (prd §7.2). */
+/** Admin Program CRUD (prd §5.6, §6.4). Reads allow trainers (scoped); writes are owner/admin (prd §7.2). */
 @RestController
 @RequestMapping("/admin/api/programs")
-@PreAuthorize("hasAnyRole('OWNER','ADMIN')")
 public class AdminProgramController {
 
     private final AdminProgramService service;
@@ -28,28 +27,34 @@ public class AdminProgramController {
         this.service = service;
     }
 
+    /** Owner/admin: all programs. Trainer: only assigned programs (for attendance/schedule UI). */
     @GetMapping
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER')")
     public PageResponse<AdminProgramDto> list() {
         return PageResponse.ofAll(service.list());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
     public AdminProgramDto get(@PathVariable String id) {
         return service.get(id);
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public AdminProgramDto create(@RequestBody AdminProgramRequest req) {
         return service.create(req);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
     public AdminProgramDto update(@PathVariable String id, @RequestBody AdminProgramRequest req) {
         return service.update(id, req);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable String id) {
         service.delete(id);

@@ -52,7 +52,11 @@ public class AdminProgramService {
 
     @Transactional(readOnly = true)
     public List<AdminProgramDto> list() {
-        return programs.findAll().stream().map(AdminProgramDto::from).toList();
+        // Trainers see only programs they are assigned to (prd §7.2); owner/admin see all.
+        List<Program> source = cz.hopik4kids.cms.kernel.web.SecurityUtils.isPrivileged()
+                ? programs.findAll()
+                : programs.findByTrainer(cz.hopik4kids.cms.kernel.web.SecurityUtils.currentUserId());
+        return source.stream().map(AdminProgramDto::from).toList();
     }
 
     @Transactional(readOnly = true)
