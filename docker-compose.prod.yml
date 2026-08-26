@@ -51,6 +51,7 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD}
       SMTP_AUTH: ${SMTP_AUTH:-true}
       SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+      SMTP_SSL: ${SMTP_SSL:-false}
     volumes:
       - hopik_cms_media:/data/media
     ports:

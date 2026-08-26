@@ -16,6 +16,11 @@ spring:
     properties:
       mail.smtp.auth: ${SMTP_AUTH:true}
       mail.smtp.starttls.enable: ${SMTP_STARTTLS:true}
+      # For implicit SSL providers (e.g. WEDOS on port 465) set SMTP_SSL=true.
+      mail.smtp.ssl.enable: ${SMTP_SSL:false}
+      mail.smtp.connectiontimeout: 10000
+      mail.smtp.timeout: 10000
+      mail.smtp.writetimeout: 10000
 
 app:
   personal-id-encryption-key: ${PERSONAL_ID_KEY}
