@@ -11,6 +11,7 @@ import cz.hopik4kids.cms.kernel.web.PageResponse;
 import cz.hopik4kids.cms.usersrbac.service.AuditService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,16 +40,18 @@ public class AdminArticleController {
 
     @GetMapping
     public PageResponse<AdminArticleDto> list() {
-        return PageResponse.ofAll(articles.findAll().stream().map(AdminArticleDto::from).toList());
+        return PageResponse.ofAll(articles.findAllWithCover().stream().map(AdminArticleDto::from).toList());
     }
 
     @GetMapping("/{id}")
+    @Transactional(readOnly = true)
     public AdminArticleDto get(@PathVariable String id) {
         return AdminArticleDto.from(find(id));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Transactional
     public AdminArticleDto create(@RequestBody AdminArticleRequest req) {
         Article a = new Article();
         apply(a, req, true);
@@ -58,6 +61,7 @@ public class AdminArticleController {
     }
 
     @PutMapping("/{id}")
+    @Transactional
     public AdminArticleDto update(@PathVariable String id, @RequestBody AdminArticleRequest req) {
         Article a = find(id);
         apply(a, req, false);

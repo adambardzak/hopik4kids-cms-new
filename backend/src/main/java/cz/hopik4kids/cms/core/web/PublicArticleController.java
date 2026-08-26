@@ -42,7 +42,7 @@ public class PublicArticleController {
 
     @GetMapping("/{slug}")
     public PublicArticleDto get(@PathVariable String slug) {
-        return articles.findBySlug(slug)
+        return articles.findBySlugWithCover(slug)
                 .filter(a -> a.getPublishedAt() != null)
                 .map(PublicArticleDto::from)
                 .orElseThrow(() -> ApiException.notFound("Článek nenalezen"));

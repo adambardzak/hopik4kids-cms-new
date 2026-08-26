@@ -11,7 +11,15 @@ public interface ArticleRepository extends JpaRepository<Article, String> {
 
     Optional<Article> findBySlug(String slug);
 
-    /** Published articles only (publishedAt not null), newest first (prd §5.2). */
-    @Query("select a from Article a where a.publishedAt is not null order by a.publishedAt desc")
+    /** All articles with cover eagerly fetched (avoids LazyInitializationException in DTO mapping), newest first. */
+    @Query("select a from Article a left join fetch a.cover order by a.createdAt desc")
+    List<Article> findAllWithCover();
+
+    /** Published articles only (publishedAt not null) with cover fetched, newest first (prd §5.2). */
+    @Query("select a from Article a left join fetch a.cover where a.publishedAt is not null order by a.publishedAt desc")
     List<Article> findPublished();
+
+    /** Single article by slug with cover fetched (for public/admin detail). */
+    @Query("select a from Article a left join fetch a.cover where a.slug = :slug")
+    Optional<Article> findBySlugWithCover(String slug);
 }
