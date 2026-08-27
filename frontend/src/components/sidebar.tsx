@@ -8,6 +8,7 @@ import type { IconKey, NavItem } from "@/lib/nav";
 import type { Session } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { NotificationToggle } from "@/components/notification-toggle";
 
 const ICONS: Record<IconKey, LucideIcon> = {
   dashboard: LayoutDashboard,
@@ -84,6 +85,7 @@ export function Sidebar({ items, session }: { items: NavItem[]; session: Session
         <p className="truncate text-sm font-medium">{session.name ?? session.email}</p>
         <p className="text-xs text-[var(--muted-foreground)]">{ROLE_LABELS[session.role] ?? session.role}</p>
       </div>
+      {(session.role === "owner" || session.role === "admin") && <NotificationToggle />}
       <Button variant="outline" size="sm" className="w-full" onClick={logout}>
         <LogOut className="h-4 w-4" />
         Odhlásit se

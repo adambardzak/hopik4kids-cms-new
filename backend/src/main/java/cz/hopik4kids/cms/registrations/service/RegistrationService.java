@@ -36,17 +36,20 @@ public class RegistrationService {
     private final ChildRepository children;
     private final RegistrationRepository registrations;
     private final PasswordEncoder passwordEncoder;
+    private final cz.hopik4kids.cms.notifications.service.WebPushService webPush;
 
     public RegistrationService(ProgramRepository programs,
                                ParentRepository parents,
                                ChildRepository children,
                                RegistrationRepository registrations,
-                               PasswordEncoder passwordEncoder) {
+                               PasswordEncoder passwordEncoder,
+                               cz.hopik4kids.cms.notifications.service.WebPushService webPush) {
         this.programs = programs;
         this.parents = parents;
         this.children = children;
         this.registrations = registrations;
         this.passwordEncoder = passwordEncoder;
+        this.webPush = webPush;
     }
 
     @Transactional
@@ -103,6 +106,18 @@ public class RegistrationService {
         // Transactional counter bump (prd §3B.9).
         program.setSpotsTaken(program.getSpotsTaken() + 1);
         programs.save(program);
+
+        // Notify owners/admins on their phones (PWA push). Best-effort — never fails the registration.
+        try {
+            webPush.sendToRoles(
+                    java.util.List.of(cz.hopik4kids.cms.usersrbac.domain.Role.OWNER,
+                            cz.hopik4kids.cms.usersrbac.domain.Role.ADMIN),
+                    "Nová registrace",
+                    child.getFullName() + " — " + program.getName(),
+                    "/admin/registrace?program=" + program.getId());
+        } catch (Exception ignored) {
+            // push is non-critical
+        }
 
         return new RegistrationResponse(reg.getId(), program.getId(), priceSnapshot,
                 reg.getStatus().name().toLowerCase());
