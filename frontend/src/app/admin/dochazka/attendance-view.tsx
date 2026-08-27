@@ -197,15 +197,15 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
               Nepodařilo se načíst docházku. Zkontroluj připojení a zkus to prosím znovu.
             </div>
           )}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-[var(--muted-foreground)]">
               {loading ? "Načítám…" : `${rows.length} dětí · zaznamenáno ${recordedCount}`}
             </p>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={markAllPresent} disabled={loading || rows.length === 0}>
+              <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={markAllPresent} disabled={loading || rows.length === 0}>
                 <Check className="h-4 w-4" /> Všichni přítomni
               </Button>
-              <Button size="sm" onClick={save} disabled={isPending || loading || rows.length === 0}>
+              <Button size="sm" className="flex-1 sm:flex-none" onClick={save} disabled={isPending || loading || rows.length === 0}>
                 <Save className="h-4 w-4" /> {saved ? "Uloženo ✓" : isPending ? "Ukládám…" : "Uložit"}
               </Button>
             </div>

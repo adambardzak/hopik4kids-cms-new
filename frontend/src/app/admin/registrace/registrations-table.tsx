@@ -253,18 +253,18 @@ function ProgramGroup({
 
   return (
     <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--background)]">
-      <div className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--muted)]">
-        <button onClick={() => setOpen((o) => !o)} className="flex flex-1 items-center gap-3 text-left">
-          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          <span className="flex flex-col">
-            <span className="font-semibold leading-tight">{name}</span>
-            {meta && <span className="text-xs text-[var(--muted-foreground)]">{meta}</span>}
+      <div className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-[var(--muted)]">
+        <button onClick={() => setOpen((o) => !o)} className="flex w-full flex-1 items-center gap-3 text-left sm:w-auto">
+          {open ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate font-semibold leading-tight">{name}</span>
+            {meta && <span className="truncate text-xs text-[var(--muted-foreground)]">{meta}</span>}
           </span>
-          <span className="flex items-center gap-1 text-sm text-[var(--muted-foreground)]">
+          <span className="flex shrink-0 items-center gap-1 text-sm text-[var(--muted-foreground)]">
             <Users className="h-3.5 w-3.5" /> {active}
           </span>
           {unpaid > 0 && (
-            <Badge variant="warning" className="ml-1">
+            <Badge variant="warning" className="ml-1 shrink-0">
               {unpaid}× nezaplaceno
             </Badge>
           )}
@@ -451,7 +451,7 @@ function Field({ label, value }: { label: string; value?: string | null }) {
   return (
     <>
       <dt className="text-[var(--muted-foreground)]">{label}</dt>
-      <dd className="font-medium">{value || "—"}</dd>
+      <dd className="font-medium break-words">{value || "—"}</dd>
     </>
   );
 }
