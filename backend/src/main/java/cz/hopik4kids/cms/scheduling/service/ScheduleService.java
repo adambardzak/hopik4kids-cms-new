@@ -48,6 +48,16 @@ public class ScheduleService {
 
     @Transactional(readOnly = true)
     public List<ScheduleEntryDto> forRange(LocalDate from, LocalDate to, String locationId) {
+        return forRange(from, to, locationId, SecurityUtils.isPrivileged(), SecurityUtils.currentUserId());
+    }
+
+    /**
+     * Same as {@link #forRange(LocalDate, LocalDate, String)} but with explicit scoping — used by the
+     * public calendar feed which has no security context (identity comes from the URL token).
+     */
+    @Transactional(readOnly = true)
+    public List<ScheduleEntryDto> forRange(LocalDate from, LocalDate to, String locationId,
+                                           boolean privileged, String userId) {
         // Cap the range to avoid unbounded expansion (prd §11 performance).
         if (from == null || to == null || from.isAfter(to)) {
             throw ApiException.badRequest("INVALID_RANGE", "Neplatné datumové rozmezí");
@@ -69,9 +79,9 @@ public class ScheduleService {
         }
 
         // Trainers see only their assigned programs (prd §7.5); owner/admin see all internally visible (incl. hidden).
-        List<Program> source = SecurityUtils.isPrivileged()
+        List<Program> source = privileged
                 ? programs.findInternallyVisibleWithLocation()
-                : programs.findByTrainer(SecurityUtils.currentUserId());
+                : programs.findByTrainer(userId);
 
         for (Program p : source) {
             // Hidden programs are shown internally (schedule/shifts); only archived are excluded.
@@ -155,8 +165,8 @@ public class ScheduleService {
                     : programById.computeIfAbsent(o.getProgramId(),
                             id -> programs.findById(id).orElse(null));
             // Trainers only see overrides for their programs (or program-less one-offs stay visible to all).
-            if (!SecurityUtils.isPrivileged() && p != null
-                    && !programs.isTrainerAssigned(p.getId(), SecurityUtils.currentUserId())) {
+            if (!privileged && p != null
+                    && !programs.isTrainerAssigned(p.getId(), userId)) {
                 continue;
             }
             String locId = o.getLocationId() != null ? o.getLocationId()

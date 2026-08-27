@@ -10,6 +10,8 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     Optional<User> findByEmail(String email);
 
+    Optional<User> findByCalendarToken(String calendarToken);
+
     boolean existsByRole(Role role);
 
     long countByRole(Role role);

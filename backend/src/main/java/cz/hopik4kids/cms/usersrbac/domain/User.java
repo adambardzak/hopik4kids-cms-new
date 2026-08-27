@@ -42,6 +42,10 @@ public class User extends BaseEntity {
     @Column(length = 20)
     private String color;
 
+    /** Random token for the personal iCal/webcal calendar feed URL (prd §6A.8 A). */
+    @Column(name = "calendar_token", length = 64)
+    private String calendarToken;
+
     @Column
     private Instant lastLoginAt;
 
@@ -99,6 +103,14 @@ public class User extends BaseEntity {
 
     public void setColor(String color) {
         this.color = color;
+    }
+
+    public String getCalendarToken() {
+        return calendarToken;
+    }
+
+    public void setCalendarToken(String calendarToken) {
+        this.calendarToken = calendarToken;
     }
 
     public Instant getLastLoginAt() {

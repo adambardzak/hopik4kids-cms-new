@@ -27,6 +27,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cancelLesson, moveLesson, addOneOffLesson, deleteOverride } from "@/lib/actions";
+import { CalendarSubscribeButton } from "@/components/calendar-subscribe-button";
 
 const DAYS = ["Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"];
 
@@ -190,6 +191,7 @@ export function ScheduleView({
 
         <div className="ml-auto flex items-center gap-3">
           <Legend />
+          <CalendarSubscribeButton />
           <Button size="sm" onClick={() => setOneOffOpen(true)}>
             <Plus className="h-4 w-4" /> Přidat akci
           </Button>
