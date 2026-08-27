@@ -101,8 +101,15 @@ export function Sidebar({ items, session }: { items: NavItem[]; session: Session
 
   return (
     <>
-      {/* Mobile top bar with hamburger (hidden on md+) */}
-      <div className="flex items-center gap-2 border-b border-[var(--border)] bg-[var(--background)] p-3 md:hidden">
+      {/* Mobile top bar with hamburger (hidden on md+). Respects the notch / dynamic island. */}
+      <div
+        className="sticky top-0 z-30 flex items-center gap-2 border-b border-[var(--border)] bg-[var(--background)] p-3 md:hidden"
+        style={{
+          paddingTop: "max(0.75rem, env(safe-area-inset-top))",
+          paddingLeft: "max(0.75rem, env(safe-area-inset-left))",
+          paddingRight: "max(0.75rem, env(safe-area-inset-right))",
+        }}
+      >
         <button
           onClick={() => setOpen(true)}
           className="rounded-md p-2 hover:bg-[var(--muted)]"
@@ -130,7 +137,14 @@ export function Sidebar({ items, session }: { items: NavItem[]; session: Session
             onClick={() => setOpen(false)}
             aria-hidden
           />
-          <aside className="absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col border-r border-[var(--border)] bg-[var(--background)] shadow-xl">
+          <aside
+            className="absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col border-r border-[var(--border)] bg-[var(--background)] shadow-xl"
+            style={{
+              paddingTop: "env(safe-area-inset-top)",
+              paddingBottom: "env(safe-area-inset-bottom)",
+              paddingLeft: "env(safe-area-inset-left)",
+            }}
+          >
             <div className="flex items-center justify-between pr-2">
               {brand}
               <button
