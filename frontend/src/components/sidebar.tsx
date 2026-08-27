@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, LayoutDashboard, Users2, CalendarDays, CalendarClock, ClipboardCheck, FileText, TrendingUp, BookOpen, CalendarPlus, MapPin, Newspaper, ClipboardList, Menu, X, type LucideIcon } from "lucide-react";
+import { LogOut, LayoutDashboard, Users2, CalendarDays, CalendarClock, ClipboardCheck, FileText, TrendingUp, BookOpen, CalendarPlus, MapPin, Newspaper, ClipboardList, Menu, X, Hourglass, type LucideIcon } from "lucide-react";
 import type { IconKey, NavItem } from "@/lib/nav";
 import type { Session } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,7 @@ const ICONS: Record<IconKey, LucideIcon> = {
   marketing: TrendingUp,
   documents: BookOpen,
   shifts: CalendarPlus,
+  waitlist: Hourglass,
 };
 
 const ROLE_LABELS: Record<string, string> = {
