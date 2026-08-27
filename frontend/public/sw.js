@@ -2,8 +2,15 @@
 // Conservative by design: it ONLY caches immutable static assets (Next build output + icons).
 // Navigations, pages, API and auth are left entirely to the network/browser — the SW never
 // intercepts them, so it can't break dynamic/auth-gated rendering (only static caching).
-const CACHE = "hopik-admin-v3";
+const CACHE = "hopik-admin-v4";
 const STATIC_PREFIXES = ["/_next/static/", "/icons/"];
+
+// Allow the page to trigger immediate activation of an updated SW.
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
 
 self.addEventListener("install", () => {
   self.skipWaiting();
