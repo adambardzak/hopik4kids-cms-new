@@ -9,6 +9,7 @@ import type { Session } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { NotificationToggle } from "@/components/notification-toggle";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const ICONS: Record<IconKey, LucideIcon> = {
   dashboard: LayoutDashboard,
@@ -86,6 +87,7 @@ export function Sidebar({ items, session }: { items: NavItem[]; session: Session
         <p className="text-xs text-[var(--muted-foreground)]">{ROLE_LABELS[session.role] ?? session.role}</p>
       </div>
       {(session.role === "owner" || session.role === "admin") && <NotificationToggle />}
+      <ThemeToggle />
       <Button variant="outline" size="sm" className="w-full" onClick={logout}>
         <LogOut className="h-4 w-4" />
         Odhlásit se

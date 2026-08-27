@@ -21,6 +21,19 @@
   --muted-foreground: #71717a;
   --border: #e4e4e7;
   --destructive: #dc2626;
+  color-scheme: light;
+}
+
+.dark {
+  --background: #0b0f19;
+  --foreground: #e5e7eb;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --muted: #1c2333;
+  --muted-foreground: #9aa4b2;
+  --border: #2a3244;
+  --destructive: #ef4444;
+  color-scheme: dark;
 }
 
 * {
