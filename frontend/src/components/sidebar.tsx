@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut, LayoutDashboard, Users2, CalendarDays, CalendarClock, ClipboardCheck, FileText, TrendingUp, BookOpen, CalendarPlus, MapPin, Newspaper, ClipboardList, Menu, X, Hourglass, type LucideIcon } from "lucide-react";
-import type { IconKey, NavItem } from "@/lib/nav";
+import type { IconKey, NavGroup } from "@/lib/nav";
 import type { Session } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ const ROLE_LABELS: Record<string, string> = {
   viewer: "Náhled",
 };
 
-export function Sidebar({ items, session }: { items: NavItem[]; session: Session }) {
+export function Sidebar({ groups, session }: { groups: NavGroup[]; session: Session }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -60,24 +60,33 @@ export function Sidebar({ items, session }: { items: NavItem[]; session: Session
   }
 
   const nav = (
-    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3">
-      {items.map((item) => {
-        const active = item.href === "/admin" ? pathname === item.href : pathname.startsWith(item.href);
-        const Icon = ICONS[item.icon];
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-              active ? "bg-[var(--primary)] text-[var(--primary-foreground)]" : "hover:bg-[var(--muted)]",
-            )}
-          >
-            <Icon className="h-4 w-4" />
-            {item.label}
-          </Link>
-        );
-      })}
+    <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 py-2">
+      {groups.map((group, gi) => (
+        <div key={group.title ?? `g${gi}`} className="flex flex-col gap-1">
+          {group.title && (
+            <p className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+              {group.title}
+            </p>
+          )}
+          {group.items.map((item) => {
+            const active = item.href === "/admin" ? pathname === item.href : pathname.startsWith(item.href);
+            const Icon = ICONS[item.icon];
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                  active ? "bg-[var(--primary)] text-[var(--primary-foreground)]" : "hover:bg-[var(--muted)]",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      ))}
     </nav>
   );
 
