@@ -45,3 +45,61 @@ body {
   color: var(--foreground);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
+
+/* Smooth theme + interactive transitions */
+body,
+aside,
+main,
+button,
+a,
+input,
+select,
+textarea,
+[role="dialog"] {
+  transition-property: background-color, border-color, color, box-shadow, transform, opacity;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Dialog + overlay (Radix data-state) */
+@keyframes h4k-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes h4k-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes h4k-dialog-in {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes h4k-dialog-out {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+}
+[data-slot="dialog-overlay"][data-state="open"] { animation: h4k-fade-in 150ms ease; }
+[data-slot="dialog-overlay"][data-state="closed"] { animation: h4k-fade-out 120ms ease; }
+[data-slot="dialog-content"][data-state="open"] { animation: h4k-dialog-in 160ms ease; }
+[data-slot="dialog-content"][data-state="closed"] { animation: h4k-dialog-out 120ms ease; }
+
+/* Mobile drawer slide-in */
+@keyframes h4k-slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+.h4k-drawer { animation: h4k-slide-in-left 200ms ease; }
+
+/* Page/list content fade-in */
+@keyframes h4k-content-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.h4k-fade-in { animation: h4k-content-in 200ms ease; }

@@ -142,7 +142,7 @@ export function Sidebar({ items, session }: { items: NavItem[]; session: Session
             aria-hidden
           />
           <aside
-            className="absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col border-r border-[var(--border)] bg-[var(--background)] shadow-xl"
+            className="h4k-drawer absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col border-r border-[var(--border)] bg-[var(--background)] shadow-xl"
             style={{
               paddingTop: "env(safe-area-inset-top)",
               paddingBottom: "env(safe-area-inset-bottom)",
