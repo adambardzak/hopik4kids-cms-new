@@ -1,21 +1,26 @@
 import Link from "next/link";
-import { AlertTriangle, TrendingUp, Users, CalendarDays, Wallet, Plus, ShieldAlert } from "lucide-react";
+import { AlertTriangle, TrendingUp, Users, CalendarDays, Wallet, Plus, ShieldAlert, Clock, MapPin, ClipboardCheck } from "lucide-react";
 import { getSession } from "@/lib/session";
-import { getDashboardStats } from "@/lib/admin-data";
+import { getDashboardStats, listSchedule } from "@/lib/admin-data";
 import { ApiRequestError } from "@/lib/api";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { DashboardStats } from "@/lib/types";
+import type { DashboardStats, ScheduleEntry } from "@/lib/types";
 
 function czk(n: number): string {
   return n.toLocaleString("cs-CZ") + " Kč";
 }
 
+const WEEKDAYS = ["neděle", "pondělí", "úterý", "středa", "čtvrtek", "pátek", "sobota"];
+
 export default async function DashboardPage() {
   const session = await getSession();
   const firstName = session?.name?.split(" ")[0] ?? "";
+  const today = new Date();
+  const todayIso = today.toISOString().slice(0, 10);
+  const todayLabel = `${WEEKDAYS[today.getDay()]} ${today.getDate()}. ${today.getMonth() + 1}.`;
 
   let stats: DashboardStats | null = null;
   try {
@@ -29,6 +34,17 @@ export default async function DashboardPage() {
     }
   }
 
+  // Today's lessons (best-effort; never break the dashboard if the schedule call fails).
+  let todayLessons: ScheduleEntry[] = [];
+  try {
+    const res = await listSchedule({ from: todayIso, to: todayIso });
+    todayLessons = res.items
+      .filter((e) => e.overrideType !== "cancelled")
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  } catch {
+    todayLessons = [];
+  }
+
   const occupancyPct =
     stats && stats.totalCapacity > 0
       ? Math.round((stats.totalSpotsTaken / stats.totalCapacity) * 100)
@@ -40,7 +56,12 @@ export default async function DashboardPage() {
         title={`Vítej${firstName ? ", " + firstName : ""}`}
         description="Přehled administrace Hopík4Kids."
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" asChild>
+              <Link href="/admin/dochazka">
+                <ClipboardCheck className="h-4 w-4" /> Docházka
+              </Link>
+            </Button>
             <Button variant="outline" asChild>
               <Link href="/admin/aktuality">
                 <Plus className="h-4 w-4" /> Aktualita
@@ -63,6 +84,56 @@ export default async function DashboardPage() {
         </Card>
       ) : (
         <div className="space-y-6">
+          {/* Today's lessons */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <CalendarDays className="h-4 w-4" /> Dnešní lekce
+                <span className="font-normal text-[var(--muted-foreground)]">· {todayLabel}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {todayLessons.length === 0 ? (
+                <p className="text-sm text-[var(--muted-foreground)]">
+                  Dnes nejsou naplánované žádné lekce.{" "}
+                  <Link href="/admin/rozvrh" className="text-[var(--primary)] hover:underline">
+                    Zobrazit rozvrh
+                  </Link>
+                  .
+                </p>
+              ) : (
+                <ul className="divide-y divide-[var(--border)]">
+                  {todayLessons.map((l, i) => (
+                    <li
+                      key={`${l.programId}-${l.startTime}-${i}`}
+                      className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5 first:pt-0 last:pb-0"
+                    >
+                      <span className="flex items-center gap-1.5 font-semibold tabular-nums">
+                        <Clock className="h-4 w-4 text-[var(--muted-foreground)]" />
+                        {l.startTime}
+                        {l.endTime ? `–${l.endTime}` : ""}
+                      </span>
+                      <span className="font-medium">{l.title ?? l.programName}</span>
+                      {l.locationName && (
+                        <span className="flex items-center gap-1 text-sm text-[var(--muted-foreground)]">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {l.locationName}
+                        </span>
+                      )}
+                      {l.overrideType === "moved" && <Badge variant="info">přesunuto</Badge>}
+                      {l.overrideType === "one_off" && <Badge variant="info">jednorázově</Badge>}
+                      <Button variant="ghost" size="sm" className="ml-auto" asChild>
+                        <Link href="/admin/dochazka">
+                          <ClipboardCheck className="h-4 w-4" /> Docházka
+                        </Link>
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Top metrics */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Metric
