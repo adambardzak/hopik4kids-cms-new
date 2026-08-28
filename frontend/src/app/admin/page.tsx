@@ -106,7 +106,7 @@ export default async function DashboardPage() {
                 ) : (
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-2xl font-bold text-amber-700">{czk(stats.unpaidAmount)}</p>
+                      <p className="text-2xl font-bold text-warning">{czk(stats.unpaidAmount)}</p>
                       <p className="text-sm text-[var(--muted-foreground)]">
                         {stats.unpaidCount}× čeká na platbu
                       </p>
@@ -118,7 +118,7 @@ export default async function DashboardPage() {
                 )}
                 {stats.withoutMediaConsent > 0 && (
                   <div className="mt-3 flex items-center gap-2 border-t border-[var(--border)] pt-3 text-sm text-[var(--muted-foreground)]">
-                    <ShieldAlert className="h-4 w-4 text-amber-600" />
+                    <ShieldAlert className="h-4 w-4 text-warning" />
                     {stats.withoutMediaConsent}× bez souhlasu s fotografováním — pozor při publikaci fotek.
                   </div>
                 )}
@@ -128,7 +128,7 @@ export default async function DashboardPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <AlertTriangle className="h-4 w-4 text-amber-600" /> Nenaplněné programy
+                  <AlertTriangle className="h-4 w-4 text-warning" /> Nenaplněné programy
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -179,7 +179,7 @@ function Metric({
           <Icon className="h-4 w-4" />
           {label}
         </div>
-        <p className={`text-2xl font-bold ${tone === "success" ? "text-green-700" : ""}`}>{value}</p>
+        <p className={`text-2xl font-bold ${tone === "success" ? "text-success" : ""}`}>{value}</p>
         {hint && <p className="mt-1 text-xs text-[var(--muted-foreground)]">{hint}</p>}
       </CardContent>
     </Card>

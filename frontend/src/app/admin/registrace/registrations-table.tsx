@@ -157,7 +157,7 @@ export function RegistrationsTable({
           <Button
             size="sm"
             asChild
-            className="bg-green-600 text-white hover:bg-green-700"
+            className="btn-success"
           >
             <a href={`/api/registrations/export?format=xlsx&${exportQuery}`}>
               <FileSpreadsheet className="h-4 w-4" /> Excel
@@ -225,7 +225,7 @@ function SummaryCard({
   tone?: "warning" | "success";
 }) {
   const color =
-    tone === "warning" ? "text-amber-700" : tone === "success" ? "text-green-700" : "";
+    tone === "warning" ? "text-warning" : tone === "success" ? "text-success" : "";
   return (
     <Card className="p-4">
       <p className="text-sm text-[var(--muted-foreground)]">{label}</p>

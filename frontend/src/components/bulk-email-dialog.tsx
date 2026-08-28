@@ -75,7 +75,7 @@ export function BulkEmailDialog({ programId, programName }: { programId: string;
           </div>
 
           {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
-          {result && <p className="text-sm text-green-700">{result}</p>}
+          {result && <p className="text-sm text-success">{result}</p>}
 
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpen(false)} disabled={isPending}>

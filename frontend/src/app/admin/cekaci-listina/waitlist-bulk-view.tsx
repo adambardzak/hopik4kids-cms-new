@@ -235,7 +235,7 @@ function WaitlistPanel({ programs }: { programs: Program[] }) {
                                 onClick={() => changeStatus(e, "converted")}
                                 disabled={pending}
                               >
-                                <Check className="h-4 w-4 text-green-600" />
+                                <Check className="h-4 w-4 text-success" />
                               </Button>
                             )}
                             {e.status !== "cancelled" && (

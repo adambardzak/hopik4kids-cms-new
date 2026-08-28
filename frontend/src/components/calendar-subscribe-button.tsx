@@ -71,7 +71,7 @@ export function CalendarSubscribeButton() {
                     className="w-full truncate rounded-md border border-[var(--border)] bg-[var(--muted)]/30 px-3 py-2 text-xs"
                   />
                   <Button variant="outline" size="sm" onClick={copy} className="shrink-0">
-                    {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                    {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
 

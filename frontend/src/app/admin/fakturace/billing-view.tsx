@@ -86,7 +86,7 @@ function InvoicesTable({ invoices, hasIban }: { invoices: Invoice[]; hasIban: bo
   return (
     <div>
       {!hasIban && (
-        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+        <div className="panel-warning mb-4 rounded-lg border p-3 text-sm">
           Nastav IBAN v „Nastavení dodavatele", aby faktury obsahovaly QR platbu.
         </div>
       )}
@@ -94,13 +94,13 @@ function InvoicesTable({ invoices, hasIban }: { invoices: Invoice[]; hasIban: bo
         <Card>
           <CardContent className="p-4">
             <p className="text-sm text-[var(--muted-foreground)]">Nezaplaceno</p>
-            <p className="mt-1 text-2xl font-bold text-amber-700">{czk(unpaidSum)}</p>
+            <p className="mt-1 text-2xl font-bold text-warning">{czk(unpaidSum)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <p className="text-sm text-[var(--muted-foreground)]">Zaplaceno</p>
-            <p className="mt-1 text-2xl font-bold text-green-700">{czk(paidSum)}</p>
+            <p className="mt-1 text-2xl font-bold text-success">{czk(paidSum)}</p>
           </CardContent>
         </Card>
       </div>

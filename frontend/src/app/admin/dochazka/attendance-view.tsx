@@ -24,24 +24,27 @@ import {
 
 const WEEKDAYS = ["", "Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
 
-const STATUS_META: Record<AttendanceStatus, { label: string; icon: typeof Check; classes: string; active: string }> = {
+const STATUS_META: Record<AttendanceStatus, { label: string; icon: typeof Check; classes: string; active: string; activeStyle: React.CSSProperties }> = {
   present: {
     label: "Přítomen",
     icon: Check,
-    classes: "border-green-200 text-green-700 hover:bg-green-50",
-    active: "bg-green-600 text-white border-green-600",
+    classes: "border-[var(--success-border)] text-success hover:bg-[var(--success-bg)]",
+    active: "text-white",
+    activeStyle: { background: "var(--success-solid)", borderColor: "var(--success-solid)" },
   },
   excused: {
     label: "Omluven",
     icon: CircleAlert,
-    classes: "border-amber-200 text-amber-700 hover:bg-amber-50",
-    active: "bg-amber-500 text-white border-amber-500",
+    classes: "border-[var(--warning-border)] text-warning hover:bg-[var(--warning-bg)]",
+    active: "text-white",
+    activeStyle: { background: "var(--warning-solid)", borderColor: "var(--warning-solid)" },
   },
   absent: {
     label: "Nepřítomen",
     icon: X,
-    classes: "border-red-200 text-red-700 hover:bg-red-50",
-    active: "bg-red-600 text-white border-red-600",
+    classes: "border-[var(--danger-border)] text-danger hover:bg-[var(--danger-bg)]",
+    active: "text-white",
+    activeStyle: { background: "var(--danger-solid)", borderColor: "var(--danger-solid)" },
   },
 };
 
@@ -193,7 +196,7 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
       ) : (
         <>
           {loadError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <div className="panel-danger rounded-lg border p-4 text-sm">
               Nepodařilo se načíst docházku. Zkontroluj připojení a zkus to prosím znovu.
             </div>
           )}
@@ -236,6 +239,7 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
                               <button
                                 key={s}
                                 onClick={() => setStatus(r.childId, s)}
+                                style={isActive ? meta.activeStyle : undefined}
                                 className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
                                   isActive ? meta.active : meta.classes
                                 }`}
@@ -311,9 +315,9 @@ function StatsPanel({
                   {stats.children.map((c) => (
                     <TableRow key={c.childId}>
                       <TableCell className="font-medium">{c.childName}</TableCell>
-                      <TableCell className="text-center text-green-700">{c.present}</TableCell>
-                      <TableCell className="text-center text-amber-700">{c.excused}</TableCell>
-                      <TableCell className="text-center text-red-700">{c.absent}</TableCell>
+                      <TableCell className="text-center text-success">{c.present}</TableCell>
+                      <TableCell className="text-center text-warning">{c.excused}</TableCell>
+                      <TableCell className="text-center text-danger">{c.absent}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -341,9 +345,9 @@ function StatsPanel({
                       <TableCell className="font-medium">
                         {new Date(l.date).toLocaleDateString("cs-CZ")}
                       </TableCell>
-                      <TableCell className="text-center text-green-700">{l.present}</TableCell>
-                      <TableCell className="text-center text-amber-700">{l.excused}</TableCell>
-                      <TableCell className="text-center text-red-700">{l.absent}</TableCell>
+                      <TableCell className="text-center text-success">{l.present}</TableCell>
+                      <TableCell className="text-center text-warning">{l.excused}</TableCell>
+                      <TableCell className="text-center text-danger">{l.absent}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

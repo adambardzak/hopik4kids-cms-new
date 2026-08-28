@@ -29,8 +29,8 @@ export default function AdminError({
     <div className="flex min-h-[60vh] items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
-            <AlertTriangle className="h-6 w-6 text-amber-600" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full" style={{ background: "var(--warning-bg)" }}>
+            <AlertTriangle className="h-6 w-6 text-warning" />
           </div>
           {isAuth ? (
             <>
