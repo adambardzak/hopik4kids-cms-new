@@ -92,6 +92,13 @@ export function TeamManager({ users, currentUserId }: { users: User[]; currentUs
             </TableRow>
           </TableHeader>
           <TableBody>
+            {users.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="py-10 text-center text-sm text-[var(--muted-foreground)]">
+                  Zatím žádní členové týmu. Pozvi prvního přes „Pozvat člena".
+                </TableCell>
+              </TableRow>
+            )}
             {users.map((u) => {
               const st = STATUS[u.status] ?? STATUS.active;
               const isSelf = u.id === currentUserId;

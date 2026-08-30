@@ -2,13 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Download, Check, Ban, Settings, Search, Mail } from "lucide-react";
+import { Download, Check, Ban, Settings, Search, Mail, FileText } from "lucide-react";
 import type { Invoice, SupplierSettings } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/page-header";
 import {
   Table,
   TableBody,
@@ -77,9 +78,10 @@ function InvoicesTable({ invoices, hasIban }: { invoices: Invoice[]; hasIban: bo
 
   if (invoices.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--background)] p-12 text-center text-sm text-[var(--muted-foreground)]">
-        Zatím žádné faktury. Faktury vytvoříš u registrace (Registrace → detail → Vystavit fakturu).
-      </div>
+      <EmptyState
+        icon={FileText}
+        message="Zatím žádné faktury. Faktury vytvoříš u registrace (Registrace → detail → Vystavit fakturu)."
+      />
     );
   }
 
