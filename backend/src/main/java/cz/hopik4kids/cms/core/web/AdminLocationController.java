@@ -36,6 +36,7 @@ public class AdminLocationController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER')")
     public PageResponse<AdminLocationDto> list() {
         return PageResponse.ofAll(locations.findAll().stream().map(AdminLocationDto::from).toList());
     }
