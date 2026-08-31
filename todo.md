@@ -9,9 +9,11 @@
      system automaticky vytvori fakturu + posle dekovny email s prilozenou fakturou (PDF) + nastavi 'faktura odeslana'
    - Skolky (school) se fakturuji rucne adminem (tlacitko Vystavit fakturu zustava)
    - Nove stavy platby: nezaplaceno / faktura odeslana / po splatnosti (odvozene z dueDate) / zaplaceno
-5) [ČEKÁ na ukazkovy vypis z Raiffeisen (kod 5500)] pridat nahrani vypisu z uctu a parovani faktur
-   - Raiffeisen nema jednoduche API -> cesta = import souboru (CSV/GPC). User chce pockat na ukazku vypisu, pak parser presne na jejich format.
-   - navrzeny tok: nahrat vypis -> parovani dle VS + castka -> navrh sparovani -> potvrzeni; idempotence (hash transakce), nikdy auto bez potvrzeni
+5) [HOTOVO ✅ nasazeno] pridat nahrani vypisu z uctu a parovani faktur
+   - /admin/parovani: nahraj Raiffeisen CSV -> parser (BOM strip, ; delimiter, dd.MM.yyyy)
+   - parovani dle VS + castka: EXACT (predvybrano) / PARTIAL (castka nesedi) / NONE / OUTGOING / ALREADY
+   - preview (bez zapisu) -> admin vybere -> confirm oznaci faktury zaplacene
+   - IDEMPOTENCE pres bank tx id (V17 bank_transaction, unique tx_id) - re-upload nikdy nezaplati dvakrat
 6) gdpr na webu
 7) notifikace
 8) [HOTOVO ✅ nasazeno] nahravani uctenek, DPP, smlouvy
@@ -27,5 +29,5 @@
 ---
 POZNAMKY / TECH DLUH:
 - DEPLOY: GitHub fetch na VPS selhava (chybi credential/token, repo private). Docasne reseno git bundle (scp souboru). NUTNO SPRAVIT: deploy token na VPS nebo prepnout remote na SSH.
-- Migrace na prod: aplikovano do V16 (record_document). Dalsi bude V17.
+- Migrace na prod: aplikovano do V17 (bank_transaction). Dalsi bude V18.
 - Dark mode: barvy sjednocene pres CSS promenne (success/warning/danger/info). Pokud neco svetli v tmavem rezimu, poslat screenshot.
