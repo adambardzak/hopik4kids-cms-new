@@ -102,6 +102,17 @@ public class InvoiceController {
         return bulkService.run(dryRun, send);
     }
 
+    /**
+     * One-time: email all existing UNPAID invoices (never creates new ones). Owner/admin only.
+     * Use dryRun=true first to see how many would be sent.
+     */
+    @PostMapping("/bulk-send-unpaid")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+    public cz.hopik4kids.cms.billing.service.BulkInvoiceService.SendResult bulkSendUnpaid(
+            @RequestParam(defaultValue = "true") boolean dryRun) {
+        return bulkService.sendUnpaid(dryRun);
+    }
+
     @PostMapping("/{id}/paid")
     public InvoiceDto markPaid(@PathVariable String id) {
         return invoices.markPaid(id);

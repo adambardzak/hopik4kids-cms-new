@@ -87,4 +87,39 @@ public class BulkInvoiceService {
                         + " skipped=" + skipped + " failed=" + failed + " dryRun=" + dryRun);
         return new Result(candidates, created, emailed, skipped, failed);
     }
+
+    public record SendResult(int total, int sent, int failed, int skipped) {}
+
+    /**
+     * Email every existing UNPAID invoice that hasn't been sent yet (payment status still UNPAID).
+     * Works on existing invoices only — never creates new ones, so intentionally un-invoiced
+     * registrations stay untouched. For the one-time rollout of pre-existing registrations.
+     *
+     * @param dryRun when true, only counts what would be sent
+     */
+    @Transactional
+    public SendResult sendUnpaid(boolean dryRun) {
+        var invoices = invoiceService.listAllUnpaidEntities();
+        int total = 0, sent = 0, failed = 0, skipped = 0;
+        for (var inv : invoices) {
+            if (inv.getPayerEmail() == null || inv.getPayerEmail().isBlank()) {
+                skipped++;
+                continue;
+            }
+            total++;
+            if (dryRun) {
+                continue;
+            }
+            try {
+                invoiceEmailService.send(inv.getId());
+                sent++;
+            } catch (Exception e) {
+                failed++;
+                log.warn("Bulk send failed for invoice {}: {}", inv.getInvoiceNumber(), e.getMessage());
+            }
+        }
+        audit.record("invoice-bulk-send", "Invoice", null,
+                "total=" + total + " sent=" + sent + " failed=" + failed + " dryRun=" + dryRun);
+        return new SendResult(total, sent, failed, skipped);
+    }
 }

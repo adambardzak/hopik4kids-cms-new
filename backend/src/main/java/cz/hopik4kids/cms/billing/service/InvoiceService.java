@@ -82,6 +82,14 @@ public class InvoiceService {
         return invoices.findByRegistrationId(registrationId).isPresent();
     }
 
+    /** All UNPAID invoice entities (for one-time bulk emailing). */
+    @Transactional(readOnly = true)
+    public List<Invoice> listAllUnpaidEntities() {
+        return invoices.findAllByOrderByIssueDateDescInvoiceNumberDesc().stream()
+                .filter(i -> i.getStatus() == InvoiceStatus.UNPAID)
+                .toList();
+    }
+
     /** Build a DTO with the program vs. shirt amount split derived from the invoice items. */
     public InvoiceDto dtoOf(Invoice i) {
         int shirt = 0;
