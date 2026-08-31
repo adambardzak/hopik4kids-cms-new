@@ -4,7 +4,11 @@
 3) [HOTOVO ✅ nasazeno] vykazy prace pro brigadniky - staci hodiny
    - /admin/vykazy: brigadnik zapisuje/upravuje/maze vlastni hodiny (pending), admin schvaluje/zamita
    - souhrn per osoba (schvaleno/ceka) + export XLSX/CSV pro vyplaty; "Nacist ze smen" predvyplni ze schvalenych smen
-4) spojit registracni email s fakturou do jednoho
+4) [HOTOVO ✅ nasazeno] spojit registracni email s fakturou do jednoho
+   - AUTO-FAKTURA: kdyz rodic zaregistruje dite na PLACENY krouzek/kemp (club/camp, cena>0, ma email),
+     system automaticky vytvori fakturu + posle dekovny email s prilozenou fakturou (PDF) + nastavi 'faktura odeslana'
+   - Skolky (school) se fakturuji rucne adminem (tlacitko Vystavit fakturu zustava)
+   - Nove stavy platby: nezaplaceno / faktura odeslana / po splatnosti (odvozene z dueDate) / zaplaceno
 5) [ČEKÁ na ukazkovy vypis z Raiffeisen (kod 5500)] pridat nahrani vypisu z uctu a parovani faktur
    - Raiffeisen nema jednoduche API -> cesta = import souboru (CSV/GPC). User chce pockat na ukazku vypisu, pak parser presne na jejich format.
    - navrzeny tok: nahrat vypis -> parovani dle VS + castka -> navrh sparovani -> potvrzeni; idempotence (hash transakce), nikdy auto bez potvrzeni
