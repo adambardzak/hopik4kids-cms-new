@@ -336,3 +336,8 @@ export async function seedWorkLogsFromShifts(
     return { ok: false, error: "Import ze směn selhal" };
   }
 }
+
+// --- records (doklady, prd todo #8) ---
+export async function deleteRecord(id: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/records/${id}`, { method: "DELETE" }), "/admin/doklady");
+}

@@ -19,6 +19,7 @@ import type {
   WaitlistEntry,
   WorkLog,
   WorkLogSummary,
+  RecordDocument,
 } from "./types";
 
 // --- registrations ---
@@ -159,4 +160,13 @@ export function getWorkLogSummary(from?: string, to?: string) {
   if (to) q.set("to", to);
   const qs = q.toString();
   return api<PageResponse<WorkLogSummary>>(`/admin/api/work-logs/summary${qs ? `?${qs}` : ""}`);
+}
+
+// --- records (doklady: účtenky, DPP, smlouvy) ---
+export function listRecords(type?: string, person?: string) {
+  const q = new URLSearchParams();
+  if (type) q.set("type", type);
+  if (person) q.set("person", person);
+  const qs = q.toString();
+  return api<PageResponse<RecordDocument>>(`/admin/api/records${qs ? `?${qs}` : ""}`);
 }

@@ -316,3 +316,18 @@ export interface WorkLogSummary {
   pendingHours: number;
   entryCount: number;
 }
+
+export interface RecordDocument {
+  id: string;
+  type: "receipt" | "dpp" | "contract" | "other";
+  title: string;
+  personId?: string | null;
+  personName?: string | null;
+  docDate?: string | null;
+  amount?: number | null;
+  note?: string | null;
+  originalName?: string | null;
+  contentType?: string | null;
+  sizeBytes?: number | null;
+  createdAt: string;
+}

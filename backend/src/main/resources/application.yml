@@ -58,6 +58,8 @@ app:
   media:
     storage-dir: ${MEDIA_DIR:./media-uploads}
     public-base-url: ${MEDIA_BASE_URL:http://localhost:8080/media}
+  records:
+    storage-dir: ${RECORDS_DIR:./records-storage}
   rate-limit:
     registration:
       capacity: ${RATE_LIMIT_REGISTRATION_CAPACITY:5}
