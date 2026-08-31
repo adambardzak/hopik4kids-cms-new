@@ -20,6 +20,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { markInvoicePaid, cancelInvoice, saveSupplierSettings, lookupAres, sendInvoiceEmail } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 
 const STATUS: Record<string, { label: string; variant: "success" | "warning" | "danger" }> = {
   paid: { label: "Zaplaceno", variant: "success" },
@@ -82,6 +84,8 @@ function InvoicesTable({
   filters: { from?: string; to?: string; status?: string; type?: string };
 }) {
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [isPending, startTransition] = useTransition();
 
   const [from, setFrom] = useState(filters.from ?? "");
@@ -250,7 +254,8 @@ function InvoicesTable({
                           onClick={() =>
                             startTransition(async () => {
                               const res = await sendInvoiceEmail(inv.id);
-                              alert(res.ok ? "Faktura odeslána e-mailem." : res.error ?? "Odeslání selhalo");
+                              if (res.ok) toast.success("Faktura odeslána e-mailem.");
+                              else toast.error(res.error ?? "Odeslání selhalo");
                             })
                           }
                         >
@@ -276,8 +281,8 @@ function InvoicesTable({
                             variant="ghost"
                             size="sm"
                             disabled={isPending}
-                            onClick={() => {
-                              if (!confirm(`Stornovat fakturu ${inv.invoiceNumber}?`)) return;
+                            onClick={async () => {
+                              if (!(await confirm({ message: `Stornovat fakturu ${inv.invoiceNumber}?`, danger: true, confirmLabel: "Stornovat" }))) return;
                               startTransition(async () => {
                                 await cancelInvoice(inv.id);
                                 router.refresh();
@@ -302,6 +307,7 @@ function InvoicesTable({
 
 function SupplierForm({ supplier }: { supplier: SupplierSettings }) {
   const router = useRouter();
+  const toast = useToast();
   const [form, setForm] = useState<SupplierSettings>(supplier);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -338,7 +344,7 @@ function SupplierForm({ supplier }: { supplier: SupplierSettings }) {
         setSaved(true);
         router.refresh();
       } else {
-        alert(res.error ?? "Uložení selhalo");
+        toast.error(res.error ?? "Uložení selhalo");
       }
     });
   }

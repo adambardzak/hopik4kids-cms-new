@@ -25,6 +25,8 @@ import {
   fetchBulkRecipients,
   sendBulkEmail,
 } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 
 const WAITLIST_STATUS: Record<
   WaitlistEntry["status"],
@@ -111,6 +113,8 @@ function ProgramPicker({
 
 function WaitlistPanel({ programs }: { programs: Program[] }) {
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [program, setProgram] = useState("");
   const [items, setItems] = useState<WaitlistEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -134,16 +138,16 @@ function WaitlistPanel({ programs }: { programs: Program[] }) {
     start(async () => {
       const res = await setWaitlistStatus(entry.id, status);
       if (res.ok) load(program);
-      else alert(res.error ?? "Změna se nezdařila");
+      else toast.error(res.error ?? "Změna se nezdařila");
     });
   }
 
-  function remove(entry: WaitlistEntry) {
-    if (!confirm(`Odstranit ${entry.childName} z čekací listiny?`)) return;
+  async function remove(entry: WaitlistEntry) {
+    if (!(await confirm({ message: `Odstranit ${entry.childName} z čekací listiny?`, danger: true, confirmLabel: "Odstranit" }))) return;
     start(async () => {
       const res = await deleteWaitlistEntry(entry.id);
       if (res.ok) load(program);
-      else alert(res.error ?? "Smazání se nezdařilo");
+      else toast.error(res.error ?? "Smazání se nezdařilo");
     });
   }
 
@@ -274,6 +278,8 @@ function WaitlistPanel({ programs }: { programs: Program[] }) {
 }
 
 function BulkEmailPanel({ programs }: { programs: Program[] }) {
+  const toast = useToast();
+  const confirm = useConfirm();
   const [program, setProgram] = useState("");
   const [recipients, setRecipients] = useState<string[]>([]);
   const [loadedFor, setLoadedFor] = useState("");
@@ -293,23 +299,23 @@ function BulkEmailPanel({ programs }: { programs: Program[] }) {
     });
   }
 
-  function send() {
+  async function send() {
     if (!subject.trim() || !body.trim()) {
-      alert("Vyplň předmět i text zprávy.");
+      toast.error("Vyplň předmět i text zprávy.");
       return;
     }
-    if (!confirm(`Odeslat e-mail ${recipients.length} příjemcům?`)) return;
+    if (!(await confirm({ message: `Odeslat e-mail ${recipients.length} příjemcům?`, confirmLabel: "Odeslat" }))) return;
     start(async () => {
       const res = await sendBulkEmail(program, subject, body);
       if (res.ok && res.result) {
-        alert(
+        toast.success(
           `Odesláno: ${res.result.sent} z ${res.result.total}` +
             (res.result.failed > 0 ? ` (${res.result.failed} selhalo)` : ""),
         );
         setSubject("");
         setBody("");
       } else {
-        alert(res.error ?? "Odeslání selhalo");
+        toast.error(res.error ?? "Odeslání selhalo");
       }
     });
   }

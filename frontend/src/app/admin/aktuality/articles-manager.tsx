@@ -20,6 +20,8 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { deleteArticle, saveArticle } from "@/lib/actions";
 import { RichTextEditor } from "@/components/rich-text-editor";
+import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 
 function slugify(s: string): string {
   return s
@@ -60,6 +62,8 @@ export function ArticlesManager({
   openCreateOnly?: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>({});
   const [error, setError] = useState<string | null>(null);
@@ -122,11 +126,11 @@ export function ArticlesManager({
     });
   }
 
-  function remove(a: Article) {
-    if (!confirm(`Opravdu smazat článek „${a.title}"?`)) return;
+  async function remove(a: Article) {
+    if (!(await confirm({ message: `Opravdu smazat článek „${a.title}"?`, danger: true, confirmLabel: "Smazat" }))) return;
     startTransition(async () => {
       const res = await deleteArticle(a.id);
-      if (!res.ok) alert(res.error ?? "Článek se nepodařilo smazat.");
+      if (!res.ok) toast.error(res.error ?? "Článek se nepodařilo smazat.");
       router.refresh();
     });
   }

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { fetchWaitlist, setWaitlistStatus, deleteWaitlistEntry } from "@/lib/actions";
+import { useConfirm } from "@/components/ui/confirm";
 
 const STATUS: Record<string, { label: string; variant: "warning" | "info" | "success" | "danger" }> = {
   waiting: { label: "Čeká", variant: "warning" },
@@ -19,6 +20,7 @@ const STATUS: Record<string, { label: string; variant: "warning" | "info" | "suc
 /** Waitlist for a full program (prd §6A.2). */
 export function WaitlistDialog({ programId, programName }: { programId: string; programName: string }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [entries, setEntries] = useState<WaitlistEntry[] | null>(null);
   const [isPending, start] = useTransition();
@@ -43,12 +45,14 @@ export function WaitlistDialog({ programId, programName }: { programId: string; 
   }
 
   function remove(id: string) {
-    if (!confirm("Opravdu smazat záznam z čekací listiny?")) return;
-    start(async () => {
-      await deleteWaitlistEntry(id);
-      reload();
-      router.refresh();
-    });
+    void (async () => {
+      if (!(await confirm({ message: "Opravdu smazat záznam z čekací listiny?", danger: true, confirmLabel: "Smazat" }))) return;
+      start(async () => {
+        await deleteWaitlistEntry(id);
+        reload();
+        router.refresh();
+      });
+    })();
   }
 
   return (

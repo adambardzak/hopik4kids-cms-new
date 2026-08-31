@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/table";
 import { EmptyState } from "@/components/page-header";
 import { deleteRecord } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 
 const TYPE_META: Record<RecordDocument["type"], { label: string; icon: typeof Receipt; variant: "info" | "success" | "warning" | "default" }> = {
   receipt: { label: "Účtenka", icon: Receipt, variant: "info" },
@@ -60,6 +62,8 @@ export function RecordsView({
   activeType: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -122,12 +126,12 @@ export function RecordsView({
     }
   }
 
-  function remove(r: RecordDocument) {
-    if (!confirm(`Smazat doklad „${r.title}"? Soubor bude odstraněn.`)) return;
+  async function remove(r: RecordDocument) {
+    if (!(await confirm({ message: `Smazat doklad „${r.title}"? Soubor bude odstraněn.`, danger: true, confirmLabel: "Smazat" }))) return;
     start(async () => {
       const res = await deleteRecord(r.id);
       if (res.ok) router.refresh();
-      else alert(res.error ?? "Smazání selhalo");
+      else toast.error(res.error ?? "Smazání selhalo");
     });
   }
 

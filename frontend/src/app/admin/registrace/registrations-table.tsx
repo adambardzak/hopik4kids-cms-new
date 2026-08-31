@@ -23,6 +23,8 @@ import { cancelRegistration, setPaymentStatus } from "@/lib/actions";
 import { createInvoiceReturningId } from "@/lib/actions";
 import { BulkEmailDialog } from "@/components/bulk-email-dialog";
 import { WaitlistDialog } from "@/components/waitlist-dialog";
+import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 
 const PAGE_SIZE = 25;
 
@@ -422,6 +424,7 @@ function DetailDialog({
   onPayment: (id: string, status: string) => void;
   onCancel: (id: string) => void;
 }) {
+  const confirm = useConfirm();
   return (
     <Dialog open={detail !== null} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[85vh] overflow-auto">
@@ -477,8 +480,8 @@ function DetailDialog({
                   variant="destructive"
                   className="ml-auto"
                   disabled={isPending}
-                  onClick={() => {
-                    if (!confirm("Opravdu zrušit tuto registraci? Uvolní se místo v programu.")) return;
+                  onClick={async () => {
+                    if (!(await confirm({ message: "Opravdu zrušit tuto registraci? Uvolní se místo v programu.", danger: true, confirmLabel: "Zrušit registraci" }))) return;
                     onCancel(detail.id);
                   }}
                 >
@@ -503,6 +506,7 @@ function Field({ label, value }: { label: string; value?: string | null }) {
 }
 
 function InvoiceButton({ registrationId, disabled }: { registrationId: string; disabled?: boolean }) {
+  const toast = useToast();
   const [pending, start] = useTransition();
   return (
     <Button
@@ -515,7 +519,7 @@ function InvoiceButton({ registrationId, disabled }: { registrationId: string; d
           if (res.ok && res.id) {
             window.open(`/api/billing/invoices/${res.id}/pdf`, "_blank");
           } else {
-            alert(res.error ?? "Nepodařilo se vystavit fakturu");
+            toast.error(res.error ?? "Nepodařilo se vystavit fakturu");
           }
         })
       }

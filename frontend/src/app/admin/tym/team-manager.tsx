@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { changeUserRole, deactivateUser, inviteUser } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 
 const ROLE_OPTIONS: { value: Role; label: string }[] = [
   { value: "owner", label: "Vlastník" },
@@ -35,6 +37,8 @@ const STATUS: Record<string, { label: string; variant: "success" | "warning" | "
 
 export function TeamManager({ users, currentUserId }: { users: User[]; currentUserId: string }) {
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("trainer");
@@ -58,16 +62,16 @@ export function TeamManager({ users, currentUserId }: { users: User[]; currentUs
   function onRoleChange(u: User, newRole: string) {
     startTransition(async () => {
       const res = await changeUserRole(u.id, newRole);
-      if (!res.ok) alert(res.error ?? "Změna role selhala");
+      if (!res.ok) toast.error(res.error ?? "Změna role selhala");
       router.refresh();
     });
   }
 
-  function onDeactivate(u: User) {
-    if (!confirm(`Opravdu deaktivovat člena ${u.name}?`)) return;
+  async function onDeactivate(u: User) {
+    if (!(await confirm({ message: `Opravdu deaktivovat člena ${u.name}?`, danger: true, confirmLabel: "Deaktivovat" }))) return;
     startTransition(async () => {
       const res = await deactivateUser(u.id);
-      if (!res.ok) alert(res.error ?? "Deaktivace selhala");
+      if (!res.ok) toast.error(res.error ?? "Deaktivace selhala");
       router.refresh();
     });
   }

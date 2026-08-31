@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { deleteLocation, saveLocation } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 
 const KIND_LABELS: Record<string, string> = {
   kindergarten: "Školka",
@@ -37,6 +39,8 @@ export function LocationsManager({
   openCreateOnly?: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>({});
   const [error, setError] = useState<string | null>(null);
@@ -80,11 +84,11 @@ export function LocationsManager({
     });
   }
 
-  function remove(l: Location) {
-    if (!confirm(`Opravdu smazat místo „${l.name}"?`)) return;
+  async function remove(l: Location) {
+    if (!(await confirm({ message: `Opravdu smazat místo „${l.name}"?`, danger: true, confirmLabel: "Smazat" }))) return;
     startTransition(async () => {
       const res = await deleteLocation(l.id);
-      if (!res.ok) alert(res.error ?? "Smazání selhalo (místo může být použito programem).");
+      if (!res.ok) toast.error(res.error ?? "Smazání selhalo (místo může být použito programem).");
       router.refresh();
     });
   }

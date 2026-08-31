@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { deleteProgram, saveProgram } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 
 const WEEKDAYS = ["", "Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"];
 const TYPE_LABELS: Record<string, string> = { club: "Kroužek", school: "Škola", camp: "Kemp" };
@@ -43,6 +45,8 @@ export function ProgramsManager({
   openCreateOnly?: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>({});
   const [error, setError] = useState<string | null>(null);
@@ -105,11 +109,11 @@ export function ProgramsManager({
     });
   }
 
-  function remove(p: Program) {
-    if (!confirm(`Opravdu smazat program „${p.name}"?`)) return;
+  async function remove(p: Program) {
+    if (!(await confirm({ message: `Opravdu smazat program „${p.name}"?`, danger: true, confirmLabel: "Smazat" }))) return;
     startTransition(async () => {
       const res = await deleteProgram(p.id);
-      if (!res.ok) alert(res.error ?? "Program nelze smazat (může mít registrace).");
+      if (!res.ok) toast.error(res.error ?? "Program nelze smazat (může mít registrace).");
       router.refresh();
     });
   }

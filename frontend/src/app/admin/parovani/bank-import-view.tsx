@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useConfirm } from "@/components/ui/confirm";
 
 function czk(n?: number | null) {
   return n != null ? n.toLocaleString("cs-CZ") + " Kč" : "—";
@@ -34,6 +35,7 @@ const STATUS_META: Record<string, { label: string; variant: "success" | "warning
 
 export function BankImportView() {
   const router = useRouter();
+  const confirm = useConfirm();
   const fileRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [matches, setMatches] = useState<BankMatch[] | null>(null);
@@ -85,7 +87,7 @@ export function BankImportView() {
 
   async function applySelected() {
     if (!file || selected.size === 0) return;
-    if (!window.confirm(`Označit ${selected.size} plateb jako zaplacené?`)) return;
+    if (!(await confirm({ message: `Označit ${selected.size} plateb jako zaplacené?`, confirmLabel: "Označit" }))) return;
     setLoading(true);
     setError(null);
     const fd = new FormData();

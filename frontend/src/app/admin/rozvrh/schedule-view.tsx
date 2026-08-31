@@ -28,6 +28,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cancelLesson, moveLesson, addOneOffLesson, deleteOverride } from "@/lib/actions";
 import { CalendarSubscribeButton } from "@/components/calendar-subscribe-button";
+import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 
 const DAYS = ["Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"];
 
@@ -88,6 +90,8 @@ export function ScheduleView({
   currentLocation: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [detail, setDetail] = useState<ScheduleEntry | null>(null);
   const [isPending, startAction] = useTransition();
   const [moveFor, setMoveFor] = useState<ScheduleEntry | null>(null);
@@ -97,7 +101,7 @@ export function ScheduleView({
     startAction(async () => {
       const res = await fn();
       if (!res.ok) {
-        alert(res.error ?? "Akce selhala");
+        toast.error(res.error ?? "Akce selhala");
         return;
       }
       onDone?.();
@@ -443,8 +447,8 @@ export function ScheduleView({
                     size="sm"
                     className="text-[var(--destructive)]"
                     disabled={isPending}
-                    onClick={() => {
-                      if (confirm("Opravdu odstranit tuto úpravu termínu?"))
+                    onClick={async () => {
+                      if (await confirm({ message: "Opravdu odstranit tuto úpravu termínu?", danger: true, confirmLabel: "Odebrat" }))
                         runAction(() => deleteOverride(detail.overrideId!));
                     }}
                   >
@@ -458,8 +462,8 @@ export function ScheduleView({
                       size="sm"
                       className="text-[var(--destructive)]"
                       disabled={isPending}
-                      onClick={() => {
-                        if (confirm(`Zrušit termín ${formatDate(detail.date)} (${detail.programName})? Např. svátek nebo zavřeno.`))
+                      onClick={async () => {
+                        if (await confirm({ message: `Zrušit termín ${formatDate(detail.date)} (${detail.programName})? Např. svátek nebo zavřeno.`, danger: true, confirmLabel: "Zrušit termín" }))
                           runAction(() => cancelLesson(detail.programId, detail.date, "zrušeno"));
                       }}
                     >

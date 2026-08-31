@@ -27,6 +27,8 @@ import {
   setWorkLogStatus,
   seedWorkLogsFromShifts,
 } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 
 const STATUS: Record<WorkLog["status"], { label: string; variant: "success" | "warning" | "danger" }> = {
   approved: { label: "Schváleno", variant: "success" },
@@ -58,6 +60,8 @@ export function WorkLogView({
   to: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [pending, start] = useTransition();
 
   const [periodFrom, setPeriodFrom] = useState(from);
@@ -98,7 +102,7 @@ export function WorkLogView({
   function save() {
     const hours = parseFloat(fHours.replace(",", "."));
     if (!fDate || isNaN(hours) || hours <= 0) {
-      alert("Vyplň datum a kladný počet hodin.");
+      toast.error("Vyplň datum a kladný počet hodin.");
       return;
     }
     const body = { workDate: fDate, hours, note: fNote || undefined, programId: fProgram || undefined };
@@ -108,17 +112,17 @@ export function WorkLogView({
         setDialogOpen(false);
         router.refresh();
       } else {
-        alert(res.error ?? "Uložení selhalo");
+        toast.error(res.error ?? "Uložení selhalo");
       }
     });
   }
 
-  function remove(w: WorkLog) {
-    if (!confirm(`Smazat výkaz ${fmtDate(w.workDate)} (${fmtHours(w.hours)})?`)) return;
+  async function remove(w: WorkLog) {
+    if (!(await confirm({ message: `Smazat výkaz ${fmtDate(w.workDate)} (${fmtHours(w.hours)})?`, danger: true, confirmLabel: "Smazat" }))) return;
     start(async () => {
       const res = await deleteWorkLog(w.id);
       if (res.ok) router.refresh();
-      else alert(res.error ?? "Smazání selhalo");
+      else toast.error(res.error ?? "Smazání selhalo");
     });
   }
 
@@ -126,7 +130,7 @@ export function WorkLogView({
     start(async () => {
       const res = await setWorkLogStatus(w.id, status);
       if (res.ok) router.refresh();
-      else alert(res.error ?? "Změna se nezdařila");
+      else toast.error(res.error ?? "Změna se nezdařila");
     });
   }
 
@@ -134,14 +138,14 @@ export function WorkLogView({
     start(async () => {
       const res = await seedWorkLogsFromShifts(periodFrom, periodTo);
       if (res.ok) {
-        alert(
+        toast.success(
           res.created && res.created > 0
             ? `Načteno ${res.created} výkazů ze schválených směn.`
             : "Žádné nové směny k načtení (nebo už jsou načtené).",
         );
         router.refresh();
       } else {
-        alert(res.error ?? "Import selhal");
+        toast.error(res.error ?? "Import selhal");
       }
     });
   }

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { signupShift, cancelShift, approveShift, rejectShift } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
 
 const WEEKDAYS = ["Ne", "Po", "Út", "St", "Čt", "Pá", "So"];
 
@@ -32,6 +33,7 @@ export function ShiftsView({
   canApprove: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [tab, setTab] = useState<"open" | "mine">("open");
   const [isPending, start] = useTransition();
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -52,7 +54,7 @@ export function ShiftsView({
       const res = await fn();
       setBusyKey(null);
       if (!res.ok) {
-        alert(res.error ?? "Akce selhala");
+        toast.error(res.error ?? "Akce selhala");
         return;
       }
       router.refresh();

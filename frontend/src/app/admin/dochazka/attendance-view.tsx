@@ -21,6 +21,8 @@ import {
   fetchAttendanceRoster,
   fetchAttendanceStats,
 } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 
 const WEEKDAYS = ["", "Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
 
@@ -63,6 +65,8 @@ function nextLessonDate(weekday?: number | null): string {
 type Draft = Record<string, { status: AttendanceStatus | null; note: string }>;
 
 export function AttendanceView({ programs }: { programs: Program[] }) {
+  const toast = useToast();
+  const confirm = useConfirm();
   const [programId, setProgramId] = useState(programs[0]?.id ?? "");
   const program = programs.find((p) => p.id === programId);
   const [date, setDate] = useState(() => nextLessonDate(programs[0]?.weekday));
@@ -99,21 +103,21 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
     });
   }, [programId, date]);
 
-  function confirmDiscard(): boolean {
-    if (!dirty) return true;
-    return confirm("Máš neuložené změny v docházce. Opravdu je zahodit?");
+  function confirmDiscard(): Promise<boolean> {
+    if (!dirty) return Promise.resolve(true);
+    return confirm({ message: "Máš neuložené změny v docházce. Opravdu je zahodit?", danger: true, confirmLabel: "Zahodit" });
   }
 
-  function onProgramChange(id: string) {
-    if (!confirmDiscard()) return;
+  async function onProgramChange(id: string) {
+    if (!(await confirmDiscard())) return;
     setProgramId(id);
     const p = programs.find((x) => x.id === id);
     setDate(nextLessonDate(p?.weekday));
     setShowStats(false);
   }
 
-  function onDateChange(newDate: string) {
-    if (!confirmDiscard()) return;
+  async function onDateChange(newDate: string) {
+    if (!(await confirmDiscard())) return;
     setDate(newDate);
   }
 
@@ -154,7 +158,7 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
         setSaved(true);
         setDirty(false);
       } else {
-        alert(res.error ?? "Uložení selhalo");
+        toast.error(res.error ?? "Uložení selhalo");
       }
     });
   }

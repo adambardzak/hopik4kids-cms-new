@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { saveDocument, deleteDocument } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 
 const CATEGORIES: { value: DocumentCategory; label: string }[] = [
   { value: "pravidla", label: "Pravidla" },
@@ -25,6 +27,8 @@ type FormState = Partial<DocumentItem> & { fileId?: string | null };
 
 export function DocumentsView({ documents, canEdit }: { documents: DocumentItem[]; canEdit: boolean }) {
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>({});
@@ -99,11 +103,11 @@ export function DocumentsView({ documents, canEdit }: { documents: DocumentItem[
     });
   }
 
-  function remove(d: DocumentItem) {
-    if (!confirm(`Opravdu smazat „${d.title}"?`)) return;
+  async function remove(d: DocumentItem) {
+    if (!(await confirm({ message: `Opravdu smazat „${d.title}"?`, danger: true, confirmLabel: "Smazat" }))) return;
     start(async () => {
       const res = await deleteDocument(d.id);
-      if (!res.ok) alert(res.error ?? "Smazání selhalo");
+      if (!res.ok) toast.error(res.error ?? "Smazání selhalo");
       router.refresh();
     });
   }
