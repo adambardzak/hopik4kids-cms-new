@@ -13,14 +13,23 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return arr;
 }
 
-type State = "unsupported" | "loading" | "default" | "granted" | "denied";
+type State = "unsupported" | "loading" | "prompt" | "subscribed" | "denied";
 
-/** Button to enable PWA push notifications for the current admin/owner device. */
+/**
+ * Button to enable PWA push notifications for the current admin/owner device.
+ * Verifies an actual server-registered subscription (not just Notification.permission),
+ * so a silently-failed subscribe can be retried instead of falsely showing "enabled".
+ */
 export function NotificationToggle() {
   const [state, setState] = useState<State>("loading");
   const [busy, setBusy] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    void refresh();
+  }, []);
+
+  async function refresh() {
     if (
       typeof window === "undefined" ||
       !("serviceWorker" in navigator) ||
@@ -30,31 +39,52 @@ export function NotificationToggle() {
       setState("unsupported");
       return;
     }
-    setState(Notification.permission as State);
-  }, []);
+    if (Notification.permission === "denied") {
+      setState("denied");
+      return;
+    }
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      // Only treat as "subscribed" when permission is granted AND a real subscription exists.
+      setState(Notification.permission === "granted" && sub ? "subscribed" : "prompt");
+    } catch {
+      setState("prompt");
+    }
+  }
 
   async function enable() {
     setBusy(true);
+    setErrorMsg(null);
     try {
       const permission = await Notification.requestPermission();
+      if (permission === "denied") {
+        setState("denied");
+        return;
+      }
       if (permission !== "granted") {
-        setState(permission as State);
+        setState("prompt");
         return;
       }
-      // Get the VAPID public key from the backend.
+
       const keyRes = await fetch("/api/push/public-key");
+      if (!keyRes.ok) throw new Error("Nepodařilo se načíst klíč ze serveru.");
       const { publicKey } = await keyRes.json();
-      if (!publicKey) {
-        alert("Notifikace nejsou na serveru nakonfigurované.");
-        return;
-      }
+      if (!publicKey) throw new Error("Notifikace nejsou na serveru nakonfigurované.");
+
       const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
-      });
+
+      // Reuse an existing subscription if present; otherwise create one.
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
+        });
+      }
+
       const json = sub.toJSON();
-      await fetch("/api/push/subscribe", {
+      const res = await fetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -63,10 +93,21 @@ export function NotificationToggle() {
           auth: json.keys?.auth,
         }),
       });
-      setState("granted");
+      if (!res.ok) {
+        // Roll back the local subscription so the next attempt is clean.
+        try {
+          await sub.unsubscribe();
+        } catch {
+          /* ignore */
+        }
+        throw new Error("Server odmítl registraci (kód " + res.status + ").");
+      }
+
+      setState("subscribed");
     } catch (e) {
       console.error("push subscribe failed", e);
-      alert("Zapnutí notifikací selhalo. Zkus to prosím znovu.");
+      setErrorMsg(e instanceof Error ? e.message : "Zapnutí notifikací selhalo.");
+      setState("prompt");
     } finally {
       setBusy(false);
     }
@@ -74,7 +115,7 @@ export function NotificationToggle() {
 
   if (state === "unsupported" || state === "loading") return null;
 
-  if (state === "granted") {
+  if (state === "subscribed") {
     return (
       <p className="mb-2 flex items-center gap-1.5 text-xs text-[var(--muted-foreground)]">
         <BellRing className="h-3.5 w-3.5 text-success" /> Notifikace zapnuté
@@ -84,20 +125,24 @@ export function NotificationToggle() {
 
   if (state === "denied") {
     return (
-      <p className="mb-2 flex items-center gap-1.5 text-xs text-[var(--muted-foreground)]">
-        <BellOff className="h-3.5 w-3.5" /> Notifikace blokované v prohlížeči
+      <p className="mb-2 flex items-start gap-1.5 text-xs text-[var(--muted-foreground)]">
+        <BellOff className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+        <span>Notifikace jsou blokované. Povol je v nastavení telefonu → aplikace → Hopík4Kids → Oznámení.</span>
       </p>
     );
   }
 
   return (
-    <button
-      onClick={enable}
-      disabled={busy}
-      className="mb-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-2 text-xs font-medium hover:bg-[var(--muted)] disabled:opacity-50"
-    >
-      <Bell className="h-3.5 w-3.5" />
-      {busy ? "Zapínám…" : "Zapnout notifikace"}
-    </button>
+    <div className="mb-2">
+      <button
+        onClick={enable}
+        disabled={busy}
+        className="flex w-full items-center justify-center gap-1.5 rounded-md border border-[var(--border)] px-3 py-2 text-xs font-medium hover:bg-[var(--muted)] disabled:opacity-50"
+      >
+        <Bell className="h-3.5 w-3.5" />
+        {busy ? "Zapínám…" : "Zapnout notifikace"}
+      </button>
+      {errorMsg && <p className="mt-1 text-xs text-[var(--destructive)]">{errorMsg}</p>}
+    </div>
   );
 }
