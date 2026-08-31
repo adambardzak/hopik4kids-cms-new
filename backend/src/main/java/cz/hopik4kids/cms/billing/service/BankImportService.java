@@ -136,6 +136,10 @@ public class BankImportService {
             if (header == null) {
                 throw ApiException.badRequest("EMPTY_FILE", "Výpis je prázdný");
             }
+            // Strip a UTF-8 BOM if present (Excel/bank exports often include it).
+            if (!header.isEmpty() && header.charAt(0) == '\uFEFF') {
+                header = header.substring(1);
+            }
             char delim = header.contains(";") ? ';' : ',';
             Cols cols = mapColumns(splitCsv(header, delim));
             if (cols.vs < 0 || cols.amount < 0 || cols.txId < 0) {
