@@ -37,19 +37,26 @@ public class RegistrationService {
     private final RegistrationRepository registrations;
     private final PasswordEncoder passwordEncoder;
     private final cz.hopik4kids.cms.notifications.service.WebPushService webPush;
+    // Lazy to avoid a bean cycle (billing depends on registrations too).
+    private final org.springframework.beans.factory.ObjectProvider<cz.hopik4kids.cms.billing.service.InvoiceService> invoiceService;
+    private final org.springframework.beans.factory.ObjectProvider<cz.hopik4kids.cms.billing.service.InvoiceEmailService> invoiceEmailService;
 
     public RegistrationService(ProgramRepository programs,
                                ParentRepository parents,
                                ChildRepository children,
                                RegistrationRepository registrations,
                                PasswordEncoder passwordEncoder,
-                               cz.hopik4kids.cms.notifications.service.WebPushService webPush) {
+                               cz.hopik4kids.cms.notifications.service.WebPushService webPush,
+                               org.springframework.beans.factory.ObjectProvider<cz.hopik4kids.cms.billing.service.InvoiceService> invoiceService,
+                               org.springframework.beans.factory.ObjectProvider<cz.hopik4kids.cms.billing.service.InvoiceEmailService> invoiceEmailService) {
         this.programs = programs;
         this.parents = parents;
         this.children = children;
         this.registrations = registrations;
         this.passwordEncoder = passwordEncoder;
         this.webPush = webPush;
+        this.invoiceService = invoiceService;
+        this.invoiceEmailService = invoiceEmailService;
     }
 
     @Transactional
@@ -119,8 +126,31 @@ public class RegistrationService {
             // push is non-critical
         }
 
+        // Auto-invoice: when a parent registers for a paid club/camp, generate the invoice and
+        // email it with a thank-you note. Schools are invoiced manually by admins (school pays).
+        // Best-effort — a failure here must never fail the registration itself.
+        maybeAutoInvoice(reg, program, parent);
+
         return new RegistrationResponse(reg.getId(), program.getId(), priceSnapshot,
                 reg.getStatus().name().toLowerCase());
+    }
+
+    private void maybeAutoInvoice(Registration reg, Program program, Parent parent) {
+        boolean parentPays = program.getType() == cz.hopik4kids.cms.core.domain.ProgramType.CLUB
+                || program.getType() == cz.hopik4kids.cms.core.domain.ProgramType.CAMP;
+        boolean hasEmail = parent.getEmail() != null && !parent.getEmail().isBlank();
+        if (!parentPays || reg.getPriceSnapshot() <= 0 || !hasEmail) {
+            return;
+        }
+        try {
+            var invoice = invoiceService.getObject().createFromRegistration(reg.getId());
+            invoiceEmailService.getObject().sendWelcome(
+                    invoice.id(), reg.getChild().getFullName(), program.getName());
+        } catch (Exception e) {
+            // Auto-invoicing is best-effort; admins can always issue/send the invoice manually.
+            org.slf4j.LoggerFactory.getLogger(RegistrationService.class)
+                    .warn("Auto-invoice failed for registration {}: {}", reg.getId(), e.getMessage());
+        }
     }
 
     private void verifyAccess(Program program, String accessCode) {

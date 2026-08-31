@@ -34,6 +34,22 @@ public class InvoiceEmailService {
     }
 
     public void send(String invoiceId) {
+        sendInternal(invoiceId, false);
+    }
+
+    /**
+     * Welcome + invoice email sent automatically right after a parent registers (auto-invoicing).
+     * Thank-you copy with the invoice attached. Best-effort caller should catch failures.
+     */
+    public void sendWelcome(String invoiceId, String childName, String programName) {
+        sendInternal(invoiceId, true, childName, programName);
+    }
+
+    private void sendInternal(String invoiceId, boolean welcome) {
+        sendInternal(invoiceId, welcome, null, null);
+    }
+
+    private void sendInternal(String invoiceId, boolean welcome, String childName, String programName) {
         InvoiceDto inv = invoices.get(invoiceId);
         if (inv.payerEmail() == null || inv.payerEmail().isBlank()) {
             throw ApiException.badRequest("NO_PAYER_EMAIL", "Faktura nemá e-mail plátce");
@@ -41,26 +57,55 @@ public class InvoiceEmailService {
 
         byte[] bytes = pdf.build(invoiceId);
         String supplierName = supplier.getOrDefault().getName();
+        String sender = supplierName == null ? "Hopík4Kids" : supplierName;
 
-        String body = """
-                Dobrý den,
+        String body;
+        String subject;
+        if (welcome) {
+            subject = "Potvrzení registrace" + (programName != null ? " — " + programName : "") + " | " + sender;
+            body = """
+                    Dobrý den,
 
-                v příloze zasíláme fakturu č. %s na částku %d Kč se splatností %s.
-                Fakturu můžete zaplatit převodem (variabilní symbol %s) nebo naskenováním
-                QR platby přímo z faktury.
+                    děkujeme za přihlášení%s do programu %s. Máme registraci v pořádku zaznamenanou.
 
-                Děkujeme,
-                %s
-                """.formatted(
-                inv.invoiceNumber(),
-                inv.totalAmount(),
-                inv.dueDate(),
-                inv.variableSymbol(),
-                supplierName == null ? "Hopík4Kids" : supplierName);
+                    V příloze najdete fakturu č. %s na částku %d Kč se splatností %s.
+                    Zaplatit můžete převodem (variabilní symbol %s) nebo naskenováním QR platby
+                    přímo z faktury.
+
+                    Pokud budete mít jakýkoliv dotaz, neváhejte nás kontaktovat.
+
+                    Těšíme se na vás,
+                    %s
+                    """.formatted(
+                    childName != null ? " " + childName : "",
+                    programName != null ? programName : "Hopík4Kids",
+                    inv.invoiceNumber(),
+                    inv.totalAmount(),
+                    inv.dueDate(),
+                    inv.variableSymbol(),
+                    sender);
+        } else {
+            subject = "Faktura č. " + inv.invoiceNumber() + " — " + sender;
+            body = """
+                    Dobrý den,
+
+                    v příloze zasíláme fakturu č. %s na částku %d Kč se splatností %s.
+                    Fakturu můžete zaplatit převodem (variabilní symbol %s) nebo naskenováním
+                    QR platby přímo z faktury.
+
+                    Děkujeme,
+                    %s
+                    """.formatted(
+                    inv.invoiceNumber(),
+                    inv.totalAmount(),
+                    inv.dueDate(),
+                    inv.variableSymbol(),
+                    sender);
+        }
 
         boolean ok = email.sendWithAttachment(
                 inv.payerEmail(),
-                "Faktura č. " + inv.invoiceNumber() + " — " + (supplierName == null ? "Hopík4Kids" : supplierName),
+                subject,
                 body,
                 "faktura-" + inv.invoiceNumber() + ".pdf",
                 bytes,
