@@ -51,6 +51,14 @@ public interface RegistrationRepository extends JpaRepository<Registration, Stri
             """)
     long sumPriceByPaymentStatus(@Param("paymentStatus") PaymentStatus paymentStatus);
 
+    /** Sum of priceSnapshot over active registrations whose payment status is in the given set. */
+    @Query("""
+            select coalesce(sum(r.priceSnapshot), 0) from Registration r
+            where r.status = cz.hopik4kids.cms.registrations.domain.RegistrationStatus.ACTIVE
+              and r.paymentStatus in :paymentStatuses
+            """)
+    long sumPriceByPaymentStatusIn(@Param("paymentStatuses") java.util.List<PaymentStatus> paymentStatuses);
+
     /** Count of active registrations with the given payment status. */
     @Query("""
             select count(r) from Registration r
@@ -58,6 +66,14 @@ public interface RegistrationRepository extends JpaRepository<Registration, Stri
               and r.paymentStatus = :paymentStatus
             """)
     long countActiveByPaymentStatus(@Param("paymentStatus") PaymentStatus paymentStatus);
+
+    /** Count of active registrations whose payment status is in the given set. */
+    @Query("""
+            select count(r) from Registration r
+            where r.status = cz.hopik4kids.cms.registrations.domain.RegistrationStatus.ACTIVE
+              and r.paymentStatus in :paymentStatuses
+            """)
+    long countActiveByPaymentStatusIn(@Param("paymentStatuses") java.util.List<PaymentStatus> paymentStatuses);
 
     /** Registrations with a media consent flag (active only). */
     @Query("""

@@ -68,9 +68,11 @@ public class DashboardService {
         }
         underfilled.sort(Comparator.comparingInt(DashboardStatsDto.UnderfilledProgram::occupancyPct));
 
+        // "Nezaplaceno" covers registrations that are UNPAID or have an invoice sent but not yet paid.
+        var unpaidStatuses = java.util.List.of(PaymentStatus.UNPAID, PaymentStatus.INVOICE_SENT);
         long confirmedRevenue = registrations.sumPriceByPaymentStatus(PaymentStatus.PAID);
-        long unpaidAmount = registrations.sumPriceByPaymentStatus(PaymentStatus.UNPAID);
-        long unpaidCount = registrations.countActiveByPaymentStatus(PaymentStatus.UNPAID);
+        long unpaidAmount = registrations.sumPriceByPaymentStatusIn(unpaidStatuses);
+        long unpaidCount = registrations.countActiveByPaymentStatusIn(unpaidStatuses);
         long expectedRevenue = confirmedRevenue + unpaidAmount;
         long potentialRevenue = expectedRevenue + potentialFromRemaining;
 
