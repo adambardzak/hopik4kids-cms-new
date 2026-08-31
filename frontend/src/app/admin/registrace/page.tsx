@@ -8,14 +8,16 @@ export default async function RegistracePage({
   searchParams: Promise<{ program?: string; paymentStatus?: string; q?: string }>;
 }) {
   const sp = await searchParams;
+  // "overdue" is a client-derived filter — don't send it to the API (unknown enum).
+  const apiPaymentStatus = sp.paymentStatus === "overdue" ? undefined : sp.paymentStatus;
   const [{ items: registrations }, { items: programs }] = await Promise.all([
-    listRegistrations({ program: sp.program, paymentStatus: sp.paymentStatus, q: sp.q }),
+    listRegistrations({ program: sp.program, paymentStatus: apiPaymentStatus, q: sp.q }),
     listPrograms(),
   ]);
 
   const exportQuery = new URLSearchParams();
   if (sp.program) exportQuery.set("program", sp.program);
-  if (sp.paymentStatus) exportQuery.set("paymentStatus", sp.paymentStatus);
+  if (apiPaymentStatus) exportQuery.set("paymentStatus", apiPaymentStatus);
 
   const noFilters = !sp.program && !sp.paymentStatus && !sp.q;
 

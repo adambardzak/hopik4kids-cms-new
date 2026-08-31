@@ -39,11 +39,21 @@ function programMeta(r: Registration): string {
   return parts.join(" · ");
 }
 
-const PAYMENT_LABELS: Record<string, { label: string; variant: "success" | "warning" | "danger" }> = {
+const PAYMENT_LABELS: Record<string, { label: string; variant: "success" | "warning" | "danger" | "info" }> = {
   paid: { label: "Zaplaceno", variant: "success" },
   unpaid: { label: "Nezaplaceno", variant: "warning" },
+  invoice_sent: { label: "Faktura odeslána", variant: "info" },
+  overdue: { label: "Po splatnosti", variant: "danger" },
   cancelled: { label: "Storno", variant: "danger" },
 };
+
+/** Effective payment badge key: overdue takes precedence over the stored status. */
+function effectivePaymentKey(r: { paymentStatus: string; overdue?: boolean }): string {
+  if (r.overdue && r.paymentStatus !== "paid" && r.paymentStatus !== "cancelled") {
+    return "overdue";
+  }
+  return r.paymentStatus;
+}
 
 export function RegistrationsTable({
   registrations,
@@ -75,17 +85,27 @@ export function RegistrationsTable({
     const merged = { ...filters, ...next };
     const q = new URLSearchParams();
     if (merged.program) q.set("program", merged.program);
+    // "overdue" is a client-side (derived) filter — keep it in the URL but not sent to the API.
     if (merged.paymentStatus) q.set("paymentStatus", merged.paymentStatus);
     if (merged.q) q.set("q", merged.q);
     router.push(`/admin/registrace${q.toString() ? `?${q}` : ""}`);
   }
 
+  // Apply the client-only "overdue" filter (derived from invoice due dates).
+  const visible = useMemo(
+    () =>
+      filters.paymentStatus === "overdue"
+        ? registrations.filter((r) => r.overdue && r.paymentStatus !== "paid" && r.paymentStatus !== "cancelled")
+        : registrations,
+    [registrations, filters.paymentStatus],
+  );
+
   // Active (non-cancelled) rows drive the summary numbers.
   const active = useMemo(
-    () => registrations.filter((r) => r.status !== "cancelled"),
-    [registrations],
+    () => visible.filter((r) => r.status !== "cancelled"),
+    [visible],
   );
-  const unpaid = active.filter((r) => r.paymentStatus === "unpaid");
+  const unpaid = active.filter((r) => r.paymentStatus === "unpaid" || r.paymentStatus === "invoice_sent");
   const unpaidSum = unpaid.reduce((s, r) => s + r.priceSnapshot, 0);
   const paidSum = active
     .filter((r) => r.paymentStatus === "paid")
@@ -94,12 +114,12 @@ export function RegistrationsTable({
   // Group by program unless a single program is already filtered.
   const grouped = useMemo(() => {
     const map = new Map<string, { name: string; meta: string; rows: Registration[] }>();
-    for (const r of registrations) {
+    for (const r of visible) {
       if (!map.has(r.programId)) map.set(r.programId, { name: r.programName, meta: programMeta(r), rows: [] });
       map.get(r.programId)!.rows.push(r);
     }
     return Array.from(map.entries()).map(([id, v]) => ({ id, ...v }));
-  }, [registrations]);
+  }, [visible]);
 
   const showGroups = !filters.program && grouped.length > 1;
 
@@ -150,6 +170,8 @@ export function RegistrationsTable({
         >
           <option value="">Všechny platby</option>
           <option value="unpaid">Nezaplaceno</option>
+          <option value="invoice_sent">Faktura odeslána</option>
+          <option value="overdue">Po splatnosti</option>
           <option value="paid">Zaplaceno</option>
           <option value="cancelled">Storno</option>
         </Select>
@@ -341,7 +363,7 @@ function RegRows({
       </TableHeader>
       <TableBody>
         {rows.map((r) => {
-          const pay = PAYMENT_LABELS[r.paymentStatus] ?? PAYMENT_LABELS.unpaid;
+          const pay = PAYMENT_LABELS[effectivePaymentKey(r)] ?? PAYMENT_LABELS.unpaid;
           return (
             <TableRow key={r.id} className={r.status === "cancelled" ? "opacity-50" : ""}>
               <TableCell className="font-medium">{r.childName}</TableCell>
@@ -450,7 +472,7 @@ function DetailDialog({
 
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="text-sm text-[var(--muted-foreground)]">Platba:</span>
-              {(["unpaid", "paid"] as const).map((s) => (
+              {(["unpaid", "invoice_sent", "paid"] as const).map((s) => (
                 <Button
                   key={s}
                   size="sm"
@@ -458,9 +480,12 @@ function DetailDialog({
                   disabled={isPending || detail.status === "cancelled"}
                   onClick={() => onPayment(detail.id, s)}
                 >
-                  {s === "paid" ? "Zaplaceno" : "Nezaplaceno"}
+                  {s === "paid" ? "Zaplaceno" : s === "invoice_sent" ? "Faktura odeslána" : "Nezaplaceno"}
                 </Button>
               ))}
+              {detail.overdue && detail.paymentStatus !== "paid" && (
+                <Badge variant="danger">Po splatnosti</Badge>
+              )}
               {detail.status !== "cancelled" && (
                 <Button
                   size="sm"

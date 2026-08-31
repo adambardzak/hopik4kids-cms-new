@@ -124,7 +124,9 @@ export interface Registration {
   note?: string | null;
   consentPersonalData: boolean;
   consentMedia: boolean;
-  paymentStatus: "unpaid" | "paid" | "cancelled";
+  paymentStatus: "unpaid" | "invoice_sent" | "paid" | "cancelled";
+  overdue: boolean;
+  invoiceId?: string | null;
   priceSnapshot: number;
   status: "active" | "cancelled";
   source?: string | null;

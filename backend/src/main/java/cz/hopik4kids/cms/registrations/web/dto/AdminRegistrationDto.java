@@ -40,12 +40,19 @@ public record AdminRegistrationDto(
         boolean consentPersonalData,
         boolean consentMedia,
         String paymentStatus,
+        boolean overdue,
+        String invoiceId,
         int priceSnapshot,
         String status,
         String source,
         Instant createdAt
 ) {
     public static AdminRegistrationDto from(Registration r) {
+        return from(r, false, null);
+    }
+
+    /** Variant carrying invoice-derived info: overdue flag + invoice id (computed by the service). */
+    public static AdminRegistrationDto from(Registration r, boolean overdue, String invoiceId) {
         var child = r.getChild();
         var parent = child.getParent();
         var program = r.getProgram();
@@ -77,6 +84,8 @@ public record AdminRegistrationDto(
                 r.isConsentPersonalData(),
                 r.isConsentMedia(),
                 r.getPaymentStatus().name().toLowerCase(),
+                overdue,
+                invoiceId,
                 r.getPriceSnapshot(),
                 r.getStatus().name().toLowerCase(),
                 r.getSource(),

@@ -3,6 +3,8 @@ package cz.hopik4kids.cms.billing.service;
 import cz.hopik4kids.cms.billing.web.dto.InvoiceDto;
 import cz.hopik4kids.cms.kernel.email.EmailService;
 import cz.hopik4kids.cms.kernel.web.ApiException;
+import cz.hopik4kids.cms.registrations.domain.PaymentStatus;
+import cz.hopik4kids.cms.registrations.repository.RegistrationRepository;
 import cz.hopik4kids.cms.usersrbac.service.AuditService;
 import org.springframework.stereotype.Service;
 
@@ -14,17 +16,20 @@ public class InvoiceEmailService {
     private final InvoicePdfService pdf;
     private final SupplierSettingsService supplier;
     private final EmailService email;
+    private final RegistrationRepository registrations;
     private final AuditService audit;
 
     public InvoiceEmailService(InvoiceService invoices,
                                InvoicePdfService pdf,
                                SupplierSettingsService supplier,
                                EmailService email,
+                               RegistrationRepository registrations,
                                AuditService audit) {
         this.invoices = invoices;
         this.pdf = pdf;
         this.supplier = supplier;
         this.email = email;
+        this.registrations = registrations;
         this.audit = audit;
     }
 
@@ -66,5 +71,13 @@ public class InvoiceEmailService {
                     "EMAIL_FAILED", "Fakturu se nepodařilo odeslat (zkontrolujte nastavení e-mailu)");
         }
         audit.record("invoice-email", "Invoice", invoiceId, "{\"to\":\"" + inv.payerEmail() + "\"}");
+
+        // Reflect that the invoice was sent on the registration's payment status (unless already paid).
+        registrations.findById(inv.registrationId()).ifPresent(reg -> {
+            if (reg.getPaymentStatus() == PaymentStatus.UNPAID) {
+                reg.setPaymentStatus(PaymentStatus.INVOICE_SENT);
+                registrations.save(reg);
+            }
+        });
     }
 }
