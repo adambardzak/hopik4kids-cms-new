@@ -294,3 +294,45 @@ export async function addOneOffLesson(body: {
 export async function deleteOverride(id: string): Promise<ActionResult> {
   return run(() => api(`/admin/api/schedule/overrides/${id}`, { method: "DELETE" }), "/admin/rozvrh");
 }
+
+// --- work logs (výkazy práce, prd todo #3) ---
+export async function createWorkLog(body: {
+  workDate: string;
+  hours: number;
+  note?: string;
+  programId?: string;
+}): Promise<ActionResult> {
+  return run(() => api(`/admin/api/work-logs`, { method: "POST", body }), "/admin/vykazy");
+}
+
+export async function updateWorkLog(
+  id: string,
+  body: { workDate: string; hours: number; note?: string; programId?: string },
+): Promise<ActionResult> {
+  return run(() => api(`/admin/api/work-logs/${id}`, { method: "PUT", body }), "/admin/vykazy");
+}
+
+export async function deleteWorkLog(id: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/work-logs/${id}`, { method: "DELETE" }), "/admin/vykazy");
+}
+
+export async function setWorkLogStatus(id: string, status: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/work-logs/${id}/status?status=${status}`, { method: "POST" }), "/admin/vykazy");
+}
+
+export async function seedWorkLogsFromShifts(
+  from: string,
+  to: string,
+): Promise<{ ok: boolean; created?: number; error?: string }> {
+  try {
+    const res = await api<{ created: number }>(
+      `/admin/api/work-logs/seed-from-shifts?from=${from}&to=${to}`,
+      { method: "POST" },
+    );
+    return { ok: true, created: res.created };
+  } catch (e) {
+    if (isRedirect(e)) throw e;
+    if (e instanceof ApiRequestError) return { ok: false, error: e.message };
+    return { ok: false, error: "Import ze směn selhal" };
+  }
+}

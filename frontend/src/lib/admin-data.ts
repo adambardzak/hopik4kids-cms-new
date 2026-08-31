@@ -17,6 +17,8 @@ import type {
   Trainer,
   User,
   WaitlistEntry,
+  WorkLog,
+  WorkLogSummary,
 } from "./types";
 
 // --- registrations ---
@@ -140,4 +142,21 @@ export function listOpenShifts(from: string, to: string) {
 
 export function listMyShifts(from: string, to: string) {
   return api<PageResponse<ShiftSlot>>(`/admin/api/shifts/mine?from=${from}&to=${to}`);
+}
+
+// --- work logs (výkazy práce) ---
+export function listWorkLogs(from?: string, to?: string) {
+  const q = new URLSearchParams();
+  if (from) q.set("from", from);
+  if (to) q.set("to", to);
+  const qs = q.toString();
+  return api<PageResponse<WorkLog>>(`/admin/api/work-logs${qs ? `?${qs}` : ""}`);
+}
+
+export function getWorkLogSummary(from?: string, to?: string) {
+  const q = new URLSearchParams();
+  if (from) q.set("from", from);
+  if (to) q.set("to", to);
+  const qs = q.toString();
+  return api<PageResponse<WorkLogSummary>>(`/admin/api/work-logs/summary${qs ? `?${qs}` : ""}`);
 }

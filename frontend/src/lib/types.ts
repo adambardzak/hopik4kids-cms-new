@@ -294,3 +294,25 @@ export interface ScheduleEntry {
   capacity?: number | null;
   spotsTaken: number;
 }
+
+export interface WorkLog {
+  id: string;
+  trainerId: string;
+  trainerName: string;
+  workDate: string;
+  hours: number;
+  note?: string | null;
+  source: "manual" | "shift";
+  status: "pending" | "approved" | "rejected";
+  programId?: string | null;
+  programName?: string | null;
+  createdAt: string;
+}
+
+export interface WorkLogSummary {
+  trainerId: string;
+  trainerName: string;
+  approvedHours: number;
+  pendingHours: number;
+  entryCount: number;
+}
