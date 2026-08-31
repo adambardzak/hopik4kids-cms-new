@@ -136,10 +136,11 @@ public class RegistrationService {
     }
 
     private void maybeAutoInvoice(Registration reg, Program program, Parent parent) {
-        boolean parentPays = program.getType() == cz.hopik4kids.cms.core.domain.ProgramType.CLUB
-                || program.getType() == cz.hopik4kids.cms.core.domain.ProgramType.CAMP;
+        // Every paid public registration is invoiced to the parent, regardless of program type
+        // (a "school" program = a club held at a kindergarten; the parent still pays). Cases where
+        // a kindergarten pays are handled outside the system with no auto-invoice.
         boolean hasEmail = parent.getEmail() != null && !parent.getEmail().isBlank();
-        if (!parentPays || reg.getPriceSnapshot() <= 0 || !hasEmail) {
+        if (reg.getPriceSnapshot() <= 0 || !hasEmail) {
             return;
         }
         try {

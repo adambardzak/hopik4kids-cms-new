@@ -76,6 +76,12 @@ public class InvoiceService {
         }
     }
 
+    /** Whether the given registration already has an invoice (idempotency check for bulk issuing). */
+    @Transactional(readOnly = true)
+    public boolean existsForRegistration(String registrationId) {
+        return invoices.findByRegistrationId(registrationId).isPresent();
+    }
+
     /** Build a DTO with the program vs. shirt amount split derived from the invoice items. */
     public InvoiceDto dtoOf(Invoice i) {
         int shirt = 0;

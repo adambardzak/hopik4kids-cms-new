@@ -30,13 +30,16 @@ public class InvoiceController {
     private final InvoicePdfService pdf;
     private final InvoiceExportService export;
     private final cz.hopik4kids.cms.billing.service.InvoiceEmailService emailService;
+    private final cz.hopik4kids.cms.billing.service.BulkInvoiceService bulkService;
 
     public InvoiceController(InvoiceService invoices, InvoicePdfService pdf,
                              InvoiceExportService export,
-                             cz.hopik4kids.cms.billing.service.InvoiceEmailService emailService) {
+                             cz.hopik4kids.cms.billing.service.InvoiceEmailService emailService,
+                             cz.hopik4kids.cms.billing.service.BulkInvoiceService bulkService) {
         this.invoices = invoices;
         this.pdf = pdf;
         this.export = export;
+        this.bulkService = bulkService;
         this.emailService = emailService;
     }
 
@@ -85,6 +88,18 @@ public class InvoiceController {
     @PostMapping
     public InvoiceDto create(@RequestParam String registration) {
         return invoices.createFromRegistration(registration);
+    }
+
+    /**
+     * One-time bulk issuing (prd todo #1): create + optionally email invoices for all active
+     * registrations that don't have one yet. Owner/admin only. Use dryRun=true first to preview.
+     */
+    @PostMapping("/bulk-issue")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+    public cz.hopik4kids.cms.billing.service.BulkInvoiceService.Result bulkIssue(
+            @RequestParam(defaultValue = "true") boolean dryRun,
+            @RequestParam(defaultValue = "true") boolean send) {
+        return bulkService.run(dryRun, send);
     }
 
     @PostMapping("/{id}/paid")
