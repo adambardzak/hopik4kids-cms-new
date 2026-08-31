@@ -13,4 +13,6 @@ public interface InvoiceRepository extends JpaRepository<Invoice, String> {
     List<Invoice> findAllByOrderByIssueDateDescInvoiceNumberDesc();
 
     List<Invoice> findByRegistrationIdIn(List<String> registrationIds);
+
+    Optional<Invoice> findByVariableSymbol(String variableSymbol);
 }

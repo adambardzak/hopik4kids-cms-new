@@ -333,3 +333,17 @@ export interface RecordDocument {
   sizeBytes?: number | null;
   createdAt: string;
 }
+
+export interface BankMatch {
+  txId: string;
+  txDate?: string | null;
+  amount: number;
+  variableSymbol?: string | null;
+  counterparty?: string | null;
+  message?: string | null;
+  matchStatus: "exact" | "partial" | "none" | "already" | "outgoing" | string;
+  invoiceId?: string | null;
+  invoiceNumber?: string | null;
+  invoiceAmount?: number | null;
+  invoiceAlreadyPaid: boolean;
+}
