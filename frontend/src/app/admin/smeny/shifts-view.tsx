@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { signupShift, cancelShift, approveShift, rejectShift } from "@/lib/actions";
+import { EmptyState } from "@/components/page-header";
 import { useToast } from "@/components/ui/toast";
 
 const WEEKDAYS = ["Ne", "Po", "Út", "St", "Čt", "Pá", "So"];
@@ -85,9 +86,10 @@ export function ShiftsView({
       </div>
 
       {byDate.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--background)] p-12 text-center text-sm text-[var(--muted-foreground)]">
-          {tab === "open" ? "Žádné hodiny v příštích 6 týdnech." : "Zatím nejsi přihlášený/á na žádnou hodinu."}
-        </div>
+        <EmptyState
+          icon={CalendarPlus}
+          message={tab === "open" ? "Žádné hodiny v příštích 6 týdnech." : "Zatím nejsi přihlášený/á na žádnou hodinu."}
+        />
       ) : (
         <div className="space-y-6">
           {byDate.map(([date, daySlots]) => (

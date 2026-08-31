@@ -23,6 +23,7 @@ import { cancelRegistration, setPaymentStatus } from "@/lib/actions";
 import { createInvoiceReturningId } from "@/lib/actions";
 import { BulkEmailDialog } from "@/components/bulk-email-dialog";
 import { WaitlistDialog } from "@/components/waitlist-dialog";
+import { EmptyState } from "@/components/page-header";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 
@@ -206,9 +207,7 @@ export function RegistrationsTable({
       {/* Scrollable list */}
       <div className="min-h-0 flex-1 overflow-auto">
         {registrations.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--background)] p-12 text-center text-sm text-[var(--muted-foreground)]">
-            Nic nenalezeno pro zadané filtry.
-          </div>
+          <EmptyState icon={Search} message="Nic nenalezeno pro zadané filtry." />
         ) : showGroups ? (
           <div className="space-y-3">
             {grouped.map((g) => (

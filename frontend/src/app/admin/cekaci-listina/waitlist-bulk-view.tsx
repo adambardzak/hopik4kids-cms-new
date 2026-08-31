@@ -27,6 +27,7 @@ import {
 } from "@/lib/actions";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
+import { EmptyState } from "@/components/page-header";
 
 const WAITLIST_STATUS: Record<
   WaitlistEntry["status"],
@@ -164,11 +165,7 @@ function WaitlistPanel({ programs }: { programs: Program[] }) {
       ) : pending && !loaded ? (
         <p className="text-sm text-[var(--muted-foreground)]">Načítám…</p>
       ) : items.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-sm text-[var(--muted-foreground)]">
-            Na čekací listině tohoto programu nikdo není.
-          </CardContent>
-        </Card>
+        <EmptyState icon={Users} message="Na čekací listině tohoto programu nikdo není." />
       ) : (
         <Card>
           <CardContent className="p-0">

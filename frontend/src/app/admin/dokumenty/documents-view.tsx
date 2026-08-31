@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { Plus, Search, FileText, ExternalLink, Pencil, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Search, FileText, ExternalLink, Pencil, Trash2, ChevronDown, ChevronRight, BookOpen } from "lucide-react";
 import type { DocumentCategory, DocumentItem } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { saveDocument, deleteDocument } from "@/lib/actions";
+import { EmptyState } from "@/components/page-header";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 
@@ -127,9 +128,10 @@ export function DocumentsView({ documents, canEdit }: { documents: DocumentItem[
       </div>
 
       {grouped.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--background)] p-12 text-center text-sm text-[var(--muted-foreground)]">
-          {documents.length === 0 ? "Zatím žádné dokumenty." : "Nic nenalezeno."}
-        </div>
+        <EmptyState
+          icon={BookOpen}
+          message={documents.length === 0 ? "Zatím žádné dokumenty." : "Nic nenalezeno."}
+        />
       ) : (
         <div className="space-y-6">
           {grouped.map((g) => (
