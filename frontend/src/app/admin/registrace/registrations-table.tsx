@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Search, ChevronDown, ChevronRight, Users, Eye, FileSpreadsheet, FileText, Printer } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, Users, Eye, FileSpreadsheet, FileText, Printer, Camera, ShieldCheck } from "lucide-react";
 import type { Program, Registration } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -334,6 +334,7 @@ function RegRows({
           <TableHead>Rodič</TableHead>
           <TableHead>Dres</TableHead>
           <TableHead>Platba</TableHead>
+          <TableHead>GDPR</TableHead>
           <TableHead>Přihlášeno</TableHead>
           <TableHead></TableHead>
         </TableRow>
@@ -352,6 +353,22 @@ function RegRows({
               <TableCell>
                 <Badge variant={pay.variant}>{pay.label}</Badge>
               </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-1.5">
+                  <ConsentIcon
+                    ok={r.consentMedia}
+                    icon={Camera}
+                    yes="Souhlas s fotografováním"
+                    no="BEZ souhlasu s fotografováním"
+                  />
+                  <ConsentIcon
+                    ok={r.consentPersonalData}
+                    icon={ShieldCheck}
+                    yes="Souhlas se zpracováním osobních údajů"
+                    no="BEZ souhlasu s osobními údaji"
+                  />
+                </div>
+              </TableCell>
               <TableCell className="text-sm text-[var(--muted-foreground)]">
                 {new Date(r.createdAt).toLocaleDateString("cs-CZ")}
               </TableCell>
@@ -363,6 +380,25 @@ function RegRows({
         })}
       </TableBody>
     </Table>
+  );
+}
+
+/** Small GDPR consent indicator: green icon when granted, muted+struck when not. */
+function ConsentIcon({
+  ok,
+  icon: Icon,
+  yes,
+  no,
+}: {
+  ok: boolean;
+  icon: React.ComponentType<{ className?: string }>;
+  yes: string;
+  no: string;
+}) {
+  return (
+    <span title={ok ? yes : no} className="inline-flex">
+      <Icon className={`h-4 w-4 ${ok ? "text-success" : "text-[var(--muted-foreground)] opacity-40"}`} />
+    </span>
   );
 }
 

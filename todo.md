@@ -16,6 +16,9 @@
    - V16 record_document; novy docker volume hopik_cms_records (/data/records)
 9) pridat vek deti
 10) barevne rozlisit, ze je krouzek bud pro verejnost (vsechny deti), nebo jen pro deti z dane skolky
+11) do listy pridat GDPR
+    - v zalozce Registrace (seznam vsech deti) u kazdeho ditete na prvni pohled videt GDPR souhlasy
+      (souhlas s porizovanim fotografii/media + souhlas s osobnimi udaji) - ikonka/badge ve sloupci
 
 ---
 POZNAMKY / TECH DLUH:

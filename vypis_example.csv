@@ -1,0 +1,5 @@
+﻿Datum provedení;Datum zaúčtování;Číslo účtu;Název účtu;Kategorie transakce;Číslo protiúčtu;Název protiúčtu;Typ transakce;Zpráva;Poznámka;VS;KS;SS;Zaúčtovaná částka;Měna účtu;Původní částka;Původní měna;Poplatky;Id transakce;Vlastní poznámka;Název obchodníka;Město
+"13.07.2026";"13.07.2026 13:48";"2368948077/5500";"Hopík4Kids s.r.o.";"Platba";"228306356/0300";"";"Odchozí okamžitá úhrada";"";"";"";"";"";"-4000";"CZK";"";"";"0";"9225571901";"";"";""
+"09.07.2026";"09.07.2026 11:49";"2368948077/5500";"Hopík4Kids s.r.o.";"Platba";"181814512/0300";"MAT.SKOLA TYMAKOV";"Příchozí úhrada";"";"";"100052026";"";"";"20000";"CZK";"";"";"0";"9208949338";"";"";""
+"07.07.2026";"07.07.2026 04:51";"2368948077/5500";"Hopík4Kids s.r.o.";"Platba";"184578332/0300";"MŠ Chudenice";"Příchozí úhrada";"";"";"100042026";"";"";"5000";"CZK";"";"";"0";"9196188584";"";"";""
+"06.07.2026";"06.07.2026 14:03";"2368948077/5500";"Hopík4Kids s.r.o.";"Platba";"1172794016/3030";"Vladimír Kindl";"Příchozí okamžitá úhrada";"";"HOPIKEMP - Heřmanova Huť (FARA) - Václav Kindl";"1811261320";"";"";"3500";"CZK";"";"";"0";"9191768732";"";"";""
