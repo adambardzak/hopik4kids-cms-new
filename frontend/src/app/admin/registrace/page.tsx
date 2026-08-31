@@ -22,7 +22,7 @@ export default async function RegistracePage({
   const noFilters = !sp.program && !sp.paymentStatus && !sp.q;
 
   return (
-    <div>
+    <div className="flex h-full flex-col">
       <PageHeader
         title="Registrace"
         description="Přihlášky dětí do kroužků a kempů. Detail obsahuje všechna data pro fakturaci a docházku."

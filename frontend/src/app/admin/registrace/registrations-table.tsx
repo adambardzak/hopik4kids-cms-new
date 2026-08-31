@@ -124,95 +124,99 @@ export function RegistrationsTable({
   const showGroups = !filters.program && grouped.length > 1;
 
   return (
-    <div>
-      {/* Summary cards */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <SummaryCard label="Aktivních registrací" value={String(active.length)} />
-        <SummaryCard
-          label="Nezaplaceno"
-          value={`${unpaid.length}× · ${unpaidSum.toLocaleString("cs-CZ")} Kč`}
-          tone="warning"
-        />
-        <SummaryCard
-          label="Zaplaceno"
-          value={`${paidSum.toLocaleString("cs-CZ")} Kč`}
-          tone="success"
-        />
-      </div>
-
-      {/* Toolbar */}
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-foreground)]" />
-          <Input
-            className="w-full pl-9 sm:w-64"
-            placeholder="Hledat dítě, rodiče, e-mail…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+    <div className="flex min-h-0 flex-1 flex-col">
+      {/* Sticky header: compact summary + toolbar (always visible while the list scrolls) */}
+      <div className="shrink-0 space-y-3 pb-3">
+        {/* Compact summary strip */}
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm">
+          <span>
+            <span className="font-semibold">{active.length}</span>{" "}
+            <span className="text-[var(--muted-foreground)]">aktivních</span>
+          </span>
+          <span className="text-warning">
+            <span className="font-semibold">{unpaid.length}×</span> nezaplaceno{" "}
+            <span className="text-[var(--muted-foreground)]">
+              ({unpaidSum.toLocaleString("cs-CZ")} Kč)
+            </span>
+          </span>
+          <span className="text-success">
+            <span className="font-semibold">{paidSum.toLocaleString("cs-CZ")} Kč</span> zaplaceno
+          </span>
         </div>
-        <Select
-          className=""
-          value={filters.program}
-          onChange={(e) => pushFilters({ program: e.target.value })}
-        >
-          <option value="">Všechny programy</option>
-          {programs.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </Select>
-        <Select
-          className=""
-          value={filters.paymentStatus}
-          onChange={(e) => pushFilters({ paymentStatus: e.target.value })}
-        >
-          <option value="">Všechny platby</option>
-          <option value="unpaid">Nezaplaceno</option>
-          <option value="invoice_sent">Faktura odeslána</option>
-          <option value="overdue">Po splatnosti</option>
-          <option value="paid">Zaplaceno</option>
-          <option value="cancelled">Storno</option>
-        </Select>
-        <div className="ml-auto flex gap-2">
-          <Button
-            size="sm"
-            asChild
-            className="btn-success"
+
+        {/* Toolbar */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-foreground)]" />
+            <Input
+              className="w-full pl-9 sm:w-64"
+              placeholder="Hledat dítě, rodiče, e-mail…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <Select
+            className=""
+            value={filters.program}
+            onChange={(e) => pushFilters({ program: e.target.value })}
           >
-            <a href={`/api/registrations/export?format=xlsx&${exportQuery}`}>
-              <FileSpreadsheet className="h-4 w-4" /> Excel
-            </a>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <a href={`/api/registrations/export?format=csv&${exportQuery}`}>
-              <FileText className="h-4 w-4" /> CSV
-            </a>
-          </Button>
-          {filters.program && (
-            <Button variant="outline" size="sm" asChild>
-              <a href={`/api/programs/${filters.program}/attendance`} target="_blank" rel="noreferrer">
-                <Printer className="h-4 w-4" /> Docházka PDF
+            <option value="">Všechny programy</option>
+            {programs.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </Select>
+          <Select
+            className=""
+            value={filters.paymentStatus}
+            onChange={(e) => pushFilters({ paymentStatus: e.target.value })}
+          >
+            <option value="">Všechny platby</option>
+            <option value="unpaid">Nezaplaceno</option>
+            <option value="invoice_sent">Faktura odeslána</option>
+            <option value="overdue">Po splatnosti</option>
+            <option value="paid">Zaplaceno</option>
+            <option value="cancelled">Storno</option>
+          </Select>
+          <div className="ml-auto flex gap-2">
+            <Button size="sm" asChild className="btn-success">
+              <a href={`/api/registrations/export?format=xlsx&${exportQuery}`}>
+                <FileSpreadsheet className="h-4 w-4" /> Excel
               </a>
             </Button>
-          )}
+            <Button variant="outline" size="sm" asChild>
+              <a href={`/api/registrations/export?format=csv&${exportQuery}`}>
+                <FileText className="h-4 w-4" /> CSV
+              </a>
+            </Button>
+            {filters.program && (
+              <Button variant="outline" size="sm" asChild>
+                <a href={`/api/programs/${filters.program}/attendance`} target="_blank" rel="noreferrer">
+                  <Printer className="h-4 w-4" /> Docházka PDF
+                </a>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
-      {registrations.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--background)] p-12 text-center text-sm text-[var(--muted-foreground)]">
-          Nic nenalezeno pro zadané filtry.
-        </div>
-      ) : showGroups ? (
-        <div className="space-y-3">
-          {grouped.map((g) => (
-            <ProgramGroup key={g.id} programId={g.id} name={g.name} meta={g.meta} rows={g.rows} onDetail={setDetail} />
-          ))}
-        </div>
-      ) : (
-        <Paginated rows={registrations} onDetail={setDetail} />
-      )}
+      {/* Scrollable list */}
+      <div className="min-h-0 flex-1 overflow-auto">
+        {registrations.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-[var(--border)] bg-[var(--background)] p-12 text-center text-sm text-[var(--muted-foreground)]">
+            Nic nenalezeno pro zadané filtry.
+          </div>
+        ) : showGroups ? (
+          <div className="space-y-3">
+            {grouped.map((g) => (
+              <ProgramGroup key={g.id} programId={g.id} name={g.name} meta={g.meta} rows={g.rows} onDetail={setDetail} />
+            ))}
+          </div>
+        ) : (
+          <Paginated rows={registrations} onDetail={setDetail} />
+        )}
+      </div>
 
       <DetailDialog
         detail={detail}
@@ -234,25 +238,6 @@ export function RegistrationsTable({
         }
       />
     </div>
-  );
-}
-
-function SummaryCard({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "warning" | "success";
-}) {
-  const color =
-    tone === "warning" ? "text-warning" : tone === "success" ? "text-success" : "";
-  return (
-    <Card className="p-4">
-      <p className="text-sm text-[var(--muted-foreground)]">{label}</p>
-      <p className={`mt-1 text-2xl font-bold ${color}`}>{value}</p>
-    </Card>
   );
 }
 
