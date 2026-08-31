@@ -1,9 +1,11 @@
 package cz.hopik4kids.cms.billing.web;
 
+import cz.hopik4kids.cms.billing.service.InvoiceExportService;
 import cz.hopik4kids.cms.billing.service.InvoicePdfService;
 import cz.hopik4kids.cms.billing.service.InvoiceService;
 import cz.hopik4kids.cms.billing.web.dto.InvoiceDto;
 import cz.hopik4kids.cms.kernel.web.PageResponse;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -16,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
+
 /** Invoices (prd §6A.5). Owner/admin/accountant. */
 @RestController
 @RequestMapping("/admin/api/billing/invoices")
@@ -24,18 +28,52 @@ public class InvoiceController {
 
     private final InvoiceService invoices;
     private final InvoicePdfService pdf;
+    private final InvoiceExportService export;
     private final cz.hopik4kids.cms.billing.service.InvoiceEmailService emailService;
 
     public InvoiceController(InvoiceService invoices, InvoicePdfService pdf,
+                             InvoiceExportService export,
                              cz.hopik4kids.cms.billing.service.InvoiceEmailService emailService) {
         this.invoices = invoices;
         this.pdf = pdf;
+        this.export = export;
         this.emailService = emailService;
     }
 
     @GetMapping
-    public PageResponse<InvoiceDto> list() {
-        return PageResponse.ofAll(invoices.list());
+    public PageResponse<InvoiceDto> list(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String type) {
+        if (from == null && to == null && (status == null || status.isBlank())
+                && (type == null || type.isBlank())) {
+            return PageResponse.ofAll(invoices.list());
+        }
+        return PageResponse.ofAll(invoices.list(from, to, status, type));
+    }
+
+    /** Export the (optionally filtered) invoice list as CSV/XLSX (prd todo #2). */
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportList(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String type,
+            @RequestParam(defaultValue = "xlsx") String format) {
+        boolean xlsx = "xlsx".equalsIgnoreCase(format);
+        byte[] body = xlsx
+                ? export.exportXlsx(from, to, status, type)
+                : export.exportCsv(from, to, status, type);
+        String filename = "faktury." + (xlsx ? "xlsx" : "csv");
+        MediaType contentType = xlsx
+                ? MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                : MediaType.parseMediaType("text/csv; charset=UTF-8");
+        return ResponseEntity.ok()
+                .contentType(contentType)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(filename).build().toString())
+                .body(body);
     }
 
     @GetMapping("/{id}")

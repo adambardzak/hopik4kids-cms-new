@@ -50,12 +50,47 @@ public class InvoiceService {
     @Transactional(readOnly = true)
     public List<InvoiceDto> list() {
         return invoices.findAllByOrderByIssueDateDescInvoiceNumberDesc().stream()
-                .map(InvoiceDto::from).toList();
+                .map(this::dtoOf).toList();
+    }
+
+    /** Filtered list for the invoice table/export (prd todo #2). All filters optional. */
+    @Transactional(readOnly = true)
+    public List<InvoiceDto> list(LocalDate from, LocalDate to, String status, String type) {
+        InvoiceStatus st = parseStatus(status);
+        return invoices.findAllByOrderByIssueDateDescInvoiceNumberDesc().stream()
+                .filter(i -> from == null || !i.getIssueDate().isBefore(from))
+                .filter(i -> to == null || !i.getIssueDate().isAfter(to))
+                .filter(i -> st == null || i.getStatus() == st)
+                .filter(i -> type == null || type.isBlank() || type.equalsIgnoreCase(i.getType()))
+                .map(this::dtoOf).toList();
+    }
+
+    private static InvoiceStatus parseStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+        try {
+            return InvoiceStatus.valueOf(status.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    /** Build a DTO with the program vs. shirt amount split derived from the invoice items. */
+    public InvoiceDto dtoOf(Invoice i) {
+        int shirt = 0;
+        for (Item it : readItems(i.getItems())) {
+            if (it.label() != null && it.label().toLowerCase().contains("dres")) {
+                shirt += it.qty() * it.unitPrice();
+            }
+        }
+        int program = i.getTotalAmount() - shirt;
+        return InvoiceDto.from(i, program, shirt);
     }
 
     @Transactional(readOnly = true)
     public InvoiceDto get(String id) {
-        return InvoiceDto.from(find(id));
+        return dtoOf(find(id));
     }
 
     /** Create an invoice for a registration (idempotent — returns existing if already invoiced). */

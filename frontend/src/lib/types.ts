@@ -223,6 +223,8 @@ export interface Invoice {
   payerEmail?: string | null;
   items: string; // JSON array
   totalAmount: number;
+  programAmount: number;
+  shirtAmount: number;
   issueDate: string;
   dueDate: string;
   variableSymbol: string;

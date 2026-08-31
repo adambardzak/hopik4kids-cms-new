@@ -15,6 +15,8 @@ public record InvoiceDto(
         String payerEmail,
         String items,
         int totalAmount,
+        int programAmount,
+        int shirtAmount,
         LocalDate issueDate,
         LocalDate dueDate,
         String variableSymbol,
@@ -22,6 +24,11 @@ public record InvoiceDto(
         Instant paidAt
 ) {
     public static InvoiceDto from(Invoice i) {
+        return from(i, 0, 0);
+    }
+
+    /** Variant that carries the program/shirt split (computed from items by the service). */
+    public static InvoiceDto from(Invoice i, int programAmount, int shirtAmount) {
         return new InvoiceDto(
                 i.getId(),
                 i.getInvoiceNumber(),
@@ -32,6 +39,8 @@ public record InvoiceDto(
                 i.getPayerEmail(),
                 i.getItems(),
                 i.getTotalAmount(),
+                programAmount,
+                shirtAmount,
                 i.getIssueDate(),
                 i.getDueDate(),
                 i.getVariableSymbol(),

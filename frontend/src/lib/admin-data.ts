@@ -88,8 +88,14 @@ export function getAttendanceStats(program: string) {
 }
 
 // --- billing ---
-export function listInvoices() {
-  return api<PageResponse<Invoice>>("/admin/api/billing/invoices");
+export function listInvoices(filters?: { from?: string; to?: string; status?: string; type?: string }) {
+  const q = new URLSearchParams();
+  if (filters?.from) q.set("from", filters.from);
+  if (filters?.to) q.set("to", filters.to);
+  if (filters?.status) q.set("status", filters.status);
+  if (filters?.type) q.set("type", filters.type);
+  const qs = q.toString();
+  return api<PageResponse<Invoice>>(`/admin/api/billing/invoices${qs ? `?${qs}` : ""}`);
 }
 
 export function getSupplierSettings() {

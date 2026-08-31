@@ -7,6 +7,7 @@ import type { Invoice, SupplierSettings } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/page-header";
@@ -33,9 +34,11 @@ function czk(n: number) {
 export function BillingView({
   invoices,
   supplier,
+  filters,
 }: {
   invoices: Invoice[];
   supplier: SupplierSettings;
+  filters: { from?: string; to?: string; status?: string; type?: string };
 }) {
   const [tab, setTab] = useState<"invoices" | "supplier">("invoices");
 
@@ -61,7 +64,7 @@ export function BillingView({
       </div>
 
       {tab === "invoices" ? (
-        <InvoicesTable invoices={invoices} hasIban={!!supplier.iban} />
+        <InvoicesTable invoices={invoices} hasIban={!!supplier.iban} filters={filters} />
       ) : (
         <SupplierForm supplier={supplier} />
       )}
@@ -69,9 +72,49 @@ export function BillingView({
   );
 }
 
-function InvoicesTable({ invoices, hasIban }: { invoices: Invoice[]; hasIban: boolean }) {
+function InvoicesTable({
+  invoices,
+  hasIban,
+  filters,
+}: {
+  invoices: Invoice[];
+  hasIban: boolean;
+  filters: { from?: string; to?: string; status?: string; type?: string };
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+
+  const [from, setFrom] = useState(filters.from ?? "");
+  const [to, setTo] = useState(filters.to ?? "");
+  const [status, setStatus] = useState(filters.status ?? "");
+  const [type, setType] = useState(filters.type ?? "");
+
+  function applyFilters() {
+    const q = new URLSearchParams();
+    if (from) q.set("from", from);
+    if (to) q.set("to", to);
+    if (status) q.set("status", status);
+    if (type) q.set("type", type);
+    const qs = q.toString();
+    router.push(`/admin/fakturace${qs ? `?${qs}` : ""}`);
+  }
+
+  function resetFilters() {
+    setFrom("");
+    setTo("");
+    setStatus("");
+    setType("");
+    router.push("/admin/fakturace");
+  }
+
+  const exportQuery = (() => {
+    const q = new URLSearchParams();
+    if (from) q.set("from", from);
+    if (to) q.set("to", to);
+    if (status) q.set("status", status);
+    if (type) q.set("type", type);
+    return q.toString();
+  })();
 
   const unpaidSum = invoices.filter((i) => i.status === "unpaid").reduce((s, i) => s + i.totalAmount, 0);
   const paidSum = invoices.filter((i) => i.status === "paid").reduce((s, i) => s + i.totalAmount, 0);
@@ -107,6 +150,54 @@ function InvoicesTable({ invoices, hasIban }: { invoices: Invoice[]; hasIban: bo
         </Card>
       </div>
 
+      {/* Filters + export */}
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-[var(--border)] bg-[var(--background)] p-3">
+        <div>
+          <Label className="text-xs">Od</Label>
+          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-9" />
+        </div>
+        <div>
+          <Label className="text-xs">Do</Label>
+          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-9" />
+        </div>
+        <div>
+          <Label className="text-xs">Stav</Label>
+          <Select value={status} onChange={(e) => setStatus(e.target.value)} className="h-9">
+            <option value="">Vše</option>
+            <option value="unpaid">Nezaplaceno</option>
+            <option value="paid">Zaplaceno</option>
+            <option value="cancelled">Storno</option>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs">Typ</Label>
+          <Select value={type} onChange={(e) => setType(e.target.value)} className="h-9">
+            <option value="">Vše</option>
+            <option value="club">Kroužek</option>
+            <option value="school">Škola</option>
+            <option value="camp">Kemp</option>
+          </Select>
+        </div>
+        <Button size="sm" onClick={applyFilters} disabled={isPending}>
+          <Search className="h-4 w-4" /> Filtrovat
+        </Button>
+        <Button variant="ghost" size="sm" onClick={resetFilters} disabled={isPending}>
+          Zrušit
+        </Button>
+        <div className="ml-auto flex gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <a href={`/api/billing/invoices/export?format=xlsx${exportQuery ? `&${exportQuery}` : ""}`}>
+              <Download className="h-4 w-4" /> Excel
+            </a>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <a href={`/api/billing/invoices/export?format=csv${exportQuery ? `&${exportQuery}` : ""}`}>
+              <Download className="h-4 w-4" /> CSV
+            </a>
+          </Button>
+        </div>
+      </div>
+
       <div className="rounded-lg border border-[var(--border)] bg-[var(--background)]">
         <Table>
           <TableHeader>
@@ -116,6 +207,8 @@ function InvoicesTable({ invoices, hasIban }: { invoices: Invoice[]; hasIban: bo
               <TableHead>Vystaveno</TableHead>
               <TableHead>Splatnost</TableHead>
               <TableHead>Částka</TableHead>
+              <TableHead>Kroužek</TableHead>
+              <TableHead>Dres</TableHead>
               <TableHead>Stav</TableHead>
               <TableHead></TableHead>
             </TableRow>
@@ -134,6 +227,10 @@ function InvoicesTable({ invoices, hasIban }: { invoices: Invoice[]; hasIban: bo
                     {new Date(inv.dueDate).toLocaleDateString("cs-CZ")}
                   </TableCell>
                   <TableCell>{czk(inv.totalAmount)}</TableCell>
+                  <TableCell className="text-sm text-[var(--muted-foreground)]">{czk(inv.programAmount)}</TableCell>
+                  <TableCell className="text-sm text-[var(--muted-foreground)]">
+                    {inv.shirtAmount > 0 ? czk(inv.shirtAmount) : "—"}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={st.variant}>{st.label}</Badge>
                   </TableCell>
