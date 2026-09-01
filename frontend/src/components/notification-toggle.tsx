@@ -44,7 +44,16 @@ export function NotificationToggle() {
       return;
     }
     try {
-      const reg = await navigator.serviceWorker.ready;
+      // Don't hang forever if the service worker never becomes ready (e.g. first launch).
+      const reg = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+      ]);
+      if (!reg) {
+        // SW not ready yet — still let the user try to enable (subscribe re-checks readiness).
+        setState("prompt");
+        return;
+      }
       const sub = await reg.pushManager.getSubscription();
       // Only treat as "subscribed" when permission is granted AND a real subscription exists.
       setState(Notification.permission === "granted" && sub ? "subscribed" : "prompt");
@@ -113,7 +122,18 @@ export function NotificationToggle() {
     }
   }
 
-  if (state === "unsupported" || state === "loading") return null;
+  if (state === "loading") return null;
+
+  if (state === "unsupported") {
+    return (
+      <p className="mb-2 flex items-start gap-1.5 text-xs text-[var(--muted-foreground)]">
+        <BellOff className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+        <span>
+          Notifikace vyžadují aplikaci na ploše (Přidat na plochu) a iPhone iOS 16.4+.
+        </span>
+      </p>
+    );
+  }
 
   if (state === "subscribed") {
     return (
