@@ -42,17 +42,20 @@ function programMeta(r: Registration): string {
   return parts.join(" · ");
 }
 
-const PAYMENT_LABELS: Record<string, { label: string; variant: "success" | "warning" | "danger" | "info" }> = {
+const PAYMENT_LABELS: Record<string, { label: string; variant: "success" | "warning" | "danger" | "info" | "default" }> = {
   paid: { label: "Zaplaceno", variant: "success" },
   unpaid: { label: "Nezaplaceno", variant: "warning" },
   invoice_sent: { label: "Faktura odeslána", variant: "info" },
   overdue: { label: "Po splatnosti", variant: "danger" },
   cancelled: { label: "Storno", variant: "danger" },
+  free: { label: "Zdarma", variant: "default" },
 };
 
-/** Effective payment badge key: overdue takes precedence over the stored status. */
-function effectivePaymentKey(r: { paymentStatus: string; overdue?: boolean }): string {
-  if (r.overdue && r.paymentStatus !== "paid" && r.paymentStatus !== "cancelled") {
+/** Effective payment badge key: free (price 0) and overdue take precedence over the stored status. */
+function effectivePaymentKey(r: { paymentStatus: string; overdue?: boolean; priceSnapshot?: number }): string {
+  if (r.paymentStatus === "cancelled") return "cancelled";
+  if (r.priceSnapshot === 0) return "free";
+  if (r.overdue && r.paymentStatus !== "paid") {
     return "overdue";
   }
   return r.paymentStatus;
@@ -108,7 +111,10 @@ export function RegistrationsTable({
     () => visible.filter((r) => r.status !== "cancelled"),
     [visible],
   );
-  const unpaid = active.filter((r) => r.paymentStatus === "unpaid" || r.paymentStatus === "invoice_sent");
+  // Free registrations (price 0) aren't "unpaid" — exclude them from the unpaid summary.
+  const unpaid = active.filter(
+    (r) => r.priceSnapshot > 0 && (r.paymentStatus === "unpaid" || r.paymentStatus === "invoice_sent"),
+  );
   const unpaidSum = unpaid.reduce((s, r) => s + r.priceSnapshot, 0);
   const paidSum = active
     .filter((r) => r.paymentStatus === "paid")
@@ -257,7 +263,11 @@ function ProgramGroup({
 }) {
   const [open, setOpen] = useState(true);
   const active = rows.filter((r) => r.status !== "cancelled").length;
-  const unpaid = rows.filter((r) => r.status !== "cancelled" && r.paymentStatus === "unpaid").length;
+  // Free registrations (price 0) don't count as unpaid.
+  const unpaid = rows.filter(
+    (r) => r.status !== "cancelled" && r.priceSnapshot > 0 &&
+      (r.paymentStatus === "unpaid" || r.paymentStatus === "invoice_sent"),
+  ).length;
 
   return (
     <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--background)]">
@@ -448,7 +458,7 @@ function DetailDialog({
               <Field label="Přezdívka" value={detail.nickName} />
               <Field label="Alergie" value={detail.allergies} />
               <Field label="Poznámka" value={detail.note} />
-              <Field label="Cena" value={`${detail.priceSnapshot} Kč`} />
+              <Field label="Cena" value={detail.priceSnapshot > 0 ? `${detail.priceSnapshot} Kč` : "Zdarma"} />
               <Field label="Souhlas OÚ" value={detail.consentPersonalData ? "ano" : "ne"} />
               <Field label="Souhlas média" value={detail.consentMedia ? "ano" : "ne"} />
             </dl>
@@ -459,19 +469,25 @@ function DetailDialog({
 
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="text-sm text-[var(--muted-foreground)]">Platba:</span>
-              {(["unpaid", "invoice_sent", "paid"] as const).map((s) => (
-                <Button
-                  key={s}
-                  size="sm"
-                  variant={detail.paymentStatus === s ? "default" : "outline"}
-                  disabled={isPending || detail.status === "cancelled"}
-                  onClick={() => onPayment(detail.id, s)}
-                >
-                  {s === "paid" ? "Zaplaceno" : s === "invoice_sent" ? "Faktura odeslána" : "Nezaplaceno"}
-                </Button>
-              ))}
-              {detail.overdue && detail.paymentStatus !== "paid" && (
-                <Badge variant="danger">Po splatnosti</Badge>
+              {detail.priceSnapshot === 0 ? (
+                <Badge variant="default">Zdarma</Badge>
+              ) : (
+                <>
+                  {(["unpaid", "invoice_sent", "paid"] as const).map((s) => (
+                    <Button
+                      key={s}
+                      size="sm"
+                      variant={detail.paymentStatus === s ? "default" : "outline"}
+                      disabled={isPending || detail.status === "cancelled"}
+                      onClick={() => onPayment(detail.id, s)}
+                    >
+                      {s === "paid" ? "Zaplaceno" : s === "invoice_sent" ? "Faktura odeslána" : "Nezaplaceno"}
+                    </Button>
+                  ))}
+                  {detail.overdue && detail.paymentStatus !== "paid" && (
+                    <Badge variant="danger">Po splatnosti</Badge>
+                  )}
+                </>
               )}
               {detail.status !== "cancelled" && (
                 <Button
