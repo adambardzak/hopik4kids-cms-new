@@ -36,7 +36,7 @@ export default async function RozvrhPage({
   ]);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader
         title="Rozvrh"
         description="Týdenní přehled lekcí. Prázdná okna = volné termíny, které můžete nabídnout školce."
