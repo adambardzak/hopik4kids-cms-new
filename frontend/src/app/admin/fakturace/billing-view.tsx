@@ -22,16 +22,13 @@ import {
 import { markInvoicePaid, cancelInvoice, saveSupplierSettings, lookupAres, sendInvoiceEmail } from "@/lib/actions";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
+import { czk } from "@/lib/format";
 
 const STATUS: Record<string, { label: string; variant: "success" | "warning" | "danger" }> = {
   paid: { label: "Zaplaceno", variant: "success" },
   unpaid: { label: "Nezaplaceno", variant: "warning" },
   cancelled: { label: "Storno", variant: "danger" },
 };
-
-function czk(n: number) {
-  return n.toLocaleString("cs-CZ") + " Kč";
-}
 
 export function BillingView({
   invoices,

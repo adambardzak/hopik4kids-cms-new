@@ -183,7 +183,7 @@ export function RegistrationsTable({
             <option value="cancelled">Storno</option>
           </Select>
           <div className="ml-auto flex gap-2">
-            <Button size="sm" asChild className="btn-success">
+            <Button size="sm" variant="success" asChild>
               <a href={`/api/registrations/export?format=xlsx&${exportQuery}`}>
                 <FileSpreadsheet className="h-4 w-4" /> Excel
               </a>

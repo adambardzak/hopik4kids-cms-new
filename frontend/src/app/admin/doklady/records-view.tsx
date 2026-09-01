@@ -22,6 +22,7 @@ import { EmptyState } from "@/components/page-header";
 import { deleteRecord } from "@/lib/actions";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
+import { czk, czDate } from "@/lib/format";
 
 const TYPE_META: Record<RecordDocument["type"], { label: string; icon: typeof Receipt; variant: "info" | "success" | "warning" | "default" }> = {
   receipt: { label: "Účtenka", icon: Receipt, variant: "info" },
@@ -37,14 +38,6 @@ const TYPE_TABS: { value: string; label: string }[] = [
   { value: "contract", label: "Smlouvy" },
   { value: "other", label: "Ostatní" },
 ];
-
-function fmtDate(iso?: string | null) {
-  return iso ? new Date(iso).toLocaleDateString("cs-CZ") : "—";
-}
-
-function czk(n?: number | null) {
-  return n != null ? n.toLocaleString("cs-CZ") + " Kč" : "—";
-}
 
 function fmtSize(bytes?: number | null) {
   if (!bytes) return "";
@@ -203,7 +196,7 @@ export function RecordsView({
                       </TableCell>
                       <TableCell className="text-sm">{r.personName ?? "—"}</TableCell>
                       <TableCell className="whitespace-nowrap text-sm text-[var(--muted-foreground)]">
-                        {fmtDate(r.docDate)}
+                        {czDate(r.docDate)}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">{czk(r.amount)}</TableCell>
                       <TableCell className="text-right">

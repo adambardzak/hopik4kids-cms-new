@@ -16,10 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useConfirm } from "@/components/ui/confirm";
-
-function czk(n?: number | null) {
-  return n != null ? n.toLocaleString("cs-CZ") + " Kč" : "—";
-}
+import { czk } from "@/lib/format";
 
 function status(m: BankMatch): string {
   return (m.matchStatus || "").toLowerCase();

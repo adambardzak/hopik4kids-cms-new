@@ -8,10 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { DashboardStats, ScheduleEntry } from "@/lib/types";
-
-function czk(n: number): string {
-  return n.toLocaleString("cs-CZ") + " Kč";
-}
+import { czk } from "@/lib/format";
 
 const WEEKDAYS = ["neděle", "pondělí", "úterý", "středa", "čtvrtek", "pátek", "sobota"];
 
