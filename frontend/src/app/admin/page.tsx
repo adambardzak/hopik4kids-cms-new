@@ -19,10 +19,17 @@ export default async function DashboardPage() {
   const todayIso = today.toISOString().slice(0, 10);
   const todayLabel = `${WEEKDAYS[today.getDay()]} ${today.getDate()}. ${today.getMonth() + 1}.`;
 
+  // Fetch stats + today's schedule in parallel (independent) to cut the dashboard load time.
+  const [statsResult, scheduleResult] = await Promise.allSettled([
+    getDashboardStats(),
+    listSchedule({ from: todayIso, to: todayIso }),
+  ]);
+
   let stats: DashboardStats | null = null;
-  try {
-    stats = await getDashboardStats();
-  } catch (e) {
+  if (statsResult.status === "fulfilled") {
+    stats = statsResult.value;
+  } else {
+    const e = statsResult.reason;
     // 403 = trainer without dashboard access → simpler view. Other errors bubble to error.tsx.
     if (e instanceof ApiRequestError && e.status === 403) {
       stats = null;
@@ -33,13 +40,10 @@ export default async function DashboardPage() {
 
   // Today's lessons (best-effort; never break the dashboard if the schedule call fails).
   let todayLessons: ScheduleEntry[] = [];
-  try {
-    const res = await listSchedule({ from: todayIso, to: todayIso });
-    todayLessons = res.items
+  if (scheduleResult.status === "fulfilled") {
+    todayLessons = scheduleResult.value.items
       .filter((e) => e.overrideType !== "cancelled")
       .sort((a, b) => a.startTime.localeCompare(b.startTime));
-  } catch {
-    todayLessons = [];
   }
 
   const occupancyPct =

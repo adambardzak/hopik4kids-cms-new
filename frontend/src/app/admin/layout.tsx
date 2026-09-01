@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ToastProvider } from "@/components/ui/toast";
 import { ConfirmProvider } from "@/components/ui/confirm";
+import { NavigationProgress } from "@/components/navigation-progress";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -16,6 +17,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <ToastProvider>
       <ConfirmProvider>
         <TooltipProvider delayDuration={200}>
+          <NavigationProgress />
           <div className="flex h-screen flex-col overflow-hidden md:flex-row">
             <Sidebar groups={groups} session={session} />
             <main className="h4k-fade-in flex-1 overflow-auto bg-[var(--muted)] p-4 md:p-8">{children}</main>
