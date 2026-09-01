@@ -15,6 +15,31 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 
 type State = "unsupported" | "loading" | "prompt" | "subscribed" | "denied";
 
+/** Get an active service-worker registration reliably (iOS `serviceWorker.ready` can hang). */
+async function getRegistration(): Promise<ServiceWorkerRegistration | null> {
+  try {
+    // Already registered?
+    const existing = await navigator.serviceWorker.getRegistration();
+    if (existing) {
+      // Wait briefly for activation, but never hang.
+      if (existing.active) return existing;
+      await Promise.race([
+        new Promise<void>((resolve) => {
+          const sw = existing.installing || existing.waiting;
+          if (!sw) return resolve();
+          sw.addEventListener("statechange", () => sw.state === "activated" && resolve());
+        }),
+        new Promise<void>((resolve) => setTimeout(resolve, 4000)),
+      ]);
+      return existing;
+    }
+    // Not registered yet — register now (returns once registered).
+    return await navigator.serviceWorker.register("/sw.js");
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Button to enable PWA push notifications for the current admin/owner device.
  * Verifies an actual server-registered subscription (not just Notification.permission),
@@ -45,10 +70,7 @@ export function NotificationToggle() {
     }
     try {
       // Don't hang forever if the service worker never becomes ready (e.g. first launch).
-      const reg = await Promise.race([
-        navigator.serviceWorker.ready,
-        new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
-      ]);
+      const reg = await getRegistration();
       if (!reg) {
         // SW not ready yet — still let the user try to enable (subscribe re-checks readiness).
         setState("prompt");
@@ -81,7 +103,8 @@ export function NotificationToggle() {
       const { publicKey } = await keyRes.json();
       if (!publicKey) throw new Error("Notifikace nejsou na serveru nakonfigurované.");
 
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await getRegistration();
+      if (!reg) throw new Error("Aplikaci nejdřív přidej na plochu a otevři z ikony.");
 
       // Reuse an existing subscription if present; otherwise create one.
       let sub = await reg.pushManager.getSubscription();
