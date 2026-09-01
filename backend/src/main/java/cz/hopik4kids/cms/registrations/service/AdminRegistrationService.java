@@ -96,6 +96,25 @@ public class AdminRegistrationService {
         PaymentStatus ps = EnumParser.parseRequired(PaymentStatus.class, status, "paymentStatus");
         r.setPaymentStatus(ps);
         registrations.save(r);
+
+        // Keep the linked invoice in sync (two-way): marking a registration paid marks its invoice
+        // paid, and reverting to unpaid reopens it. Cancelled invoices are left untouched.
+        invoices.findByRegistrationId(id).ifPresent(inv -> {
+            if (inv.getStatus() == InvoiceStatus.CANCELLED) {
+                return;
+            }
+            if (ps == PaymentStatus.PAID && inv.getStatus() != InvoiceStatus.PAID) {
+                inv.setStatus(InvoiceStatus.PAID);
+                inv.setPaidAt(java.time.Instant.now());
+                invoices.save(inv);
+            } else if ((ps == PaymentStatus.UNPAID || ps == PaymentStatus.INVOICE_SENT)
+                    && inv.getStatus() == InvoiceStatus.PAID) {
+                inv.setStatus(InvoiceStatus.UNPAID);
+                inv.setPaidAt(null);
+                invoices.save(inv);
+            }
+        });
+
         audit.record("payment-status", "Registration", id, "{\"status\":\"" + ps.name() + "\"}");
         return AdminRegistrationDto.from(r);
     }
