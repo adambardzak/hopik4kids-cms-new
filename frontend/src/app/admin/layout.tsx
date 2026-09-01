@@ -23,7 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Sidebar modules={modules} session={session} />
             <main className="flex flex-1 flex-col overflow-auto bg-[var(--muted)] p-4 md:p-8">
               <ModuleTabs role={session.role} />
-              <div className="h4k-fade-in flex min-h-0 flex-1 flex-col">{children}</div>
+              <div className="h4k-fade-in flex min-h-0 flex-1 flex-col pb-10">{children}</div>
             </main>
           </div>
         </TooltipProvider>
