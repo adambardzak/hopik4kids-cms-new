@@ -69,6 +69,7 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
     router.refresh();
   }
 
+  // Desktop: compact module list (module pages become tabs at the top of the page).
   const nav = (
     <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-2">
       {modules.map((m) => {
@@ -91,6 +92,39 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
           </Link>
         );
       })}
+    </nav>
+  );
+
+  // Mobile drawer: full flat list grouped by module (no tabs — everything is one tap here).
+  const mobileNav = (
+    <nav className="flex flex-1 flex-col gap-3 overflow-y-auto px-3 py-2">
+      {modules.map((m) => (
+        <div key={m.id} className="flex flex-col gap-1">
+          {m.title && (
+            <p className="px-3 pb-1 pt-1 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+              {m.title}
+            </p>
+          )}
+          {m.items.map((item) => {
+            const active =
+              item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
+            const Icon = ICONS[item.icon];
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                  active ? "bg-[var(--primary)] text-[var(--primary-foreground)]" : "hover:bg-[var(--muted)]",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      ))}
     </nav>
   );
 
@@ -173,7 +207,7 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
                 <X className="h-5 w-5" />
               </button>
             </div>
-            {nav}
+            {mobileNav}
             {footer}
           </aside>
         </div>

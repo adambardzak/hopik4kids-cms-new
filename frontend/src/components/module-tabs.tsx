@@ -18,7 +18,7 @@ export function ModuleTabs({ role }: { role: Role }) {
   if (!module || module.title === null || module.items.length < 2) return null;
 
   return (
-    <div className="mb-5 flex gap-1 overflow-x-auto border-b border-[var(--border)]">
+    <div className="mb-5 hidden gap-1 overflow-x-auto border-b border-[var(--border)] md:flex">
       {module.items.map((item) => {
         const active =
           item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
