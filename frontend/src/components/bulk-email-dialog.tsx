@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { fetchBulkRecipients, sendBulkEmail } from "@/lib/actions";
 
 /** Dialog to email all parents of a program's active participants (prd §6A.3). */
-export function BulkEmailDialog({ programId, programName }: { programId: string; programName: string }) {
+export function BulkEmailDialog({ programId, programName, triggerClassName }: { programId: string; programName: string; triggerClassName?: string }) {
   const [open, setOpen] = useState(false);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
@@ -46,7 +46,7 @@ export function BulkEmailDialog({ programId, programName }: { programId: string;
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" title="Hromadný e-mail rodičům">
+        <Button variant="outline" size="sm" className={triggerClassName} title="Hromadný e-mail rodičům">
           <Mail className="h-3.5 w-3.5" /> E-mail rodičům
         </Button>
       </DialogTrigger>

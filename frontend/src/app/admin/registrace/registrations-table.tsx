@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Search, ChevronDown, ChevronRight, Users, Eye, FileSpreadsheet, FileText, Printer, Camera, ShieldCheck } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, Users, Eye, FileSpreadsheet, FileText, Printer, Camera } from "lucide-react";
 import type { Program, Registration } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -133,9 +133,9 @@ export function RegistrationsTable({
   const showGroups = !filters.program && grouped.length > 1;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      {/* Sticky header: compact summary + toolbar (always visible while the list scrolls) */}
-      <div className="shrink-0 space-y-3 pb-3">
+    <div>
+      {/* Summary + toolbar */}
+      <div className="mb-3 space-y-3">
         {/* Compact summary strip */}
         <div className="flex flex-wrap items-center gap-x-6 gap-y-1 rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm">
           <span>
@@ -210,8 +210,8 @@ export function RegistrationsTable({
         </div>
       </div>
 
-      {/* Scrollable list */}
-      <div className="min-h-0 flex-1 overflow-auto">
+      {/* List */}
+      <div>
         {registrations.length === 0 ? (
           <EmptyState icon={Search} message="Nic nenalezeno pro zadané filtry." />
         ) : showGroups ? (
@@ -291,13 +291,13 @@ function ProgramGroup({
           href={`/api/programs/${programId}/attendance`}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-1.5 rounded-md border border-[var(--border)] px-2.5 py-1.5 text-xs font-medium hover:bg-[var(--background)]"
+          className="flex min-w-[130px] items-center justify-center gap-1.5 rounded-md border border-[var(--border)] px-2.5 py-1.5 text-xs font-medium hover:bg-[var(--background)]"
           title="Docházkový list (PDF)"
         >
           <Printer className="h-3.5 w-3.5" /> Docházka
         </a>
-        <BulkEmailDialog programId={programId} programName={name} />
-        <WaitlistDialog programId={programId} programName={name} />
+        <BulkEmailDialog programId={programId} programName={name} triggerClassName="min-w-[130px] justify-center" />
+        <WaitlistDialog programId={programId} programName={name} triggerClassName="min-w-[130px] justify-center" />
       </div>
       {open && <RegRows rows={rows} onDetail={onDetail} />}
     </div>
@@ -352,7 +352,7 @@ function RegRows({
           <TableHead>Rodič</TableHead>
           <TableHead>Dres</TableHead>
           <TableHead>Platba</TableHead>
-          <TableHead>GDPR</TableHead>
+          <TableHead>Fotky</TableHead>
           <TableHead>Přihlášeno</TableHead>
           <TableHead></TableHead>
         </TableRow>
@@ -372,20 +372,12 @@ function RegRows({
                 <Badge variant={pay.variant}>{pay.label}</Badge>
               </TableCell>
               <TableCell>
-                <div className="flex items-center gap-1.5">
-                  <ConsentIcon
-                    ok={r.consentMedia}
-                    icon={Camera}
-                    yes="Souhlas s fotografováním"
-                    no="BEZ souhlasu s fotografováním"
-                  />
-                  <ConsentIcon
-                    ok={r.consentPersonalData}
-                    icon={ShieldCheck}
-                    yes="Souhlas se zpracováním osobních údajů"
-                    no="BEZ souhlasu s osobními údaji"
-                  />
-                </div>
+                <ConsentIcon
+                  ok={r.consentMedia}
+                  icon={Camera}
+                  yes="Souhlas s fotografováním"
+                  no="BEZ souhlasu s fotografováním"
+                />
               </TableCell>
               <TableCell className="text-sm text-[var(--muted-foreground)]">
                 {new Date(r.createdAt).toLocaleDateString("cs-CZ")}
@@ -401,7 +393,7 @@ function RegRows({
   );
 }
 
-/** Small GDPR consent indicator: green icon when granted, muted+struck when not. */
+/** Photo-consent indicator: green icon when granted, red when not. */
 function ConsentIcon({
   ok,
   icon: Icon,
@@ -415,7 +407,7 @@ function ConsentIcon({
 }) {
   return (
     <span title={ok ? yes : no} className="inline-flex">
-      <Icon className={`h-4 w-4 ${ok ? "text-success" : "text-[var(--muted-foreground)] opacity-40"}`} />
+      <Icon className={`h-4 w-4 ${ok ? "text-success" : "text-danger"}`} />
     </span>
   );
 }

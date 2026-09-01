@@ -18,7 +18,7 @@ const STATUS: Record<string, { label: string; variant: "warning" | "info" | "suc
 };
 
 /** Waitlist for a full program (prd §6A.2). */
-export function WaitlistDialog({ programId, programName }: { programId: string; programName: string }) {
+export function WaitlistDialog({ programId, programName, triggerClassName }: { programId: string; programName: string; triggerClassName?: string }) {
   const router = useRouter();
   const confirm = useConfirm();
   const [open, setOpen] = useState(false);
@@ -58,7 +58,7 @@ export function WaitlistDialog({ programId, programName }: { programId: string; 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" title="Čekací listina">
+        <Button variant="outline" size="sm" className={triggerClassName} title="Čekací listina">
           <Clock className="h-3.5 w-3.5" /> Čekatelé
         </Button>
       </DialogTrigger>
