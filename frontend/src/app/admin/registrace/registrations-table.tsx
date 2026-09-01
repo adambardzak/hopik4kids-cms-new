@@ -434,26 +434,47 @@ function DetailDialog({
             <DialogHeader>
               <DialogTitle>{detail.childName}</DialogTitle>
             </DialogHeader>
-            <dl className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
-              <Field label="Datum narození" value={new Date(detail.birthDate).toLocaleDateString("cs-CZ")} />
-              <Field label="Rodné číslo" value={detail.personalId} />
-              <Field label="Adresa" value={detail.childAddress} />
-              <Field label="Pojišťovna" value={detail.healthInsurance} />
-              <Field label="Třída" value={detail.className} />
-              <Field label="Program" value={[detail.programName, programMeta(detail)].filter(Boolean).join(" — ")} />
-              <Field label="Rodič" value={detail.parentName} />
-              <Field label="Telefon" value={detail.parentPhone} />
-              <Field label="E-mail" value={detail.parentEmail} />
-              <Field label="Druhý rodič" value={detail.secondParentName} />
-              <Field label="Telefon 2" value={detail.secondParentPhone} />
-              <Field label="Dres" value={detail.wantsShirt ? detail.shirtSize ?? "ano" : "ne"} />
-              <Field label="Přezdívka" value={detail.nickName} />
-              <Field label="Alergie" value={detail.allergies} />
-              <Field label="Poznámka" value={detail.note} />
-              <Field label="Cena" value={detail.priceSnapshot > 0 ? `${detail.priceSnapshot} Kč` : "Zdarma"} />
-              <Field label="Souhlas OÚ" value={detail.consentPersonalData ? "ano" : "ne"} />
-              <Field label="Souhlas média" value={detail.consentMedia ? "ano" : "ne"} />
-            </dl>
+
+            <div className="space-y-4">
+              {/* Dítě */}
+              <section>
+                <SectionTitle>Dítě</SectionTitle>
+                <dl className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
+                  <Field label="Datum narození" value={new Date(detail.birthDate).toLocaleDateString("cs-CZ")} />
+                  <Field label="Rodné číslo" value={detail.personalId} />
+                  <Field label="Adresa" value={detail.childAddress} />
+                  <Field label="Pojišťovna" value={detail.healthInsurance} />
+                  <Field label="Třída" value={detail.className} />
+                  <Field label="Alergie" value={detail.allergies} />
+                </dl>
+              </section>
+
+              {/* Rodič */}
+              <section>
+                <SectionTitle>Rodič</SectionTitle>
+                <dl className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
+                  <Field label="Jméno" value={detail.parentName} />
+                  <Field label="Telefon" value={detail.parentPhone} href={detail.parentPhone ? `tel:${detail.parentPhone}` : undefined} />
+                  <Field label="E-mail" value={detail.parentEmail} href={detail.parentEmail ? `mailto:${detail.parentEmail}` : undefined} />
+                  <Field label="Druhý rodič" value={detail.secondParentName} />
+                  <Field label="Telefon 2" value={detail.secondParentPhone} href={detail.secondParentPhone ? `tel:${detail.secondParentPhone}` : undefined} />
+                </dl>
+              </section>
+
+              {/* Přihláška */}
+              <section>
+                <SectionTitle>Přihláška</SectionTitle>
+                <dl className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
+                  <Field label="Program" value={[detail.programName, programMeta(detail)].filter(Boolean).join(" — ")} />
+                  <Field label="Dres" value={detail.wantsShirt ? detail.shirtSize ?? "ano" : "ne"} />
+                  <Field label="Přezdívka" value={detail.nickName} />
+                  <Field label="Cena" value={detail.priceSnapshot > 0 ? `${detail.priceSnapshot} Kč` : "Zdarma"} />
+                  <Field label="Souhlas s osobními údaji" value={detail.consentPersonalData ? "ano" : "ne"} />
+                  <Field label="Souhlas s fotografováním" value={detail.consentMedia ? "ano" : "ne"} />
+                  <Field label="Poznámka" value={detail.note} />
+                </dl>
+              </section>
+            </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-4">
               <InvoiceButton registrationId={detail.id} disabled={detail.status === "cancelled"} />
@@ -503,11 +524,31 @@ function DetailDialog({
   );
 }
 
-function Field({ label, value }: { label: string; value?: string | null }) {
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+      {children}
+    </h3>
+  );
+}
+
+function Field({ label, value, href }: { label: string; value?: string | null; href?: string }) {
   return (
     <>
       <dt className="text-[var(--muted-foreground)]">{label}</dt>
-      <dd className="font-medium break-words">{value || "—"}</dd>
+      <dd className="font-medium break-words">
+        {value ? (
+          href ? (
+            <a href={href} className="text-[var(--primary)] hover:underline">
+              {value}
+            </a>
+          ) : (
+            value
+          )
+        ) : (
+          "—"
+        )}
+      </dd>
     </>
   );
 }
