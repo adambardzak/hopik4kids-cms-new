@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { IconAction } from "@/components/ui/icon-action";
 import {
   Table,
@@ -476,46 +477,67 @@ function DetailDialog({
               </section>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-4">
-              <InvoiceButton registrationId={detail.id} disabled={detail.status === "cancelled"} />
-            </div>
+            <div className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 p-4">
+              <SectionTitle>Akce</SectionTitle>
 
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-sm text-[var(--muted-foreground)]">Platba:</span>
+              {/* Stav platby — segmented picker */}
               {detail.priceSnapshot === 0 ? (
-                <Badge variant="default">Zdarma</Badge>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-[var(--muted-foreground)]">Platba:</span>
+                  <Badge variant="default">Zdarma</Badge>
+                </div>
               ) : (
-                <>
-                  {(["unpaid", "invoice_sent", "paid"] as const).map((s) => (
-                    <Button
-                      key={s}
-                      size="sm"
-                      variant={detail.paymentStatus === s ? "default" : "outline"}
-                      disabled={isPending || detail.status === "cancelled"}
-                      onClick={() => onPayment(detail.id, s)}
-                    >
-                      {s === "paid" ? "Zaplaceno" : s === "invoice_sent" ? "Faktura odeslána" : "Nezaplaceno"}
-                    </Button>
-                  ))}
-                  {detail.overdue && detail.paymentStatus !== "paid" && (
-                    <Badge variant="danger">Po splatnosti</Badge>
-                  )}
-                </>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-medium text-[var(--muted-foreground)]">Stav platby</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="inline-flex rounded-lg border border-[var(--border)] bg-[var(--background)] p-1">
+                      {(["unpaid", "invoice_sent", "paid"] as const).map((s) => {
+                        const active = detail.paymentStatus === s;
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            disabled={isPending || detail.status === "cancelled"}
+                            onClick={() => onPayment(detail.id, s)}
+                            className={cn(
+                              "whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50",
+                              active
+                                ? s === "paid"
+                                  ? "bg-[var(--success-solid)] text-white shadow-sm"
+                                  : "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm"
+                                : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]",
+                            )}
+                          >
+                            {s === "paid" ? "Zaplaceno" : s === "invoice_sent" ? "Faktura odeslána" : "Nezaplaceno"}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {detail.overdue && detail.paymentStatus !== "paid" && (
+                      <Badge variant="danger">Po splatnosti</Badge>
+                    )}
+                  </div>
+                </div>
               )}
-              {detail.status !== "cancelled" && (
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  className="ml-auto"
-                  disabled={isPending}
-                  onClick={async () => {
-                    if (!(await confirm({ message: "Opravdu zrušit tuto registraci? Uvolní se místo v programu.", danger: true, confirmLabel: "Zrušit registraci" }))) return;
-                    onCancel(detail.id);
-                  }}
-                >
-                  Zrušit registraci
-                </Button>
-              )}
+
+              {/* Faktura + zrušení */}
+              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-4">
+                <InvoiceButton registrationId={detail.id} disabled={detail.status === "cancelled"} />
+                {detail.status !== "cancelled" && (
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="ml-auto"
+                    disabled={isPending}
+                    onClick={async () => {
+                      if (!(await confirm({ message: "Opravdu zrušit tuto registraci? Uvolní se místo v programu.", danger: true, confirmLabel: "Zrušit registraci" }))) return;
+                      onCancel(detail.id);
+                    }}
+                  >
+                    Zrušit registraci
+                  </Button>
+                )}
+              </div>
             </div>
           </>
         )}
