@@ -477,7 +477,7 @@ function DetailDialog({
               </section>
             </div>
 
-            <div className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 p-4">
+            <div className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--muted)] p-4">
               <SectionTitle>Akce</SectionTitle>
 
               {/* Stav platby — segmented picker */}

@@ -121,7 +121,7 @@ input,
 select,
 textarea,
 [role="dialog"] {
-  transition-property: background-color, border-color, color, box-shadow, transform, opacity;
+  transition-property: background-color, border-color, color, box-shadow;
   transition-duration: 150ms;
   transition-timing-function: ease;
 }
