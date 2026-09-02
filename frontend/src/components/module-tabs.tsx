@@ -18,25 +18,27 @@ export function ModuleTabs({ role }: { role: Role }) {
   if (!module || module.title === null || module.items.length < 2) return null;
 
   return (
-    <div className="mb-5 hidden gap-1 overflow-x-auto border-b border-[var(--border)] md:flex">
-      {module.items.map((item) => {
-        const active =
-          item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
-              active
-                ? "border-[var(--primary)] text-[var(--primary)]"
-                : "border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
-            )}
-          >
-            {item.label}
-          </Link>
-        );
-      })}
+    <div className="mb-6 hidden overflow-x-auto md:block">
+      <div className="inline-flex gap-1 rounded-lg border border-[var(--border)] bg-[var(--background)] p-1">
+        {module.items.map((item) => {
+          const active =
+            item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                active
+                  ? "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm"
+                  : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]",
+              )}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }
