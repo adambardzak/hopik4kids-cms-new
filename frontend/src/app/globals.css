@@ -143,17 +143,17 @@ textarea,
   to { opacity: 0; }
 }
 @keyframes h4k-dialog-in {
-  from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
-  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
 @keyframes h4k-dialog-out {
-  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  to { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.96); }
 }
 [data-slot="dialog-overlay"][data-state="open"] { animation: h4k-fade-in 150ms ease; }
 [data-slot="dialog-overlay"][data-state="closed"] { animation: h4k-fade-out 120ms ease; }
-[data-slot="dialog-content"][data-state="open"] { animation: h4k-dialog-in 160ms ease; }
-[data-slot="dialog-content"][data-state="closed"] { animation: h4k-dialog-out 120ms ease; }
+[data-slot="dialog-content"][data-state="open"] { animation: h4k-dialog-in 160ms ease both; }
+[data-slot="dialog-content"][data-state="closed"] { animation: h4k-dialog-out 120ms ease both; }
 
 /* Mobile drawer slide-in */
 @keyframes h4k-slide-in-left {

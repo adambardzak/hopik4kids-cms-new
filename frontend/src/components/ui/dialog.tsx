@@ -14,22 +14,27 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
   <DialogPrimitive.Portal>
-    <DialogPrimitive.Overlay data-slot="dialog-overlay" className="fixed inset-0 z-50 bg-black/40" />
-    <DialogPrimitive.Content
-      ref={ref}
-      data-slot="dialog-content"
-      className={cn(
-        "fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--border)] bg-[var(--background)] p-5 shadow-lg sm:p-6",
-        className,
-      )}
-      {...props}
+    <DialogPrimitive.Overlay
+      data-slot="dialog-overlay"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4"
     >
-      {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 opacity-70 hover:opacity-100">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Zavřít</span>
-      </DialogPrimitive.Close>
-    </DialogPrimitive.Content>
+      <DialogPrimitive.Content
+        ref={ref}
+        data-slot="dialog-content"
+        onClick={(e) => e.stopPropagation()}
+        className={cn(
+          "relative z-50 my-auto w-full max-w-lg rounded-lg border border-[var(--border)] bg-[var(--background)] p-5 shadow-lg sm:p-6",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+        <DialogPrimitive.Close className="absolute right-4 top-4 opacity-70 hover:opacity-100">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Zavřít</span>
+        </DialogPrimitive.Close>
+      </DialogPrimitive.Content>
+    </DialogPrimitive.Overlay>
   </DialogPrimitive.Portal>
 ));
 DialogContent.displayName = "DialogContent";
