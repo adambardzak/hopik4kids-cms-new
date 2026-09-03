@@ -187,19 +187,19 @@ textarea,
   content: "";
   position: absolute;
   right: -2px;
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
   pointer-events: none;
 }
 /* upper concave corner: accent field with a background-colored circle carving the inward curve */
 .h4k-nav-active::before {
-  top: -8px;
-  background: radial-gradient(circle 8px at left top, transparent 8px, var(--accent) 8px);
+  top: -12px;
+  background: radial-gradient(circle 12px at left top, transparent 12px, var(--accent) 12px);
 }
 /* lower concave corner */
 .h4k-nav-active::after {
-  bottom: -8px;
-  background: radial-gradient(circle 8px at left bottom, transparent 8px, var(--accent) 8px);
+  bottom: -12px;
+  background: radial-gradient(circle 12px at left bottom, transparent 12px, var(--accent) 12px);
 }
 
 /* Loading skeleton shimmer */
