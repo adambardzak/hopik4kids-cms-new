@@ -136,60 +136,71 @@ export function RegistrationsTable({
   return (
     <div>
       {/* Summary + toolbar */}
-      <div className="mb-3 space-y-3">
-        {/* Compact summary strip */}
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-2.5 text-sm">
+      <div className="mb-4 space-y-3">
+        {/* Compact inline summary (no boxed row) */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
           <span>
             <span className="font-semibold">{active.length}</span>{" "}
             <span className="text-[var(--muted-foreground)]">aktivních</span>
           </span>
+          <span className="text-[var(--border)]">·</span>
           <span className="text-warning">
             <span className="font-semibold">{unpaid.length}×</span> nezaplaceno{" "}
             <span className="text-[var(--muted-foreground)]">
               ({unpaidSum.toLocaleString("cs-CZ")} Kč)
             </span>
           </span>
+          <span className="text-[var(--border)]">·</span>
           <span className="text-success">
             <span className="font-semibold">{paidSum.toLocaleString("cs-CZ")} Kč</span> zaplaceno
           </span>
         </div>
 
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative">
+        {/* Toolbar: search + filters + export on a single wrapping row */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-foreground)]" />
             <Input
-              className="w-full pl-9 sm:w-64"
+              className="w-full pl-9"
               placeholder="Hledat dítě, rodiče, e-mail…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <Select
-            className=""
-            value={filters.program}
-            onChange={(e) => pushFilters({ program: e.target.value })}
-          >
-            <option value="">Všechny programy</option>
-            {programs.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            className=""
-            value={filters.paymentStatus}
-            onChange={(e) => pushFilters({ paymentStatus: e.target.value })}
-          >
-            <option value="">Všechny platby</option>
-            <option value="unpaid">Nezaplaceno</option>
-            <option value="invoice_sent">Faktura odeslána</option>
-            <option value="overdue">Po splatnosti</option>
-            <option value="paid">Zaplaceno</option>
-            <option value="cancelled">Storno</option>
-          </Select>
+          <div className="w-auto min-w-[160px] max-w-[220px]">
+            <Select
+              value={filters.program}
+              onChange={(e) => pushFilters({ program: e.target.value })}
+            >
+              <option value="">Všechny programy</option>
+              {programs.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="w-auto min-w-[150px] max-w-[180px]">
+            <Select
+              value={filters.paymentStatus}
+              onChange={(e) => pushFilters({ paymentStatus: e.target.value })}
+            >
+              <option value="">Všechny platby</option>
+              <option value="unpaid">Nezaplaceno</option>
+              <option value="invoice_sent">Faktura odeslána</option>
+              <option value="overdue">Po splatnosti</option>
+              <option value="paid">Zaplaceno</option>
+              <option value="cancelled">Storno</option>
+            </Select>
+          </div>
           <div className="ml-auto flex gap-2">
+            {filters.program && (
+              <Button variant="outline" size="sm" asChild>
+                <a href={`/api/programs/${filters.program}/attendance`} target="_blank" rel="noreferrer">
+                  <Printer className="h-4 w-4" /> Docházka PDF
+                </a>
+              </Button>
+            )}
             <Button size="sm" variant="success" asChild>
               <a href={`/api/registrations/export?format=xlsx&${exportQuery}`}>
                 <FileSpreadsheet className="h-4 w-4" /> Excel
@@ -200,13 +211,6 @@ export function RegistrationsTable({
                 <FileText className="h-4 w-4" /> CSV
               </a>
             </Button>
-            {filters.program && (
-              <Button variant="outline" size="sm" asChild>
-                <a href={`/api/programs/${filters.program}/attendance`} target="_blank" rel="noreferrer">
-                  <Printer className="h-4 w-4" /> Docházka PDF
-                </a>
-              </Button>
-            )}
           </div>
         </div>
       </div>
