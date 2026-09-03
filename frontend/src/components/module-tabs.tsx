@@ -27,7 +27,7 @@ export function ModuleTabs({ role }: { role: Role }) {
         DBG path={pathname} · module={module?.id ?? "NULL"} · items={module?.items.length ?? 0}
       </div>
       {module && module.title !== null && module.items.length >= 2 && (
-        <div className="mb-5 overflow-x-auto">
+        <div className="mb-5 min-h-[50px] overflow-x-auto bg-yellow-300">
           <div className="inline-flex gap-1 rounded-lg border border-[var(--border)] bg-[var(--background)] p-1">
             {module.items.map((item) => {
               const active =
