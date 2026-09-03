@@ -71,7 +71,7 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
 
   // Desktop: compact module list (module pages become tabs at the top of the page).
   const nav = (
-    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden px-2 py-2">
+    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto py-2 pl-2">
       {modules.map((m) => {
         // The dashboard is a plain link; other modules link to their first page.
         const target = m.items[0]?.href ?? "/admin";
@@ -84,8 +84,10 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
             href={target}
             title={label}
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-              active ? "" : "hover:bg-[var(--muted)]",
+              "flex items-center gap-3 py-2.5 pl-3 pr-3 text-sm font-medium transition-colors",
+              active
+                ? "-mr-[2px] rounded-l-md rounded-r-none" // bleed into the accent gutter so the pill connects to the content ring
+                : "mr-2 rounded-md hover:bg-[var(--muted)]",
             )}
             style={active ? { background: "var(--accent)", color: "var(--accent-fg)" } : undefined}
           >
@@ -215,7 +217,7 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
       </div>
 
       {/* Desktop sidebar: collapsed icon rail that expands on hover, pushing content aside. */}
-      <aside className="group hidden h-full w-16 shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--background)] transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:w-64 md:flex">
+      <aside className="group hidden h-full w-16 shrink-0 flex-col overflow-hidden bg-[var(--background)] transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:w-64 md:flex">
         {brand}
         {nav}
         {footer}
