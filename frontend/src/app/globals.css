@@ -173,6 +173,38 @@ textarea,
 }
 .h4k-fade-in { animation: h4k-content-in 200ms ease; }
 
+/*
+ * Active sidebar item: concave ("inverted radius") corners on the right edge, so the
+ * accent pill flows smoothly into the accent gutter/content ring instead of a hard 90°.
+ * The pseudo-elements sit just above/below the pill on its right edge and carve a
+ * background-colored quarter-circle out of the accent, producing the inward curve.
+ */
+.h4k-nav-active {
+  position: relative;
+}
+.h4k-nav-active::before,
+.h4k-nav-active::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: var(--accent);
+  pointer-events: none;
+}
+.h4k-nav-active::before {
+  top: -12px;
+  border-bottom-right-radius: 12px;
+  -webkit-mask: radial-gradient(circle at top left, transparent 12px, #000 12px);
+  mask: radial-gradient(circle at top left, transparent 12px, #000 12px);
+}
+.h4k-nav-active::after {
+  bottom: -12px;
+  border-top-right-radius: 12px;
+  -webkit-mask: radial-gradient(circle at bottom left, transparent 12px, #000 12px);
+  mask: radial-gradient(circle at bottom left, transparent 12px, #000 12px);
+}
+
 /* Loading skeleton shimmer */
 @keyframes h4k-skeleton-pulse {
   0%, 100% { opacity: 1; }

@@ -86,7 +86,7 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
             className={cn(
               "flex items-center gap-3 py-2.5 pl-3 pr-3 text-sm font-medium transition-colors",
               active
-                ? "-mr-[2px] rounded-l-xl rounded-r-none" // bleed into the accent gutter so the pill connects to the content ring
+                ? "h4k-nav-active -mr-[2px] rounded-l-xl rounded-r-none" // concave corners bleed into the accent gutter
                 : "mr-2 rounded-lg hover:bg-[var(--muted)]",
             )}
             style={active ? { background: "var(--accent)", color: "var(--accent-fg)" } : undefined}

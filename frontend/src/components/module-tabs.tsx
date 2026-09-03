@@ -19,7 +19,7 @@ export function ModuleTabs({ role }: { role: Role }) {
 
   return (
     <div className="mb-5 hidden overflow-x-auto md:block">
-      <div className="inline-flex gap-1 rounded-xl border border-[var(--border)] bg-[var(--background)] p-1">
+      <div className="inline-flex gap-1 rounded-lg border border-[var(--border)] bg-[var(--background)] p-1">
         {module.items.map((item) => {
           const active =
             item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
@@ -28,7 +28,7 @@ export function ModuleTabs({ role }: { role: Role }) {
               key={item.href}
               href={item.href}
               className={cn(
-                "whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                "whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors",
                 active
                   ? "shadow-sm"
                   : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]",
