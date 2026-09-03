@@ -86,9 +86,9 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
               aria-label={label}
               className={cn(
                 "flex items-center justify-center py-2.5 pl-3 pr-3 text-sm font-medium transition-colors",
-                active
-                  ? "h4k-nav-active rounded-l-xl rounded-r-none" // full-bleed right so it meets the accent gutter
-                  : "mr-2 rounded-lg hover:bg-[var(--muted)]",
+              active
+                ? "h4k-nav-active rounded-l-lg rounded-r-none" // full-bleed right so it meets the accent gutter
+                : "mr-2 rounded-lg hover:bg-[var(--muted)]",
               )}
               style={active ? { background: "var(--accent)", color: "var(--accent-fg)", marginRight: "-2px" } : undefined}
             >
