@@ -98,8 +98,8 @@ function ProgramPicker({
   onChange: (id: string) => void;
 }) {
   return (
-    <div className="mb-4 max-w-md">
-      <Label>Program</Label>
+    <div className="mb-4 flex flex-col gap-1.5 sm:max-w-xs">
+      <Label className="text-xs">Program</Label>
       <Select value={value} onChange={(e) => onChange(e.target.value)}>
         <option value="">— vyber program —</option>
         {programs.map((p) => (

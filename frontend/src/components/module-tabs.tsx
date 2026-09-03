@@ -25,7 +25,7 @@ export function ModuleTabs({ role }: { role: Role }) {
   if (!module || module.title === null || module.items.length < 2) return null;
 
   return (
-    <div className="mb-5 flex shrink-0 overflow-x-auto">
+    <div className="mb-5 hidden shrink-0 overflow-x-auto md:flex">
       <div className="inline-flex shrink-0 gap-1 rounded-lg border border-[var(--border)] bg-[var(--background)] p-1">
         {module.items.map((item) => {
           const active =
