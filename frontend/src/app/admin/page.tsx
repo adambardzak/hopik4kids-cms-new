@@ -1,16 +1,23 @@
 import Link from "next/link";
-import { AlertTriangle, TrendingUp, Users, CalendarDays, Wallet, Plus, ShieldAlert, Clock, MapPin, ClipboardCheck } from "lucide-react";
+import { AlertTriangle, TrendingUp, Users, CalendarDays, Wallet, Plus, ShieldAlert, Clock, MapPin, ClipboardCheck, ClipboardList } from "lucide-react";
 import { getSession } from "@/lib/session";
-import { getDashboardStats, listSchedule } from "@/lib/admin-data";
+import { getDashboardStats, listSchedule, listRegistrations } from "@/lib/admin-data";
 import { ApiRequestError } from "@/lib/api";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { DashboardStats, ScheduleEntry } from "@/lib/types";
-import { czk } from "@/lib/format";
+import type { DashboardStats, ScheduleEntry, Registration } from "@/lib/types";
+import { czk, czDate } from "@/lib/format";
 
 const WEEKDAYS = ["neděle", "pondělí", "úterý", "středa", "čtvrtek", "pátek", "sobota"];
+
+const PAYMENT_BADGE: Record<string, { label: string; variant: "success" | "info" | "warning" | "danger" | "default" }> = {
+  paid: { label: "Zaplaceno", variant: "success" },
+  invoice_sent: { label: "Faktura odeslána", variant: "info" },
+  unpaid: { label: "Nezaplaceno", variant: "warning" },
+  cancelled: { label: "Storno", variant: "default" },
+};
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -20,9 +27,10 @@ export default async function DashboardPage() {
   const todayLabel = `${WEEKDAYS[today.getDay()]} ${today.getDate()}. ${today.getMonth() + 1}.`;
 
   // Fetch stats + today's schedule in parallel (independent) to cut the dashboard load time.
-  const [statsResult, scheduleResult] = await Promise.allSettled([
+  const [statsResult, scheduleResult, registrationsResult] = await Promise.allSettled([
     getDashboardStats(),
     listSchedule({ from: todayIso, to: todayIso }),
+    listRegistrations(),
   ]);
 
   let stats: DashboardStats | null = null;
@@ -50,6 +58,15 @@ export default async function DashboardPage() {
     stats && stats.totalCapacity > 0
       ? Math.round((stats.totalSpotsTaken / stats.totalCapacity) * 100)
       : 0;
+
+  // Latest registrations (best-effort; newest first).
+  let recentRegistrations: Registration[] = [];
+  if (registrationsResult.status === "fulfilled") {
+    recentRegistrations = [...registrationsResult.value.items]
+      .filter((r) => r.status !== "cancelled")
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, 6);
+  }
 
   return (
     <div>
@@ -250,6 +267,51 @@ export default async function DashboardPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Latest registrations */}
+          {recentRegistrations.length > 0 && (
+            <Card>
+              <CardHeader className="flex-row items-center justify-between space-y-0">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)]/10 text-[var(--accent)]">
+                    <ClipboardList className="h-4 w-4" />
+                  </span>
+                  Poslední registrace
+                </CardTitle>
+                <Link href="/admin/registrace" className="text-sm font-medium text-[var(--accent)] hover:underline">
+                  Všechny →
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <ul className="divide-y divide-[var(--border)]">
+                  {recentRegistrations.map((r) => {
+                    const pay = PAYMENT_BADGE[r.paymentStatus] ?? PAYMENT_BADGE.unpaid;
+                    return (
+                      <li
+                        key={r.id}
+                        className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 first:pt-0 last:pb-0"
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-medium">{r.childName}</span>
+                          <span className="block truncate text-xs text-[var(--muted-foreground)]">
+                            {r.programName}
+                          </span>
+                        </span>
+                        {r.priceSnapshot === 0 ? (
+                          <Badge variant="default">Zdarma</Badge>
+                        ) : (
+                          <Badge variant={pay.variant}>{pay.label}</Badge>
+                        )}
+                        <span className="w-20 shrink-0 text-right text-sm text-[var(--muted-foreground)] tabular-nums">
+                          {czDate(r.createdAt)}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
     </div>
