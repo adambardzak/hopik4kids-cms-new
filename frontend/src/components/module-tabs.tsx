@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { moduleForPath } from "@/lib/nav";
@@ -12,20 +13,19 @@ import { cn } from "@/lib/utils";
  */
 export function ModuleTabs({ role }: { role: Role }) {
   const pathname = usePathname() ?? "";
+  // Render only after mount to avoid any SSR/hydration divergence on pathname.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const module = moduleForPath(pathname, role);
 
+  if (!mounted) return null;
+
   // No tabs for the dashboard or single-page modules.
-  if (!module || module.title === null || module.items.length < 2) {
-    return (
-      <div className="mb-5 rounded bg-red-500 px-3 py-1 text-xs text-white">
-        DEBUG: no tabs (module={module?.id ?? "null"} items={module?.items.length ?? 0} path={pathname} role={role})
-      </div>
-    );
-  }
+  if (!module || module.title === null || module.items.length < 2) return null;
 
   return (
-    <div className="mb-5 overflow-x-auto border-4 border-green-500">
-      <div className="bg-green-500 px-2 py-0.5 text-xs text-white">DEBUG OK: {module.id} · {module.items.length} items · {pathname}</div>
+    <div className="mb-5 overflow-x-auto">
       <div className="inline-flex gap-1 rounded-lg border border-[var(--border)] bg-[var(--background)] p-1">
         {module.items.map((item) => {
           const active =
