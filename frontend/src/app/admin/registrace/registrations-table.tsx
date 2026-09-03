@@ -353,7 +353,16 @@ function RegRows({
   onDetail: (r: Registration) => void;
 }) {
   return (
-    <Table>
+    <Table className="table-fixed">
+      <colgroup>
+        <col className="w-[22%]" />
+        <col className="w-[24%]" />
+        <col className="w-[10%]" />
+        <col className="w-[16%]" />
+        <col className="w-[10%]" />
+        <col className="w-[14%]" />
+        <col className="w-[64px]" />
+      </colgroup>
       <TableHeader>
         <TableRow>
           <TableHead>Dítě</TableHead>
@@ -370,10 +379,10 @@ function RegRows({
           const pay = PAYMENT_LABELS[effectivePaymentKey(r)] ?? PAYMENT_LABELS.unpaid;
           return (
             <TableRow key={r.id} className={r.status === "cancelled" ? "opacity-50" : ""}>
-              <TableCell className="font-medium">{r.childName}</TableCell>
-              <TableCell>
-                <div>{r.parentName}</div>
-                <div className="text-xs text-[var(--muted-foreground)]">{r.parentPhone}</div>
+              <TableCell className="truncate font-medium">{r.childName}</TableCell>
+              <TableCell className="truncate">
+                <div className="truncate">{r.parentName}</div>
+                <div className="truncate text-xs text-[var(--muted-foreground)]">{r.parentPhone}</div>
               </TableCell>
               <TableCell>{r.wantsShirt ? r.shirtSize ?? "ano" : "—"}</TableCell>
               <TableCell>
