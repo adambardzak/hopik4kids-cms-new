@@ -90,7 +90,7 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
             style={active ? { background: "var(--accent)", color: "var(--accent-fg)" } : undefined}
           >
             <Icon className="h-5 w-5 shrink-0" />
-            <span className="whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <span className="-translate-x-2 whitespace-nowrap opacity-0 transition-all duration-300 ease-out group-hover:translate-x-0 group-hover:opacity-100">
               {label}
             </span>
           </Link>
@@ -177,7 +177,7 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
     <div className="flex items-center gap-2.5 px-4 py-6">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/logo.svg" alt="Hopík4Kids" className="h-9 w-auto shrink-0" />
-      <span className="whitespace-nowrap text-lg font-bold opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+      <span className="-translate-x-2 whitespace-nowrap text-lg font-bold opacity-0 transition-all duration-300 ease-out group-hover:translate-x-0 group-hover:opacity-100">
         Hopík4Kids
       </span>
     </div>
@@ -215,7 +215,7 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
       </div>
 
       {/* Desktop sidebar: collapsed icon rail that expands on hover, pushing content aside. */}
-      <aside className="group hidden h-full w-16 shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--background)] transition-[width] duration-200 ease-out hover:w-64 md:flex">
+      <aside className="group hidden h-full w-16 shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--background)] transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:w-64 md:flex">
         {brand}
         {nav}
         {footer}
