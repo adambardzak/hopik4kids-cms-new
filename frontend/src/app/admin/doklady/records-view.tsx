@@ -132,16 +132,17 @@ export function RecordsView({
     <div>
       {/* Type tabs + upload */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="flex flex-wrap gap-2">
+        <div className="inline-flex flex-wrap gap-1 rounded-lg border border-[var(--border)] bg-[var(--background)] p-1">
           {TYPE_TABS.map((t) => (
             <button
               key={t.value}
               onClick={() => pickType(t.value)}
-              className={`rounded-full border px-3 py-1.5 text-sm font-medium ${
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 activeType === t.value
-                  ? "border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)]"
-                  : "border-[var(--border)] hover:bg-[var(--muted)]"
+                  ? ""
+                  : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
               }`}
+              style={activeType === t.value ? { background: "var(--accent)", color: "var(--accent-fg)" } : undefined}
             >
               {t.label}
             </button>

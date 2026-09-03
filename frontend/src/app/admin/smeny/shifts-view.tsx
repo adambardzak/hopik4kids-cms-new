@@ -64,22 +64,24 @@ export function ShiftsView({
 
   return (
     <div>
-      <div className="mb-4 inline-flex rounded-lg border border-[var(--border)] p-1">
+      <div className="mb-4 inline-flex rounded-lg border border-[var(--border)] bg-[var(--background)] p-1">
         <button
           onClick={() => setTab("open")}
           className={cn(
-            "rounded-md px-4 py-1.5 text-sm font-medium",
-            tab === "open" ? "bg-[var(--primary)] text-[var(--primary-foreground)]" : "text-[var(--muted-foreground)]",
+            "rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
+            tab === "open" ? "" : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]",
           )}
+          style={tab === "open" ? { background: "var(--accent)", color: "var(--accent-fg)" } : undefined}
         >
           Volné hodiny
         </button>
         <button
           onClick={() => setTab("mine")}
           className={cn(
-            "rounded-md px-4 py-1.5 text-sm font-medium",
-            tab === "mine" ? "bg-[var(--primary)] text-[var(--primary-foreground)]" : "text-[var(--muted-foreground)]",
+            "rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
+            tab === "mine" ? "" : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]",
           )}
+          style={tab === "mine" ? { background: "var(--accent)", color: "var(--accent-fg)" } : undefined}
         >
           Moje hodiny {mine.length > 0 && <span className="ml-1 opacity-70">({mine.length})</span>}
         </button>

@@ -44,22 +44,24 @@ export function BillingView({
 
   return (
     <div>
-      <div className="mb-4 flex gap-2 border-b border-[var(--border)]">
+      <div className="mb-4 inline-flex gap-1 rounded-lg border border-[var(--border)] bg-[var(--background)] p-1">
         <button
           onClick={() => setTab("invoices")}
-          className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium ${
-            tab === "invoices" ? "border-[var(--primary)] text-[var(--primary)]" : "border-transparent text-[var(--muted-foreground)]"
+          className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            tab === "invoices" ? "" : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
           }`}
+          style={tab === "invoices" ? { background: "var(--accent)", color: "var(--accent-fg)" } : undefined}
         >
           Faktury
         </button>
         <button
           onClick={() => setTab("supplier")}
-          className={`-mb-px flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium ${
-            tab === "supplier" ? "border-[var(--primary)] text-[var(--primary)]" : "border-transparent text-[var(--muted-foreground)]"
+          className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            tab === "supplier" ? "" : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
           }`}
+          style={tab === "supplier" ? { background: "var(--accent)", color: "var(--accent-fg)" } : undefined}
         >
-          <Settings className="h-3.5 w-3.5" /> Nastavení dodavatele
+          <Settings className="h-4 w-4" /> Nastavení dodavatele
         </button>
       </div>
 
