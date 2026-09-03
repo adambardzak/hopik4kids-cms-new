@@ -24,7 +24,8 @@ export function ModuleTabs({ role }: { role: Role }) {
   }
 
   return (
-    <div className="mb-5 overflow-x-auto">
+    <div className="mb-5 overflow-x-auto border-4 border-green-500">
+      <div className="bg-green-500 px-2 py-0.5 text-xs text-white">DEBUG OK: {module.id} · {module.items.length} items · {pathname}</div>
       <div className="inline-flex gap-1 rounded-lg border border-[var(--border)] bg-[var(--background)] p-1">
         {module.items.map((item) => {
           const active =
