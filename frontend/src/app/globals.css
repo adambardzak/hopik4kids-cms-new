@@ -186,19 +186,19 @@ textarea,
 .h4k-nav-active::after {
   content: "";
   position: absolute;
-  right: -2px;
+  right: 0;
   width: 12px;
   height: 12px;
   pointer-events: none;
 }
 /* upper concave corner: accent field with a background-colored circle carving the inward curve */
 .h4k-nav-active::before {
-  top: -12px;
+  top: -11px;
   background: radial-gradient(circle 12px at left top, transparent 12px, var(--accent) 12px);
 }
 /* lower concave corner */
 .h4k-nav-active::after {
-  bottom: -12px;
+  bottom: -11px;
   background: radial-gradient(circle 12px at left bottom, transparent 12px, var(--accent) 12px);
 }
 
