@@ -9,6 +9,7 @@ import { moduleForPath } from "@/lib/nav";
 import type { Session } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/tooltip";
 import { NotificationToggle } from "@/components/notification-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -79,23 +80,21 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
         const active = activeModule?.id === m.id;
         const label = m.title ?? m.items[0]?.label ?? "";
         return (
-          <Link
-            key={m.id}
-            href={target}
-            title={label}
-            className={cn(
-              "flex items-center gap-3 py-2.5 pl-3 pr-3 text-sm font-medium transition-colors",
-              active
-                ? "h4k-nav-active rounded-l-xl rounded-r-none" // full-bleed right so it meets the accent gutter
-                : "mr-2 rounded-lg hover:bg-[var(--muted)]",
-            )}
-            style={active ? { background: "var(--accent)", color: "var(--accent-fg)", marginRight: "-2px" } : undefined}
-          >
-            <Icon className="h-5 w-5 shrink-0" />
-            <span className="-translate-x-2 whitespace-nowrap opacity-0 transition-all duration-300 ease-out group-hover:translate-x-0 group-hover:opacity-100">
-              {label}
-            </span>
-          </Link>
+          <Tooltip key={m.id} label={label} side="right">
+            <Link
+              href={target}
+              aria-label={label}
+              className={cn(
+                "flex items-center justify-center py-2.5 pl-3 pr-3 text-sm font-medium transition-colors",
+                active
+                  ? "h4k-nav-active rounded-l-xl rounded-r-none" // full-bleed right so it meets the accent gutter
+                  : "mr-2 rounded-lg hover:bg-[var(--muted)]",
+              )}
+              style={active ? { background: "var(--accent)", color: "var(--accent-fg)", marginRight: "-2px" } : undefined}
+            >
+              <Icon className="h-5 w-5 shrink-0" />
+            </Link>
+          </Tooltip>
         );
       })}
     </nav>
@@ -136,27 +135,17 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
   );
 
   const footer = (
-    <div className="border-t border-[var(--border)] p-4">
-      <div className="hidden group-hover:block">
-        <div className="mb-2">
-          <p className="truncate text-sm font-medium">{session.name ?? session.email}</p>
-          <p className="text-xs text-[var(--muted-foreground)]">{ROLE_LABELS[session.role] ?? session.role}</p>
-        </div>
-        {(session.role === "owner" || session.role === "admin") && <NotificationToggle />}
-        <ThemeToggle />
-        <Button variant="outline" size="sm" className="w-full" onClick={logout}>
-          <LogOut className="h-4 w-4" />
-          Odhlásit se
-        </Button>
-      </div>
-      <button
-        onClick={logout}
-        title="Odhlásit se"
-        aria-label="Odhlásit se"
-        className="flex w-full items-center justify-center rounded-md p-2 hover:bg-[var(--muted)] group-hover:hidden"
-      >
-        <LogOut className="h-5 w-5" />
-      </button>
+    <div className="flex flex-col items-center gap-1 border-t border-[var(--border)] p-2">
+      <ThemeToggle iconOnly />
+      <Tooltip label="Odhlásit se" side="right">
+        <button
+          onClick={logout}
+          aria-label="Odhlásit se"
+          className="flex w-full items-center justify-center rounded-md p-2 hover:bg-[var(--muted)]"
+        >
+          <LogOut className="h-5 w-5" />
+        </button>
+      </Tooltip>
     </div>
   );
 
@@ -176,12 +165,9 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
   );
 
   const brand = (
-    <div className="flex items-center gap-2.5 px-4 py-6">
+    <div className="flex items-center justify-center py-6">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/logo.svg" alt="Hopík4Kids" className="h-9 w-auto shrink-0" />
-      <span className="-translate-x-2 whitespace-nowrap text-lg font-bold opacity-0 transition-all duration-300 ease-out group-hover:translate-x-0 group-hover:opacity-100">
-        Hopík4Kids
-      </span>
     </div>
   );
 
@@ -216,11 +202,8 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
         <span className="font-bold">Hopík4Kids</span>
       </div>
 
-      {/* Desktop sidebar: collapsed icon rail that expands on hover, pushing content aside. */}
-      <aside
-        className="group hidden h-full w-16 shrink-0 flex-col overflow-hidden bg-[var(--background)] hover:w-64 md:flex"
-        style={{ transition: "width 300ms cubic-bezier(0.4,0,0.2,1)" }}
-      >
+      {/* Desktop sidebar: fixed icon rail; labels shown as tooltips on hover. */}
+      <aside className="hidden h-full w-16 shrink-0 flex-col overflow-hidden bg-[var(--background)] md:flex">
         {brand}
         {nav}
         {footer}

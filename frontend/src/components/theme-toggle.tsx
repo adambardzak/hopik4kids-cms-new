@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
 /** Toggles dark mode; persists to localStorage and updates the <html> class. */
-export function ThemeToggle() {
+export function ThemeToggle({ iconOnly = false }: { iconOnly?: boolean }) {
   const [dark, setDark] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -23,6 +23,18 @@ export function ThemeToggle() {
   }
 
   if (dark === null) return null;
+
+  if (iconOnly) {
+    return (
+      <button
+        onClick={toggle}
+        className="flex w-full items-center justify-center rounded-md p-2 hover:bg-[var(--muted)]"
+        aria-label={dark ? "Světlý režim" : "Tmavý režim"}
+      >
+        {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      </button>
+    );
+  }
 
   return (
     <button

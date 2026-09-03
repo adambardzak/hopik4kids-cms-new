@@ -27,11 +27,19 @@ const TooltipContent = React.forwardRef<
 TooltipContent.displayName = "TooltipContent";
 
 /** Convenience wrapper: an icon button (children) with a text tooltip label. */
-export function Tooltip({ label, children }: { label: string; children: React.ReactNode }) {
+export function Tooltip({
+  label,
+  children,
+  side,
+}: {
+  label: string;
+  children: React.ReactNode;
+  side?: "top" | "right" | "bottom" | "left";
+}) {
   return (
     <TooltipRoot>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
+      <TooltipContent side={side}>{label}</TooltipContent>
     </TooltipRoot>
   );
 }
