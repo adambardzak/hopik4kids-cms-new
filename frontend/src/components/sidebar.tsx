@@ -87,7 +87,7 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
               "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
               active ? "" : "hover:bg-[var(--muted)]",
             )}
-            style={active ? { background: m.accent, color: m.accentFg } : undefined}
+            style={active ? { background: "var(--accent)", color: "var(--accent-fg)" } : undefined}
           >
             <Icon className="h-5 w-5 shrink-0" />
             <span className="whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:opacity-100">
@@ -119,8 +119,9 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
                 href={item.href}
                 className={cn(
                   "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-                  active ? "bg-[var(--primary)] text-[var(--primary-foreground)]" : "hover:bg-[var(--muted)]",
+                  active ? "" : "hover:bg-[var(--muted)]",
                 )}
+                style={active ? { background: "var(--accent)", color: "var(--accent-fg)" } : undefined}
               >
                 <Icon className="h-4 w-4" />
                 {item.label}
