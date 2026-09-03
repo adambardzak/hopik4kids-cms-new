@@ -26,25 +26,25 @@ import { useConfirm } from "@/components/ui/confirm";
 
 const WEEKDAYS = ["", "Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
 
-const STATUS_META: Record<AttendanceStatus, { label: string; icon: typeof Check; classes: string; active: string; activeStyle: React.CSSProperties }> = {
+const STATUS_META: Record<AttendanceStatus, { label: string; icon: typeof Check; hover: string; active: string; activeStyle: React.CSSProperties }> = {
   present: {
     label: "Přítomen",
     icon: Check,
-    classes: "border-[var(--success-border)] text-success hover:bg-[var(--success-bg)]",
+    hover: "hover:text-success",
     active: "text-white",
     activeStyle: { background: "var(--success-solid)", borderColor: "var(--success-solid)" },
   },
   excused: {
     label: "Omluven",
     icon: CircleAlert,
-    classes: "border-[var(--warning-border)] text-warning hover:bg-[var(--warning-bg)]",
+    hover: "hover:text-warning",
     active: "text-white",
     activeStyle: { background: "var(--warning-solid)", borderColor: "var(--warning-solid)" },
   },
   absent: {
     label: "Nepřítomen",
     icon: X,
-    classes: "border-[var(--danger-border)] text-danger hover:bg-[var(--danger-bg)]",
+    hover: "hover:text-danger",
     active: "text-white",
     activeStyle: { background: "var(--danger-solid)", borderColor: "var(--danger-solid)" },
   },
@@ -234,8 +234,8 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
                     <TableRow key={r.childId}>
                       <TableCell className="font-medium">{r.childName}</TableCell>
                       <TableCell>
-                        <div className="flex gap-1.5">
-                          {(Object.keys(STATUS_META) as AttendanceStatus[]).map((s) => {
+                        <div className="inline-flex overflow-hidden rounded-lg border border-[var(--border)]">
+                          {(Object.keys(STATUS_META) as AttendanceStatus[]).map((s, i) => {
                             const meta = STATUS_META[s];
                             const Icon = meta.icon;
                             const isActive = cur === s;
@@ -243,13 +243,20 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
                               <button
                                 key={s}
                                 onClick={() => setStatus(r.childId, s)}
+                                title={meta.label}
+                                aria-label={meta.label}
+                                aria-pressed={isActive}
                                 style={isActive ? meta.activeStyle : undefined}
-                                className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
-                                  isActive ? meta.active : meta.classes
+                                className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors ${
+                                  i > 0 ? "border-l border-[var(--border)]" : ""
+                                } ${
+                                  isActive
+                                    ? meta.active
+                                    : `text-[var(--muted-foreground)] hover:bg-[var(--muted)] ${meta.hover}`
                                 }`}
                               >
-                                <Icon className="h-3.5 w-3.5" />
-                                {meta.label}
+                                <Icon className="h-4 w-4" />
+                                <span className="hidden sm:inline">{meta.label}</span>
                               </button>
                             );
                           })}

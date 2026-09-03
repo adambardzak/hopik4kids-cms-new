@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { IconAction } from "@/components/ui/icon-action";
 import { EmptyState } from "@/components/page-header";
 import {
   Table,
@@ -237,17 +238,16 @@ function InvoicesTable({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="sm" asChild>
-                        <a href={`/api/billing/invoices/${inv.id}/pdf`} target="_blank" rel="noreferrer">
-                          <Download className="h-4 w-4" /> PDF
-                        </a>
-                      </Button>
+                      <IconAction
+                        label="Stáhnout PDF"
+                        icon={Download}
+                        href={`/api/billing/invoices/${inv.id}/pdf`}
+                      />
                       {inv.status !== "cancelled" && inv.payerEmail && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                        <IconAction
+                          label={`Odeslat na ${inv.payerEmail}`}
+                          icon={Mail}
                           disabled={isPending}
-                          title={`Odeslat na ${inv.payerEmail}`}
                           onClick={() =>
                             startTransition(async () => {
                               const res = await sendInvoiceEmail(inv.id);
@@ -255,15 +255,14 @@ function InvoicesTable({
                               else toast.error(res.error ?? "Odeslání selhalo");
                             })
                           }
-                        >
-                          <Mail className="h-4 w-4" /> Odeslat
-                        </Button>
+                        />
                       )}
                       {inv.status === "unpaid" && (
                         <>
-                          <Button
-                            variant="ghost"
-                            size="sm"
+                          <IconAction
+                            label="Označit jako zaplaceno"
+                            icon={Check}
+                            className="text-[var(--success-fg)]"
                             disabled={isPending}
                             onClick={() =>
                               startTransition(async () => {
@@ -271,12 +270,11 @@ function InvoicesTable({
                                 router.refresh();
                               })
                             }
-                          >
-                            <Check className="h-4 w-4" /> Zaplaceno
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
+                          />
+                          <IconAction
+                            label="Stornovat fakturu"
+                            icon={Ban}
+                            className="text-[var(--destructive)]"
                             disabled={isPending}
                             onClick={async () => {
                               if (!(await confirm({ message: `Stornovat fakturu ${inv.invoiceNumber}?`, danger: true, confirmLabel: "Stornovat" }))) return;
@@ -285,9 +283,7 @@ function InvoicesTable({
                                 router.refresh();
                               });
                             }}
-                          >
-                            <Ban className="h-4 w-4" />
-                          </Button>
+                          />
                         </>
                       )}
                     </div>
