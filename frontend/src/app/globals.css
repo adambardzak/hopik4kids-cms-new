@@ -15,7 +15,7 @@
 :root {
   --background: #ffffff;
   --foreground: #0a0a0a;
-  --primary: #2563eb;
+  --primary: #1A2B47;
   --primary-foreground: #ffffff;
   --accent: #1A2B47;
   --accent-fg: #ffffff;
@@ -48,7 +48,7 @@
 .dark {
   --background: #0b0f19;
   --foreground: #e5e7eb;
-  --primary: #3b82f6;
+  --primary: #3b6fb8;
   --primary-foreground: #ffffff;
   --accent: #2a4066;
   --accent-fg: #ffffff;
