@@ -186,23 +186,20 @@ textarea,
 .h4k-nav-active::after {
   content: "";
   position: absolute;
-  right: 0;
-  width: 12px;
-  height: 12px;
-  background: var(--accent);
+  right: -2px;
+  width: 14px;
+  height: 14px;
   pointer-events: none;
 }
+/* upper concave corner: accent field with a background-colored circle carving the inward curve */
 .h4k-nav-active::before {
-  top: -12px;
-  border-bottom-right-radius: 12px;
-  -webkit-mask: radial-gradient(circle at top left, transparent 12px, #000 12px);
-  mask: radial-gradient(circle at top left, transparent 12px, #000 12px);
+  top: -14px;
+  background: radial-gradient(circle 14px at left top, transparent 14px, var(--accent) 14px);
 }
+/* lower concave corner */
 .h4k-nav-active::after {
-  bottom: -12px;
-  border-top-right-radius: 12px;
-  -webkit-mask: radial-gradient(circle at bottom left, transparent 12px, #000 12px);
-  mask: radial-gradient(circle at bottom left, transparent 12px, #000 12px);
+  bottom: -14px;
+  background: radial-gradient(circle 14px at left bottom, transparent 14px, var(--accent) 14px);
 }
 
 /* Loading skeleton shimmer */

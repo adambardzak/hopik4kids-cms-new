@@ -217,7 +217,10 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
       </div>
 
       {/* Desktop sidebar: collapsed icon rail that expands on hover, pushing content aside. */}
-      <aside className="group hidden h-full w-16 shrink-0 flex-col overflow-hidden bg-[var(--background)] transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:w-64 md:flex">
+      <aside
+        className="group hidden h-full w-16 shrink-0 flex-col overflow-hidden bg-[var(--background)] hover:w-64 md:flex"
+        style={{ transition: "width 300ms cubic-bezier(0.4,0,0.2,1)" }}
+      >
         {brand}
         {nav}
         {footer}
