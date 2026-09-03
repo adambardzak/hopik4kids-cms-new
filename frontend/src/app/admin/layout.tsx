@@ -21,7 +21,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <NavigationProgress />
           <div className="flex h-screen flex-col overflow-hidden md:flex-row">
             <Sidebar modules={modules} session={session} />
-            <main className="flex flex-1 flex-col overflow-hidden bg-[var(--accent)] p-1.5 md:p-2">
+            <main className="flex flex-1 flex-col overflow-hidden rounded-l-2xl bg-[var(--accent)] p-1.5 md:p-2">
               <div className="flex min-h-0 flex-1 flex-col overflow-auto rounded-xl border border-[var(--accent)] bg-[var(--background)] p-4 pb-16 md:p-8 md:pb-20">
                 <ModuleTabs role={session.role} />
                 <div className="h4k-fade-in flex min-h-0 flex-1 flex-col">{children}</div>
