@@ -173,9 +173,9 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
   return (
     <div className="space-y-4">
       {/* Controls */}
-      <div className="flex flex-wrap items-end gap-3">
+      <div className="flex flex-wrap items-end gap-2">
         <div className="flex flex-col gap-1.5">
-          <Label>Program</Label>
+          <Label className="text-xs">Program</Label>
           <Select value={programId} onChange={(e) => onProgramChange(e.target.value)} className="w-full sm:w-64">
             {programs.map((p) => (
               <option key={p.id} value={p.id}>
@@ -185,11 +185,11 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
           </Select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label>Datum lekce</Label>
+          <Label className="text-xs">Datum lekce</Label>
           <Input type="date" value={date} onChange={(e) => onDateChange(e.target.value)} className="w-44" />
         </div>
         <div className="ml-auto flex gap-2">
-          <Button variant="outline" onClick={openStats}>
+          <Button variant="outline" size="sm" onClick={openStats}>
             <BarChart3 className="h-4 w-4" /> Statistiky
           </Button>
         </div>

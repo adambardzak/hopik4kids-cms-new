@@ -156,7 +156,7 @@ export function WorkLogView({
   return (
     <div className="space-y-5">
       {/* Toolbar: period + actions */}
-      <div className="flex flex-wrap items-end gap-3 rounded-lg border border-[var(--border)] bg-[var(--background)] p-3">
+      <div className="flex flex-wrap items-end gap-2">
         <div>
           <Label className="text-xs">Od</Label>
           <Input type="date" value={periodFrom} onChange={(e) => setPeriodFrom(e.target.value)} className="h-9" />

@@ -137,23 +137,19 @@ function InvoicesTable({
           Nastav IBAN v „Nastavení dodavatele", aby faktury obsahovaly QR platbu.
         </div>
       )}
-      <div className="mb-4 grid gap-4 sm:grid-cols-2">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-[var(--muted-foreground)]">Nezaplaceno</p>
-            <p className="mt-1 text-2xl font-bold text-warning">{czk(unpaidSum)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-[var(--muted-foreground)]">Zaplaceno</p>
-            <p className="mt-1 text-2xl font-bold text-success">{czk(paidSum)}</p>
-          </CardContent>
-        </Card>
+      {/* Inline summary */}
+      <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+        <span className="text-warning">
+          <span className="font-semibold">{czk(unpaidSum)}</span> nezaplaceno
+        </span>
+        <span className="text-[var(--border)]">·</span>
+        <span className="text-success">
+          <span className="font-semibold">{czk(paidSum)}</span> zaplaceno
+        </span>
       </div>
 
-      {/* Filters + export */}
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-[var(--border)] bg-[var(--background)] p-3">
+      {/* Filters + export on a single row */}
+      <div className="mb-4 flex flex-wrap items-end gap-2">
         <div>
           <Label className="text-xs">Od</Label>
           <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-9" />
@@ -162,7 +158,7 @@ function InvoicesTable({
           <Label className="text-xs">Do</Label>
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-9" />
         </div>
-        <div>
+        <div className="w-auto min-w-[140px] max-w-[170px]">
           <Label className="text-xs">Stav</Label>
           <Select value={status} onChange={(e) => setStatus(e.target.value)} className="h-9">
             <option value="">Vše</option>
@@ -171,7 +167,7 @@ function InvoicesTable({
             <option value="cancelled">Storno</option>
           </Select>
         </div>
-        <div>
+        <div className="w-auto min-w-[130px] max-w-[160px]">
           <Label className="text-xs">Typ</Label>
           <Select value={type} onChange={(e) => setType(e.target.value)} className="h-9">
             <option value="">Vše</option>
