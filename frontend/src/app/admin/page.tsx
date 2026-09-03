@@ -86,23 +86,28 @@ export default async function DashboardPage() {
       ) : (
         <div className="space-y-6">
           {/* Today's lessons */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <CalendarDays className="h-4 w-4" /> Dnešní lekce
-                <span className="font-normal text-[var(--muted-foreground)]">· {todayLabel}</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {todayLessons.length === 0 ? (
-                <p className="text-sm text-[var(--muted-foreground)]">
-                  Dnes nejsou naplánované žádné lekce.{" "}
-                  <Link href="/admin/rozvrh" className="text-[var(--primary)] hover:underline">
-                    Zobrazit rozvrh
-                  </Link>
-                  .
-                </p>
-              ) : (
+          {todayLessons.length === 0 ? (
+            <div className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--background)] px-5 py-3.5 text-sm">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--accent)]/10 text-[var(--accent)]">
+                <CalendarDays className="h-[18px] w-[18px]" />
+              </span>
+              <span className="text-[var(--muted-foreground)]">
+                <span className="font-medium text-[var(--foreground)]">Dnešní lekce · {todayLabel}</span>
+                {" — "}dnes nejsou naplánované žádné lekce.
+              </span>
+              <Link href="/admin/rozvrh" className="ml-auto shrink-0 text-sm font-medium text-[var(--accent)] hover:underline">
+                Zobrazit rozvrh →
+              </Link>
+            </div>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <CalendarDays className="h-4 w-4" /> Dnešní lekce
+                  <span className="font-normal text-[var(--muted-foreground)]">· {todayLabel}</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
                 <ul className="divide-y divide-[var(--border)]">
                   {todayLessons.map((l, i) => (
                     <li
@@ -131,9 +136,9 @@ export default async function DashboardPage() {
                     </li>
                   ))}
                 </ul>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Top metrics */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -142,12 +147,17 @@ export default async function DashboardPage() {
               label="Nové registrace"
               value={String(stats.registrationsToday)}
               hint={`${stats.registrationsThisWeek} tento týden`}
+              tone="brand"
+              href="/admin/registrace"
             />
             <Metric
               icon={Users}
               label="Obsazenost"
               value={`${stats.totalSpotsTaken}/${stats.totalCapacity}`}
               hint={`${occupancyPct} % · ${stats.activePrograms} programů`}
+              tone="brand"
+              progress={occupancyPct}
+              href="/admin/programy"
             />
             <Metric
               icon={Wallet}
@@ -155,12 +165,14 @@ export default async function DashboardPage() {
               value={czk(stats.confirmedRevenue)}
               hint={`očekávané ${czk(stats.expectedRevenue)}`}
               tone="success"
+              href="/admin/fakturace"
             />
             <Metric
               icon={TrendingUp}
               label="Potenciál sezóny"
               value={czk(stats.potentialRevenue)}
               hint="při plné kapacitě"
+              tone="neutral"
             />
           </div>
 
@@ -169,7 +181,10 @@ export default async function DashboardPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Wallet className="h-4 w-4" /> Nezaplacené registrace
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--warning-bg)] text-[var(--warning-fg)]">
+                    <Wallet className="h-4 w-4" />
+                  </span>
+                  Nezaplacené registrace
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -184,7 +199,7 @@ export default async function DashboardPage() {
                       </p>
                     </div>
                     <Button variant="outline" size="sm" asChild>
-                      <Link href="/admin/registrace?paymentStatus=unpaid">Zobrazit</Link>
+                      <Link href="/admin/registrace?paymentStatus=unpaid">Zobrazit →</Link>
                     </Button>
                   </div>
                 )}
@@ -200,7 +215,10 @@ export default async function DashboardPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <AlertTriangle className="h-4 w-4 text-warning" /> Nenaplněné programy
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--warning-bg)] text-[var(--warning-fg)]">
+                    <AlertTriangle className="h-4 w-4" />
+                  </span>
+                  Nenaplněné programy
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -209,18 +227,25 @@ export default async function DashboardPage() {
                     Všechny programy mají dobrou obsazenost.
                   </p>
                 ) : (
-                  <ul className="space-y-2">
-                    {stats.underfilled.slice(0, 5).map((p) => (
-                      <li key={p.id} className="flex items-center justify-between gap-2 text-sm">
-                        <Link href="/admin/programy" className="truncate font-medium hover:underline">
-                          {p.name}
-                        </Link>
-                        <Badge variant={p.occupancyPct === 0 ? "danger" : "warning"}>
-                          {p.spotsTaken}/{p.capacity} · {p.occupancyPct} %
-                        </Badge>
-                      </li>
-                    ))}
-                  </ul>
+                  <>
+                    <ul className="space-y-2">
+                      {stats.underfilled.slice(0, 5).map((p) => (
+                        <li key={p.id} className="flex items-center justify-between gap-2 text-sm">
+                          <Link href="/admin/programy" className="truncate font-medium hover:underline">
+                            {p.name}
+                          </Link>
+                          <Badge variant={p.occupancyPct === 0 ? "danger" : "warning"}>
+                            {p.spotsTaken}/{p.capacity} · {p.occupancyPct} %
+                          </Badge>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-3 border-t border-[var(--border)] pt-3 text-right">
+                      <Link href="/admin/programy" className="text-sm font-medium text-[var(--accent)] hover:underline">
+                        Všechny programy →
+                      </Link>
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -236,24 +261,53 @@ function Metric({
   label,
   value,
   hint,
-  tone,
+  tone = "neutral",
+  href,
+  progress,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string;
   hint?: string;
-  tone?: "success";
+  tone?: "neutral" | "success" | "warning" | "brand";
+  href?: string;
+  progress?: number;
 }) {
-  return (
-    <Card>
-      <CardContent className="p-5">
-        <div className="mb-2 flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
-          <Icon className="h-4 w-4" />
-          {label}
+  const tones: Record<string, { chip: string; ring: string; bar: string; value: string }> = {
+    neutral: { chip: "bg-[var(--muted)] text-[var(--foreground)]", ring: "", bar: "bg-[var(--foreground)]", value: "" },
+    brand: { chip: "bg-[var(--accent)]/10 text-[var(--accent)]", ring: "", bar: "bg-[var(--accent)]", value: "" },
+    success: { chip: "bg-[var(--success-bg)] text-[var(--success-fg)]", ring: "", bar: "bg-[var(--success-solid)]", value: "text-success" },
+    warning: { chip: "bg-[var(--warning-bg)] text-[var(--warning-fg)]", ring: "", bar: "bg-[var(--warning-solid)]", value: "text-warning" },
+  };
+  const t = tones[tone];
+
+  const inner = (
+    <div className="flex h-full flex-col p-5">
+      <div className="mb-3 flex items-center gap-2.5">
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${t.chip}`}>
+          <Icon className="h-[18px] w-[18px]" />
+        </span>
+        <span className="text-sm font-medium text-[var(--muted-foreground)]">{label}</span>
+      </div>
+      <p className={`text-2xl font-bold tabular-nums ${t.value}`}>{value}</p>
+      {progress != null && (
+        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--muted)]">
+          <div className={`h-full rounded-full ${t.bar}`} style={{ width: `${Math.min(100, progress)}%` }} />
         </div>
-        <p className={`text-2xl font-bold ${tone === "success" ? "text-success" : ""}`}>{value}</p>
-        {hint && <p className="mt-1 text-xs text-[var(--muted-foreground)]">{hint}</p>}
-      </CardContent>
+      )}
+      {hint && <p className="mt-1.5 text-xs text-[var(--muted-foreground)]">{hint}</p>}
+    </div>
+  );
+
+  return (
+    <Card className={`overflow-hidden transition-shadow ${href ? "hover:shadow-md" : ""}`}>
+      {href ? (
+        <Link href={href} className="block h-full">
+          {inner}
+        </Link>
+      ) : (
+        inner
+      )}
     </Card>
   );
 }
