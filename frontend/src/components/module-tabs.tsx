@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
  * The sidebar shows modules; this shows the module's pages so everything stays one click away.
  */
 export function ModuleTabs({ role }: { role: Role }) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const module = moduleForPath(pathname, role);
 
   // No tabs for the dashboard or single-page modules.
@@ -22,7 +22,9 @@ export function ModuleTabs({ role }: { role: Role }) {
       <div className="inline-flex gap-1 rounded-lg border border-[var(--border)] bg-[var(--background)] p-1">
         {module.items.map((item) => {
           const active =
-            item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
+            item.href === "/admin"
+              ? pathname === "/admin"
+              : pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
               key={item.href}
