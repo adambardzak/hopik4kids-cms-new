@@ -30,9 +30,10 @@ export function ModuleTabs({ role }: { role: Role }) {
               className={cn(
                 "whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors",
                 active
-                  ? "bg-[var(--accent)] text-white shadow-sm"
+                  ? "shadow-sm"
                   : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]",
               )}
+              style={active ? { background: "var(--accent)", color: "var(--accent-fg)" } : undefined}
             >
               {item.label}
             </Link>

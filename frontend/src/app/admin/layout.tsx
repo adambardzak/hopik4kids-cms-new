@@ -17,7 +17,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   // Resolve the active module's accent from the request path (middleware sets x-pathname).
   const pathname = (await headers()).get("x-pathname") ?? "";
-  const accent = moduleForPath(pathname, session.role)?.accent ?? "#3b82f6";
+  const activeModule = moduleForPath(pathname, session.role);
+  const accent = activeModule?.accent ?? "#1A2B47";
+  const accentFg = activeModule?.accentFg ?? "#ffffff";
 
   return (
     <ToastProvider>
@@ -26,11 +28,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <NavigationProgress />
           <div
             className="flex h-screen flex-col overflow-hidden md:flex-row"
-            style={{ ["--accent" as string]: accent }}
+            style={{ ["--accent" as string]: accent, ["--accent-fg" as string]: accentFg }}
           >
             <Sidebar modules={modules} session={session} />
             <main className="flex flex-1 flex-col overflow-hidden bg-[var(--muted)] p-3 md:p-4">
-              <div className="flex min-h-0 flex-1 flex-col overflow-auto rounded-xl border-2 border-[var(--accent)]/25 bg-[var(--muted)] p-4 pb-16 shadow-[0_0_0_1px_var(--border)] md:p-8 md:pb-20">
+              <div className="flex min-h-0 flex-1 flex-col overflow-auto rounded-xl border-2 border-[var(--accent)] bg-[var(--background)] p-4 pb-16 md:p-8 md:pb-20">
                 <ModuleTabs role={session.role} />
                 <div className="h4k-fade-in flex min-h-0 flex-1 flex-col">{children}</div>
               </div>

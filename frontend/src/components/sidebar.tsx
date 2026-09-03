@@ -85,9 +85,9 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
             title={label}
             className={cn(
               "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-              active ? "text-white" : "hover:bg-[var(--muted)]",
+              active ? "" : "hover:bg-[var(--muted)]",
             )}
-            style={active ? { background: m.accent } : undefined}
+            style={active ? { background: m.accent, color: m.accentFg } : undefined}
           >
             <Icon className="h-5 w-5 shrink-0" />
             <span className="whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:opacity-100">
@@ -213,14 +213,12 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
         <span className="font-bold">Hopík4Kids</span>
       </div>
 
-      {/* Desktop sidebar: collapsed rail (16) that expands to an overlay on hover (no layout shift). */}
-      <div className="relative hidden w-16 shrink-0 md:block">
-        <aside className="group absolute inset-y-0 left-0 z-40 flex w-16 flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--background)] transition-[width] duration-200 ease-out hover:w-64 hover:shadow-2xl">
-          {brand}
-          {nav}
-          {footer}
-        </aside>
-      </div>
+      {/* Desktop sidebar: collapsed icon rail that expands on hover, pushing content aside. */}
+      <aside className="group hidden h-full w-16 shrink-0 flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--background)] transition-[width] duration-200 ease-out hover:w-64 md:flex">
+        {brand}
+        {nav}
+        {footer}
+      </aside>
 
       {/* Mobile drawer + overlay */}
       {open && (
