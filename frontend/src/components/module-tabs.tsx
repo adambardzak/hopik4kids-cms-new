@@ -15,7 +15,13 @@ export function ModuleTabs({ role }: { role: Role }) {
   const module = moduleForPath(pathname, role);
 
   // No tabs for the dashboard or single-page modules.
-  if (!module || module.title === null || module.items.length < 2) return null;
+  if (!module || module.title === null || module.items.length < 2) {
+    return (
+      <div className="mb-5 rounded bg-red-500 px-3 py-1 text-xs text-white">
+        DEBUG: no tabs (module={module?.id ?? "null"} items={module?.items.length ?? 0} path={pathname} role={role})
+      </div>
+    );
+  }
 
   return (
     <div className="mb-5 overflow-x-auto">
