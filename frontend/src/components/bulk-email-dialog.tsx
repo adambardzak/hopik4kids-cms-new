@@ -47,7 +47,7 @@ export function BulkEmailDialog({ programId, programName, triggerClassName }: { 
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className={triggerClassName} title="Hromadný e-mail rodičům">
-          <Mail className="h-3.5 w-3.5" /> E-mail rodičům
+          <Mail className="h-4 w-4" /> E-mail rodičům
         </Button>
       </DialogTrigger>
       <DialogContent>

@@ -292,17 +292,20 @@ function ProgramGroup({
             </Badge>
           )}
         </button>
-        <a
-          href={`/api/programs/${programId}/attendance`}
-          target="_blank"
-          rel="noreferrer"
-          className="flex min-w-[130px] items-center justify-center gap-1.5 rounded-md border border-[var(--border)] px-2.5 py-1.5 text-xs font-medium hover:bg-[var(--background)]"
-          title="Docházkový list (PDF)"
-        >
-          <Printer className="h-3.5 w-3.5" /> Docházka
-        </a>
-        <BulkEmailDialog programId={programId} programName={name} triggerClassName="min-w-[130px] justify-center" />
-        <WaitlistDialog programId={programId} programName={name} triggerClassName="min-w-[130px] justify-center" />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <a
+              href={`/api/programs/${programId}/attendance`}
+              target="_blank"
+              rel="noreferrer"
+              title="Docházkový list (PDF)"
+            >
+              <Printer className="h-4 w-4" /> Docházka
+            </a>
+          </Button>
+          <BulkEmailDialog programId={programId} programName={name} />
+          <WaitlistDialog programId={programId} programName={name} />
+        </div>
       </div>
       {open && <RegRows rows={rows} onDetail={onDetail} />}
     </div>
