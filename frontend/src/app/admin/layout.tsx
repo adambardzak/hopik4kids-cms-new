@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { getSession } from "@/lib/session";
-import { navModulesForRole } from "@/lib/nav";
+import { navModulesForRole, moduleForPath } from "@/lib/nav";
 import { Sidebar } from "@/components/sidebar";
 import { ModuleTabs } from "@/components/module-tabs";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,16 +15,25 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const modules = navModulesForRole(session.role);
 
+  // Resolve the active module's accent from the request path (middleware sets x-pathname).
+  const pathname = (await headers()).get("x-pathname") ?? "";
+  const accent = moduleForPath(pathname, session.role)?.accent ?? "#3b82f6";
+
   return (
     <ToastProvider>
       <ConfirmProvider>
         <TooltipProvider delayDuration={200}>
           <NavigationProgress />
-          <div className="flex h-screen flex-col overflow-hidden md:flex-row">
+          <div
+            className="flex h-screen flex-col overflow-hidden md:flex-row"
+            style={{ ["--accent" as string]: accent }}
+          >
             <Sidebar modules={modules} session={session} />
-            <main className="flex flex-1 flex-col overflow-auto bg-[var(--muted)] p-4 pb-16 md:p-8 md:pb-20">
-              <ModuleTabs role={session.role} />
-              <div className="h4k-fade-in flex min-h-0 flex-1 flex-col">{children}</div>
+            <main className="flex flex-1 flex-col overflow-hidden bg-[var(--muted)] p-3 md:p-4">
+              <div className="flex min-h-0 flex-1 flex-col overflow-auto rounded-xl border-2 border-[var(--accent)]/25 bg-[var(--muted)] p-4 pb-16 shadow-[0_0_0_1px_var(--border)] md:p-8 md:pb-20">
+                <ModuleTabs role={session.role} />
+                <div className="h4k-fade-in flex min-h-0 flex-1 flex-col">{children}</div>
+              </div>
             </main>
           </div>
         </TooltipProvider>

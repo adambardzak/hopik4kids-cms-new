@@ -71,7 +71,7 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
 
   // Desktop: compact module list (module pages become tabs at the top of the page).
   const nav = (
-    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-2">
+    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden px-2 py-2">
       {modules.map((m) => {
         // The dashboard is a plain link; other modules link to their first page.
         const target = m.items[0]?.href ?? "/admin";
@@ -82,13 +82,17 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
           <Link
             key={m.id}
             href={target}
+            title={label}
             className={cn(
               "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-              active ? "bg-[var(--primary)] text-[var(--primary-foreground)]" : "hover:bg-[var(--muted)]",
+              active ? "text-white" : "hover:bg-[var(--muted)]",
             )}
+            style={active ? { background: m.accent } : undefined}
           >
-            <Icon className="h-4 w-4" />
-            {label}
+            <Icon className="h-5 w-5 shrink-0" />
+            <span className="whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              {label}
+            </span>
           </Link>
         );
       })}
@@ -130,6 +134,31 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
 
   const footer = (
     <div className="border-t border-[var(--border)] p-4">
+      <div className="hidden group-hover:block">
+        <div className="mb-2">
+          <p className="truncate text-sm font-medium">{session.name ?? session.email}</p>
+          <p className="text-xs text-[var(--muted-foreground)]">{ROLE_LABELS[session.role] ?? session.role}</p>
+        </div>
+        {(session.role === "owner" || session.role === "admin") && <NotificationToggle />}
+        <ThemeToggle />
+        <Button variant="outline" size="sm" className="w-full" onClick={logout}>
+          <LogOut className="h-4 w-4" />
+          Odhlásit se
+        </Button>
+      </div>
+      <button
+        onClick={logout}
+        title="Odhlásit se"
+        aria-label="Odhlásit se"
+        className="flex w-full items-center justify-center rounded-md p-2 hover:bg-[var(--muted)] group-hover:hidden"
+      >
+        <LogOut className="h-5 w-5" />
+      </button>
+    </div>
+  );
+
+  const mobileFooter = (
+    <div className="border-t border-[var(--border)] p-4">
       <div className="mb-2">
         <p className="truncate text-sm font-medium">{session.name ?? session.email}</p>
         <p className="text-xs text-[var(--muted-foreground)]">{ROLE_LABELS[session.role] ?? session.role}</p>
@@ -144,6 +173,16 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
   );
 
   const brand = (
+    <div className="flex items-center gap-2.5 px-4 py-6">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo.svg" alt="Hopík4Kids" className="h-9 w-auto shrink-0" />
+      <span className="whitespace-nowrap text-lg font-bold opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+        Hopík4Kids
+      </span>
+    </div>
+  );
+
+  const mobileBrand = (
     <div className="flex items-center gap-2.5 p-6">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/logo.svg" alt="Hopík4Kids" className="h-9 w-auto" />
@@ -174,12 +213,14 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
         <span className="font-bold">Hopík4Kids</span>
       </div>
 
-      {/* Desktop sidebar (always visible on md+) */}
-      <aside className="hidden h-full w-64 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--background)] md:flex">
-        {brand}
-        {nav}
-        {footer}
-      </aside>
+      {/* Desktop sidebar: collapsed rail (16) that expands to an overlay on hover (no layout shift). */}
+      <div className="relative hidden w-16 shrink-0 md:block">
+        <aside className="group absolute inset-y-0 left-0 z-40 flex w-16 flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--background)] transition-[width] duration-200 ease-out hover:w-64 hover:shadow-2xl">
+          {brand}
+          {nav}
+          {footer}
+        </aside>
+      </div>
 
       {/* Mobile drawer + overlay */}
       {open && (
@@ -198,7 +239,7 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
             }}
           >
             <div className="flex items-center justify-between pr-2">
-              {brand}
+              {mobileBrand}
               <button
                 onClick={() => setOpen(false)}
                 className="rounded-md p-2 hover:bg-[var(--muted)]"
@@ -208,7 +249,7 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
               </button>
             </div>
             {mobileNav}
-            {footer}
+            {mobileFooter}
           </aside>
         </div>
       )}

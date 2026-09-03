@@ -21,6 +21,8 @@ export interface NavModule {
   title: string | null;
   /** Module-level icon shown in the sidebar. */
   icon: IconKey;
+  /** Accent color (hue) used for the active state + content ring. */
+  accent: string;
   /** Pages belonging to the module (rendered as tabs at the top of the page). */
   items: NavItem[];
 }
@@ -35,6 +37,7 @@ export const NAV_MODULES: NavModule[] = [
     id: "dashboard",
     title: null,
     icon: "dashboard",
+    accent: "#3b82f6",
     items: [
       { href: "/admin", label: "Přehled", icon: "dashboard", roles: ["owner", "admin", "trainer", "accountant", "viewer"] },
     ],
@@ -43,6 +46,7 @@ export const NAV_MODULES: NavModule[] = [
     id: "provoz",
     title: "Provoz",
     icon: "operations",
+    accent: "#0ea5e9",
     items: [
       { href: "/admin/rozvrh", label: "Rozvrh", icon: "schedule", roles: ["owner", "admin", "trainer"] },
       { href: "/admin/dochazka", label: "Docházka", icon: "attendance", roles: ["owner", "admin", "trainer"] },
@@ -54,6 +58,7 @@ export const NAV_MODULES: NavModule[] = [
     id: "ucastnici",
     title: "Účastníci",
     icon: "participants",
+    accent: "#10b981",
     items: [
       { href: "/admin/registrace", label: "Registrace", icon: "registrations", roles: ["owner", "admin", "viewer"] },
       { href: "/admin/cekaci-listina", label: "Čekací listina", icon: "waitlist", roles: ["owner", "admin"] },
@@ -66,6 +71,7 @@ export const NAV_MODULES: NavModule[] = [
     id: "obsah",
     title: "Obsah",
     icon: "content",
+    accent: "#f59e0b",
     items: [
       { href: "/admin/aktuality", label: "Aktuality", icon: "articles", roles: ["owner", "admin"] },
       { href: "/admin/dokumenty", label: "Dokumenty", icon: "documents", roles: ["owner", "admin", "trainer"] },
@@ -76,6 +82,7 @@ export const NAV_MODULES: NavModule[] = [
     id: "nastaveni",
     title: "Nastavení",
     icon: "settings",
+    accent: "#8b5cf6",
     items: [
       { href: "/admin/programy", label: "Programy", icon: "programs", roles: ["owner", "admin"] },
       { href: "/admin/mista", label: "Místa", icon: "locations", roles: ["owner", "admin"] },

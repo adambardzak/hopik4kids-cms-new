@@ -13,7 +13,10 @@ export function middleware(request: NextRequest) {
     url.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
-  return NextResponse.next();
+  // Expose the pathname to server components (layout resolves the active module's accent).
+  const res = NextResponse.next();
+  res.headers.set("x-pathname", request.nextUrl.pathname);
+  return res;
 }
 
 export const config = {
