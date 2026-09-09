@@ -132,7 +132,7 @@ public class ShiftSignupService {
                 if (p != null) {
                     name = p.getName();
                     type = p.getType().name().toLowerCase();
-                    trainersNeeded = p.getTrainersNeeded() == null ? 1 : p.getTrainersNeeded();
+                    trainersNeeded = p.getTrainersNeeded();
                     locationName = p.getLocation() == null ? null : p.getLocation().getName();
                 } else {
                     name = o.getTitle() != null ? o.getTitle() : "Jednorázová akce";
