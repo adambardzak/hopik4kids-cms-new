@@ -25,7 +25,7 @@ import java.util.UUID;
 public class MediaService {
 
     private static final Set<String> ALLOWED = Set.of(
-            "image/jpeg", "image/png", "image/webp", "image/gif");
+            "image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf");
 
     private final MediaRepository media;
     private final AuditService audit;

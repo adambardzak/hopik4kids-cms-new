@@ -7,7 +7,10 @@ import cz.hopik4kids.cms.kernel.web.ApiException;
 import cz.hopik4kids.cms.kernel.web.SecurityUtils;
 import cz.hopik4kids.cms.scheduling.domain.ShiftSignup;
 import cz.hopik4kids.cms.scheduling.domain.ShiftStatus;
+import cz.hopik4kids.cms.scheduling.domain.LessonOverride;
+import cz.hopik4kids.cms.scheduling.domain.LessonOverrideType;
 import cz.hopik4kids.cms.scheduling.repository.ShiftSignupRepository;
+import cz.hopik4kids.cms.scheduling.repository.LessonOverrideRepository;
 import cz.hopik4kids.cms.scheduling.web.dto.ShiftSlotDto;
 import cz.hopik4kids.cms.usersrbac.domain.User;
 import cz.hopik4kids.cms.usersrbac.repository.UserRepository;
@@ -40,14 +43,17 @@ public class ShiftSignupService {
     private final UserRepository users;
     private final ScheduleService schedule;
     private final AuditService audit;
+    private final LessonOverrideRepository overrides;
 
     public ShiftSignupService(ShiftSignupRepository signups, ProgramRepository programs,
-                              UserRepository users, ScheduleService schedule, AuditService audit) {
+                              UserRepository users, ScheduleService schedule, AuditService audit,
+                              LessonOverrideRepository overrides) {
         this.signups = signups;
         this.programs = programs;
         this.users = users;
         this.schedule = schedule;
         this.audit = audit;
+        this.overrides = overrides;
     }
 
     private static void validateRange(LocalDate from, LocalDate to) {
@@ -106,6 +112,64 @@ public class ShiftSignupService {
                         p.getTrainersNeeded(), approved, pending, mySignupId, myStatus, people));
             }
         }
+
+        // One-off lessons/events (prd §7.4) are offered as shift slots too, so trainers can sign
+        // up for ad-hoc sessions. Keyed by the override id so signups don't collide with recurring
+        // program occurrences on the same date.
+        Map<String, Program> programCache = new HashMap<>();
+        for (LessonOverride o : overrides.findInRange(from, to)) {
+            if (o.getType() != LessonOverrideType.ONE_OFF || o.getDate() == null) {
+                continue;
+            }
+            String slotKey = "override:" + o.getId();
+            String name;
+            String type = "one_off";
+            int trainersNeeded = 1;
+            String locationName = null;
+            if (o.getProgramId() != null) {
+                Program p = programCache.computeIfAbsent(o.getProgramId(),
+                        id -> programs.findByIdWithLocation(id).orElse(null));
+                if (p != null) {
+                    name = p.getName();
+                    type = p.getType().name().toLowerCase();
+                    trainersNeeded = p.getTrainersNeeded() == null ? 1 : p.getTrainersNeeded();
+                    locationName = p.getLocation() == null ? null : p.getLocation().getName();
+                } else {
+                    name = o.getTitle() != null ? o.getTitle() : "Jednorázová akce";
+                }
+            } else {
+                name = o.getTitle() != null ? o.getTitle() : "Jednorázová akce";
+            }
+
+            LocalTime start = parseTime(o.getTime());
+            String startStr = start == null ? null : start.format(HHMM);
+            String endStr = (start != null && o.getDurationMin() != null)
+                    ? start.plusMinutes(o.getDurationMin()).format(HHMM) : null;
+
+            List<ShiftSignup> here = byKey.getOrDefault(key(slotKey, o.getDate()), List.of());
+            int approved = 0, pending = 0;
+            String mySignupId = null, myStatus = null;
+            List<ShiftSlotDto.ShiftSignupTrainerDto> people = new ArrayList<>();
+            for (ShiftSignup s : here) {
+                if (s.getStatus() == ShiftStatus.APPROVED) approved++;
+                else if (s.getStatus() == ShiftStatus.PENDING) pending++;
+                if (s.getTrainerId().equals(me) && s.getStatus() != ShiftStatus.CANCELLED
+                        && s.getStatus() != ShiftStatus.REJECTED) {
+                    mySignupId = s.getId();
+                    myStatus = s.getStatus().name();
+                }
+                if (s.getStatus() == ShiftStatus.APPROVED || s.getStatus() == ShiftStatus.PENDING) {
+                    String tname = trainerNames.computeIfAbsent(s.getTrainerId(),
+                            id -> users.findById(id).map(User::getName).orElse("—"));
+                    people.add(new ShiftSlotDto.ShiftSignupTrainerDto(
+                            s.getId(), s.getTrainerId(), tname, s.getStatus().name()));
+                }
+            }
+            slots.add(new ShiftSlotDto(
+                    slotKey, name, type, o.getDate(),
+                    startStr, endStr, locationName,
+                    trainersNeeded, approved, pending, mySignupId, myStatus, people));
+        }
         slots.sort(Comparator.comparing(ShiftSlotDto::date)
                 .thenComparing(s -> s.startTime() == null ? "" : s.startTime()));
         return slots;
@@ -120,14 +184,25 @@ public class ShiftSignupService {
     @Transactional
     public void signup(String programId, LocalDate date) {
         String me = SecurityUtils.currentUserId();
-        Program p = programs.findById(programId)
-                .orElseThrow(() -> ApiException.badRequest("INVALID_PROGRAM", "Program nenalezen"));
-        if (p.getStatus() == ProgramStatus.ARCHIVED) {
-            throw ApiException.badRequest("PROGRAM_INACTIVE", "Program je archivovaný");
-        }
-        // The (program, date) must be a real occurrence of this program.
-        if (schedule.occurrenceDates(p, date, date).isEmpty()) {
-            throw ApiException.badRequest("INVALID_OCCURRENCE", "V tento den lekce neprobíhá");
+
+        if (programId != null && programId.startsWith("override:")) {
+            // One-off lesson/event slot: validate the override exists on that date.
+            String overrideId = programId.substring("override:".length());
+            LessonOverride o = overrides.findById(overrideId)
+                    .filter(x -> x.getType() == LessonOverrideType.ONE_OFF && date.equals(x.getDate()))
+                    .orElseThrow(() -> ApiException.badRequest("INVALID_OCCURRENCE", "Jednorázová akce nenalezena"));
+            // (o referenced only for validation.)
+            java.util.Objects.requireNonNull(o);
+        } else {
+            Program p = programs.findById(programId)
+                    .orElseThrow(() -> ApiException.badRequest("INVALID_PROGRAM", "Program nenalezen"));
+            if (p.getStatus() == ProgramStatus.ARCHIVED) {
+                throw ApiException.badRequest("PROGRAM_INACTIVE", "Program je archivovaný");
+            }
+            // The (program, date) must be a real occurrence of this program.
+            if (schedule.occurrenceDates(p, date, date).isEmpty()) {
+                throw ApiException.badRequest("INVALID_OCCURRENCE", "V tento den lekce neprobíhá");
+            }
         }
         signups.findByProgramIdAndLessonDateAndTrainerId(programId, date, me).ifPresent(existing -> {
             if (existing.getStatus() == ShiftStatus.PENDING || existing.getStatus() == ShiftStatus.APPROVED) {

@@ -33,9 +33,9 @@ import { useConfirm } from "@/components/ui/confirm";
 
 const DAYS = ["Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"];
 
-// Horizontal grid: days are rows, time is the x-axis (7:00–20:00).
+// Horizontal grid: days are rows, time is the x-axis (7:00–21:00).
 const START_HOUR = 7;
-const END_HOUR = 20;
+const END_HOUR = 21;
 const TOTAL_MIN = (END_HOUR - START_HOUR) * 60;
 
 const TYPE_STYLE: Record<
