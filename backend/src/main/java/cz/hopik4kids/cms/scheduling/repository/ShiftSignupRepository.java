@@ -23,4 +23,9 @@ public interface ShiftSignupRepository extends JpaRepository<ShiftSignup, String
     List<ShiftSignup> findInRange(@Param("from") LocalDate from, @Param("to") LocalDate to);
 
     long countByProgramIdAndLessonDateAndStatusIn(String programId, LocalDate lessonDate, List<ShiftStatus> statuses);
+
+    /** Distinct program ids where the trainer has a signup with any of the given statuses. */
+    @Query("select distinct s.programId from ShiftSignup s where s.trainerId = :trainerId and s.status in :statuses")
+    List<String> findProgramIdsByTrainerAndStatusIn(@Param("trainerId") String trainerId,
+                                                     @Param("statuses") List<ShiftStatus> statuses);
 }

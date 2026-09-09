@@ -31,6 +31,7 @@ public class AdminProgramService {
     private final cz.hopik4kids.cms.registrations.repository.RegistrationRepository registrations;
     private final WaitlistEntryRepository waitlist;
     private final AttendanceRecordRepository attendance;
+    private final cz.hopik4kids.cms.scheduling.repository.ShiftSignupRepository shiftSignups;
     private final PasswordEncoder passwordEncoder;
     private final AuditService audit;
 
@@ -39,6 +40,7 @@ public class AdminProgramService {
                                cz.hopik4kids.cms.registrations.repository.RegistrationRepository registrations,
                                WaitlistEntryRepository waitlist,
                                AttendanceRecordRepository attendance,
+                               cz.hopik4kids.cms.scheduling.repository.ShiftSignupRepository shiftSignups,
                                PasswordEncoder passwordEncoder,
                                AuditService audit) {
         this.programs = programs;
@@ -46,17 +48,32 @@ public class AdminProgramService {
         this.registrations = registrations;
         this.waitlist = waitlist;
         this.attendance = attendance;
+        this.shiftSignups = shiftSignups;
         this.passwordEncoder = passwordEncoder;
         this.audit = audit;
     }
 
     @Transactional(readOnly = true)
     public List<AdminProgramDto> list() {
-        // Trainers see only programs they are assigned to (prd §7.2); owner/admin see all.
-        List<Program> source = cz.hopik4kids.cms.kernel.web.SecurityUtils.isPrivileged()
-                ? programs.findAll()
-                : programs.findByTrainer(cz.hopik4kids.cms.kernel.web.SecurityUtils.currentUserId());
-        return source.stream().map(AdminProgramDto::from).toList();
+        // Trainers see programs they are assigned to (prd §7.2) PLUS programs where they have an
+        // approved shift signup (admin-approved substitute — needed to record attendance). Owner/admin: all.
+        if (cz.hopik4kids.cms.kernel.web.SecurityUtils.isPrivileged()) {
+            return programs.findAll().stream().map(AdminProgramDto::from).toList();
+        }
+        String uid = cz.hopik4kids.cms.kernel.web.SecurityUtils.currentUserId();
+        java.util.Map<String, Program> byId = new java.util.LinkedHashMap<>();
+        for (Program p : programs.findByTrainer(uid)) {
+            byId.put(p.getId(), p);
+        }
+        List<String> approvedProgramIds = shiftSignups.findProgramIdsByTrainerAndStatusIn(
+                uid, List.of(cz.hopik4kids.cms.scheduling.domain.ShiftStatus.APPROVED));
+        for (String pid : approvedProgramIds) {
+            if (pid == null || pid.startsWith("override:") || byId.containsKey(pid)) {
+                continue;
+            }
+            programs.findByIdWithLocation(pid).ifPresent(p -> byId.put(p.getId(), p));
+        }
+        return byId.values().stream().map(AdminProgramDto::from).toList();
     }
 
     @Transactional(readOnly = true)

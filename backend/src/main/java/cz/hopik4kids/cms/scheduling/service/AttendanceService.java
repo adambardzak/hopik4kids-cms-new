@@ -8,7 +8,9 @@ import cz.hopik4kids.cms.registrations.domain.Registration;
 import cz.hopik4kids.cms.registrations.repository.RegistrationRepository;
 import cz.hopik4kids.cms.scheduling.domain.AttendanceRecord;
 import cz.hopik4kids.cms.scheduling.domain.AttendanceStatus;
+import cz.hopik4kids.cms.scheduling.domain.ShiftStatus;
 import cz.hopik4kids.cms.scheduling.repository.AttendanceRecordRepository;
+import cz.hopik4kids.cms.scheduling.repository.ShiftSignupRepository;
 import cz.hopik4kids.cms.scheduling.web.dto.AttendanceRowDto;
 import cz.hopik4kids.cms.scheduling.web.dto.AttendanceSaveRequest;
 import cz.hopik4kids.cms.scheduling.web.dto.AttendanceStatsDto;
@@ -29,19 +31,47 @@ public class AttendanceService {
     private final AttendanceRecordRepository attendance;
     private final RegistrationRepository registrations;
     private final ProgramRepository programs;
+    private final ShiftSignupRepository shiftSignups;
     private final AuditService audit;
 
     public AttendanceService(AttendanceRecordRepository attendance,
                              RegistrationRepository registrations,
                              ProgramRepository programs,
+                             ShiftSignupRepository shiftSignups,
                              AuditService audit) {
         this.attendance = attendance;
         this.registrations = registrations;
         this.programs = programs;
+        this.shiftSignups = shiftSignups;
         this.audit = audit;
     }
 
-    /** Trainers may only touch programs they are assigned to (prd §7.5). Owner/admin: full access. */
+    /**
+     * Trainers may only touch programs they are assigned to (prd §7.5), OR a specific lesson date
+     * for which they have an APPROVED shift signup (an admin-approved substitute). Owner/admin: full.
+     */
+    private void requireProgramAccess(String programId, LocalDate date) {
+        if (SecurityUtils.isPrivileged()) {
+            return;
+        }
+        String userId = SecurityUtils.currentUserId();
+        if (userId == null) {
+            throw ApiException.forbidden("NOT_ASSIGNED", "Nemáš přístup k tomuto programu");
+        }
+        if (programs.isTrainerAssigned(programId, userId)) {
+            return;
+        }
+        // Approved shift signup grants access to that single lesson date only.
+        if (date != null && shiftSignups
+                .findByProgramIdAndLessonDateAndTrainerId(programId, date, userId)
+                .filter(s -> s.getStatus() == ShiftStatus.APPROVED)
+                .isPresent()) {
+            return;
+        }
+        throw ApiException.forbidden("NOT_ASSIGNED", "Nemáš přístup k tomuto programu");
+    }
+
+    /** Program-wide access (stats): requires a real assignment, not a single-day shift. */
     private void requireProgramAccess(String programId) {
         if (SecurityUtils.isPrivileged()) {
             return;
@@ -55,7 +85,7 @@ public class AttendanceService {
     /** Roster for a lesson: all active children of the program + their recorded status (if any). */
     @Transactional(readOnly = true)
     public List<AttendanceRowDto> roster(String programId, LocalDate date) {
-        requireProgramAccess(programId);
+        requireProgramAccess(programId, date);
         Map<String, AttendanceRecord> byChild = new java.util.HashMap<>();
         for (AttendanceRecord r : attendance.findByProgramIdAndLessonDate(programId, date)) {
             byChild.put(r.getChildId(), r);
@@ -76,7 +106,7 @@ public class AttendanceService {
 
     @Transactional
     public void save(String programId, LocalDate date, AttendanceSaveRequest req) {
-        requireProgramAccess(programId);
+        requireProgramAccess(programId, date);
         if (req.entries() == null) {
             return;
         }
