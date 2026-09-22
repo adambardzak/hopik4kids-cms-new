@@ -45,13 +45,15 @@ public class LessonOverrideController {
     }
 
     public record OneOffRequest(String programId, String title, LocalDate date, String time,
-                                Integer durationMin, String locationId, String note) {}
+                                Integer durationMin, String locationId, String note,
+                                Integer trainersNeeded, Boolean adminOnly) {}
 
     @PostMapping("/one-off")
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, String> oneOff(@RequestBody OneOffRequest req) {
         return Map.of("id", service.oneOff(req.programId(), req.title(), req.date(), req.time(),
-                req.durationMin(), req.locationId(), req.note()));
+                req.durationMin(), req.locationId(), req.note(),
+                req.trainersNeeded(), req.adminOnly() != null && req.adminOnly()));
     }
 
     @DeleteMapping("/{id}")

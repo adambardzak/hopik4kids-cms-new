@@ -104,6 +104,7 @@ public class RegistrationService {
         reg.setNote(blankToNull(req.note()));
         reg.setConsentPersonalData(req.consentPersonalData());
         reg.setConsentMedia(req.consentMedia());
+        reg.setWantsInsuranceConfirmation(req.wantsInsuranceConfirmation());
         reg.setPaymentStatus(PaymentStatus.UNPAID);
         reg.setPriceSnapshot(priceSnapshot);
         reg.setStatus(RegistrationStatus.ACTIVE);

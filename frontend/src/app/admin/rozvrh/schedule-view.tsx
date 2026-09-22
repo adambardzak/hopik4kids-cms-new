@@ -658,6 +658,8 @@ function OneOffDialog({
     time: string;
     durationMin?: number | null;
     locationId?: string | null;
+    trainersNeeded?: number | null;
+    adminOnly?: boolean;
   }) => void;
   pending: boolean;
 }) {
@@ -667,6 +669,8 @@ function OneOffDialog({
   const [time, setTime] = useState("");
   const [duration, setDuration] = useState("");
   const [locationId, setLocationId] = useState(defaultLocation);
+  const [trainersNeeded, setTrainersNeeded] = useState("");
+  const [adminOnly, setAdminOnly] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -676,6 +680,8 @@ function OneOffDialog({
       setTime("");
       setDuration("");
       setLocationId(defaultLocation);
+      setTrainersNeeded("");
+      setAdminOnly(false);
     }
   }, [open, defaultLocation]);
 
@@ -734,6 +740,24 @@ function OneOffDialog({
               ))}
             </Select>
           </div>
+          <div className="flex flex-col gap-1.5">
+            <Label>Počet trenérů (nepovinné)</Label>
+            <Input
+              type="number"
+              min={1}
+              value={trainersNeeded}
+              onChange={(e) => setTrainersNeeded(e.target.value)}
+              placeholder="1"
+            />
+          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={adminOnly}
+              onChange={(e) => setAdminOnly(e.target.checked)}
+            />
+            Vidí jen vedení (nezobrazovat trenérům/brigádníkům)
+          </label>
           <div className="mt-2 flex justify-end gap-2">
             <Button variant="outline" onClick={onClose} disabled={pending}>
               Zrušit
@@ -748,6 +772,8 @@ function OneOffDialog({
                   time,
                   durationMin: duration ? Number(duration) : null,
                   locationId: locationId || null,
+                  trainersNeeded: trainersNeeded ? Number(trainersNeeded) : null,
+                  adminOnly,
                 })
               }
             >

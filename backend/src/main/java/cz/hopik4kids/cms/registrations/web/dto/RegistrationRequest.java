@@ -66,6 +66,9 @@ public record RegistrationRequest(
 
         boolean consentMedia,
 
+        /** Parent wants a payment confirmation for their health insurer (sent once paid). */
+        boolean wantsInsuranceConfirmation,
+
         String source,
 
         /** Required only when program.accessMode = CODE (prd §3B.10). */

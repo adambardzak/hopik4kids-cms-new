@@ -16,7 +16,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Internal documents (prd §6A.8 B). Reading: owner/admin/trainer (scoped by visibility). Writing: owner/admin. */
+/**
+ * Internal documents (prd §6A.8 B). Reading: owner/admin/trainer (scoped by visibility).
+ * Writing: owner/admin/trainer — trainers may only create/edit TRAINERS-visible documents
+ * (enforced in the service), never ADMIN-only ones.
+ */
 @RestController
 @RequestMapping("/admin/api/documents")
 public class DocumentController {
@@ -35,13 +39,13 @@ public class DocumentController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER')")
     public DocumentDto create(@RequestBody DocumentRequest req) {
         return service.create(req);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER')")
     public DocumentDto update(@PathVariable String id, @RequestBody DocumentRequest req) {
         return service.update(id, req);
     }

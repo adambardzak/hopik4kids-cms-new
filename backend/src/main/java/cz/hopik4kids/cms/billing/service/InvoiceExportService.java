@@ -24,7 +24,7 @@ public class InvoiceExportService {
 
     private static final String[] HEADERS = {
             "Číslo faktury", "Odběratel", "Částka celkem", "Kroužek", "Dres",
-            "Datum vystavení", "Datum splatnosti", "Variabilní symbol", "Stav"
+            "Zaplaceno (skutečně)", "Datum vystavení", "Datum splatnosti", "Variabilní symbol", "Stav"
     };
 
     private static final java.util.Map<String, String> STATUS_CS = java.util.Map.of(
@@ -80,12 +80,22 @@ public class InvoiceExportService {
     }
 
     private static String[] cells(InvoiceDto r) {
+        // Actual paid amount: explicit override if set, else the invoiced total once paid, else blank.
+        String paid;
+        if (r.paidAmount() != null) {
+            paid = String.valueOf(r.paidAmount());
+        } else if ("paid".equals(r.status())) {
+            paid = String.valueOf(r.totalAmount());
+        } else {
+            paid = "";
+        }
         return new String[]{
                 r.invoiceNumber(),
                 r.payerName(),
                 String.valueOf(r.totalAmount()),
                 String.valueOf(r.programAmount()),
                 String.valueOf(r.shirtAmount()),
+                paid,
                 str(r.issueDate()),
                 str(r.dueDate()),
                 r.variableSymbol(),

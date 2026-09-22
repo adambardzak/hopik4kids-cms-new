@@ -56,6 +56,17 @@ public class Registration extends BaseEntity {
     @Column(nullable = false)
     private boolean consentMedia;
 
+    /**
+     * Parent requested a payment confirmation for their health insurer (many insurers reimburse
+     * sport clubs). Sent automatically once the registration/invoice is marked paid.
+     */
+    @Column(nullable = false)
+    private boolean wantsInsuranceConfirmation;
+
+    /** Whether the insurance-payment confirmation has already been emailed (idempotency). */
+    @Column(nullable = false)
+    private boolean insuranceConfirmationSent;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
@@ -150,6 +161,22 @@ public class Registration extends BaseEntity {
 
     public void setConsentMedia(boolean consentMedia) {
         this.consentMedia = consentMedia;
+    }
+
+    public boolean isWantsInsuranceConfirmation() {
+        return wantsInsuranceConfirmation;
+    }
+
+    public void setWantsInsuranceConfirmation(boolean wantsInsuranceConfirmation) {
+        this.wantsInsuranceConfirmation = wantsInsuranceConfirmation;
+    }
+
+    public boolean isInsuranceConfirmationSent() {
+        return insuranceConfirmationSent;
+    }
+
+    public void setInsuranceConfirmationSent(boolean insuranceConfirmationSent) {
+        this.insuranceConfirmationSent = insuranceConfirmationSent;
     }
 
     public PaymentStatus getPaymentStatus() {

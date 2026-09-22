@@ -62,6 +62,14 @@ public class Invoice extends BaseEntity {
     @Column
     private Instant paidAt;
 
+    /**
+     * Actual amount the parent paid, when it differs from {@code totalAmount}
+     * (e.g. they added an extra shirt and paid more). Null = paid exactly the invoiced amount.
+     * This is what the accountant exports.
+     */
+    @Column
+    private Integer paidAmount;
+
     public String getInvoiceNumber() {
         return invoiceNumber;
     }
@@ -164,5 +172,13 @@ public class Invoice extends BaseEntity {
 
     public void setPaidAt(Instant paidAt) {
         this.paidAt = paidAt;
+    }
+
+    public Integer getPaidAmount() {
+        return paidAmount;
+    }
+
+    public void setPaidAmount(Integer paidAmount) {
+        this.paidAmount = paidAmount;
     }
 }

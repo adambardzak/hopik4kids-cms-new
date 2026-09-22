@@ -165,6 +165,24 @@ export function ShiftsView({
                         </div>
                       )}
 
+                      {/* Co-trainers on this shift (read-only, visible to trainers so they know
+                          who they're working with — not just the count). */}
+                      {!canApprove && s.signups.length > 0 && (
+                        <div className="mt-3 space-y-1 border-t border-[var(--border)] pt-3">
+                          <p className="text-xs font-medium text-[var(--muted-foreground)]">Jde s tebou:</p>
+                          {s.signups.map((p) => (
+                            <div key={p.signupId} className="flex items-center gap-1.5 text-sm">
+                              {p.trainerName}
+                              {p.status === "APPROVED" ? (
+                                <Check className="h-3.5 w-3.5 text-[var(--success,green)]" />
+                              ) : (
+                                <span className="text-xs text-[var(--muted-foreground)]">(čeká na schválení)</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                       <div className="mt-3">
                         {s.mySignupId ? (
                           <Button

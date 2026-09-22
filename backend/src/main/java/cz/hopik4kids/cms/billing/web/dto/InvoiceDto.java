@@ -21,7 +21,8 @@ public record InvoiceDto(
         LocalDate dueDate,
         String variableSymbol,
         String status,
-        Instant paidAt
+        Instant paidAt,
+        Integer paidAmount
 ) {
     public static InvoiceDto from(Invoice i) {
         return from(i, 0, 0);
@@ -45,6 +46,7 @@ public record InvoiceDto(
                 i.getDueDate(),
                 i.getVariableSymbol(),
                 i.getStatus().name().toLowerCase(),
-                i.getPaidAt());
+                i.getPaidAt(),
+                i.getPaidAmount());
     }
 }

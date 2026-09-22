@@ -29,15 +29,18 @@ public class AdminRegistrationService {
     private final ProgramRepository programs;
     private final InvoiceRepository invoices;
     private final AuditService audit;
+    private final cz.hopik4kids.cms.billing.service.InsuranceConfirmationService insuranceConfirmation;
 
     public AdminRegistrationService(RegistrationRepository registrations,
                                     ProgramRepository programs,
                                     InvoiceRepository invoices,
-                                    AuditService audit) {
+                                    AuditService audit,
+                                    cz.hopik4kids.cms.billing.service.InsuranceConfirmationService insuranceConfirmation) {
         this.registrations = registrations;
         this.programs = programs;
         this.invoices = invoices;
         this.audit = audit;
+        this.insuranceConfirmation = insuranceConfirmation;
     }
 
     @Transactional(readOnly = true)
@@ -116,6 +119,10 @@ public class AdminRegistrationService {
         });
 
         audit.record("payment-status", "Registration", id, "{\"status\":\"" + ps.name() + "\"}");
+        // If this marks the registration paid, send the insurance confirmation if requested.
+        if (ps == PaymentStatus.PAID) {
+            insuranceConfirmation.sendIfRequested(id);
+        }
         return AdminRegistrationDto.from(r);
     }
 

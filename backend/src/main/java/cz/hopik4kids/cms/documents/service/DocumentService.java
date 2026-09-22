@@ -57,6 +57,10 @@ public class DocumentService {
     @Transactional
     public DocumentDto update(String id, DocumentRequest req) {
         Document d = find(id);
+        // Trainers may only edit documents they can see (TRAINERS-visible), never ADMIN-only ones.
+        if (!SecurityUtils.isPrivileged() && d.getVisibility() != DocumentVisibility.TRAINERS) {
+            throw ApiException.forbidden("FORBIDDEN", "Nemáš oprávnění upravit tento dokument");
+        }
         apply(d, req, false);
         d = documents.save(d);
         audit.record("update", "Document", d.getId());
@@ -88,6 +92,10 @@ public class DocumentService {
         if (req.visibility() != null) {
             d.setVisibility(EnumParser.parse(DocumentVisibility.class, req.visibility(), "visibility"));
         } else if (isCreate) {
+            d.setVisibility(DocumentVisibility.TRAINERS);
+        }
+        // Trainers can never create/switch a document to ADMIN-only visibility.
+        if (!SecurityUtils.isPrivileged() && d.getVisibility() != DocumentVisibility.TRAINERS) {
             d.setVisibility(DocumentVisibility.TRAINERS);
         }
         d.setContent(req.content());

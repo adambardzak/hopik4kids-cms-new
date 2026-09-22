@@ -488,6 +488,12 @@ function DetailDialog({
                   <Field label="Cena" value={detail.priceSnapshot > 0 ? `${detail.priceSnapshot} Kč` : "Zdarma"} />
                   <Field label="Souhlas s osobními údaji" value={detail.consentPersonalData ? "ano" : "ne"} />
                   <Field label="Souhlas s fotografováním" value={detail.consentMedia ? "ano" : "ne"} />
+                  {detail.wantsInsuranceConfirmation && (
+                    <Field
+                      label="Potvrzení pro pojišťovnu"
+                      value={detail.insuranceConfirmationSent ? "vyžádáno · odesláno" : "vyžádáno · odešle se po zaplacení"}
+                    />
+                  )}
                   <Field label="Poznámka" value={detail.note} />
                 </dl>
               </section>

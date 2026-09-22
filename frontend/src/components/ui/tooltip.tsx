@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const TooltipProvider = TooltipPrimitive.Provider;
@@ -36,9 +37,21 @@ export function Tooltip({
   children: React.ReactNode;
   side?: "top" | "right" | "bottom" | "left";
 }) {
+  const [open, setOpen] = React.useState(false);
+  const pathname = usePathname();
+
+  // Radix keeps a tooltip open until pointerleave fires. When the trigger is a link, a client-side
+  // navigation swaps the page without ever firing pointerleave, so the tooltip stays stuck open on
+  // return. Force it closed whenever the route changes.
+  React.useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
   return (
-    <TooltipRoot>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
+    <TooltipRoot open={open} onOpenChange={setOpen}>
+      <TooltipTrigger asChild onClick={() => setOpen(false)}>
+        {children}
+      </TooltipTrigger>
       <TooltipContent side={side}>{label}</TooltipContent>
     </TooltipRoot>
   );

@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { markInvoicePaid, cancelInvoice, saveSupplierSettings, lookupAres, sendInvoiceEmail } from "@/lib/actions";
+import { markInvoicePaid, cancelInvoice, saveSupplierSettings, lookupAres, sendInvoiceEmail, setInvoicePaidAmount } from "@/lib/actions";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { czk } from "@/lib/format";
@@ -209,6 +209,7 @@ function InvoicesTable({
               <TableHead>Částka</TableHead>
               <TableHead>Kroužek</TableHead>
               <TableHead>Dres</TableHead>
+              <TableHead>Zaplaceno</TableHead>
               <TableHead>Stav</TableHead>
               <TableHead></TableHead>
             </TableRow>
@@ -230,6 +231,9 @@ function InvoicesTable({
                   <TableCell className="text-sm text-[var(--muted-foreground)]">{czk(inv.programAmount)}</TableCell>
                   <TableCell className="text-sm text-[var(--muted-foreground)]">
                     {inv.shirtAmount > 0 ? czk(inv.shirtAmount) : "—"}
+                  </TableCell>
+                  <TableCell>
+                    <PaidAmountCell invoice={inv} disabled={isPending} onSaved={() => router.refresh()} />
                   </TableCell>
                   <TableCell>
                     <Badge variant={st.variant}>{st.label}</Badge>
@@ -422,6 +426,94 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div className="flex flex-col gap-1.5">
       <Label>{label}</Label>
       {children}
+    </div>
+  );
+}
+
+/**
+ * Inline-editable "actually paid" amount. Defaults to the invoiced total once paid; the admin can
+ * override it (e.g. parent paid extra for a shirt). This value is what the accountant exports.
+ */
+function PaidAmountCell({
+  invoice,
+  disabled,
+  onSaved,
+}: {
+  invoice: Invoice;
+  disabled: boolean;
+  onSaved: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(
+    invoice.paidAmount != null ? String(invoice.paidAmount) : "",
+  );
+  const [pending, startTransition] = useTransition();
+  const toast = useToast();
+
+  if (invoice.status === "cancelled") {
+    return <span className="text-sm text-[var(--muted-foreground)]">—</span>;
+  }
+
+  const effective =
+    invoice.paidAmount != null
+      ? invoice.paidAmount
+      : invoice.status === "paid"
+        ? invoice.totalAmount
+        : null;
+
+  function save() {
+    const trimmed = value.trim();
+    const amount = trimmed === "" ? null : Number(trimmed);
+    if (amount != null && (Number.isNaN(amount) || amount < 0)) {
+      toast.error("Neplatná částka");
+      return;
+    }
+    startTransition(async () => {
+      const res = await setInvoicePaidAmount(invoice.id, amount);
+      if (res.ok) {
+        toast.success("Zaplacená částka uložena.");
+        setEditing(false);
+        onSaved();
+      } else {
+        toast.error(res.error ?? "Uložení selhalo");
+      }
+    });
+  }
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        className="text-sm underline decoration-dotted underline-offset-2 hover:text-[var(--foreground)]"
+        onClick={() => setEditing(true)}
+        title="Upravit skutečně zaplacenou částku"
+      >
+        {effective != null ? czk(effective) : "—"}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      <Input
+        type="number"
+        min={0}
+        value={value}
+        autoFocus
+        className="h-8 w-24"
+        placeholder={String(invoice.totalAmount)}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") save();
+          if (e.key === "Escape") setEditing(false);
+        }}
+      />
+      <IconAction
+        label="Uložit"
+        icon={Check}
+        disabled={disabled || pending}
+        onClick={save}
+      />
     </div>
   );
 }

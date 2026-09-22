@@ -5,7 +5,9 @@ import { DocumentsView } from "./documents-view";
 
 export default async function DokumentyPage() {
   const [{ items: documents }, session] = await Promise.all([listDocuments(), getSession()]);
-  const canEdit = session?.role === "owner" || session?.role === "admin";
+  const isPrivileged = session?.role === "owner" || session?.role === "admin";
+  // Trainers may write documents too, but only TRAINERS-visible ones (prd RBAC).
+  const canEdit = isPrivileged || session?.role === "trainer";
 
   return (
     <div>
@@ -13,7 +15,7 @@ export default async function DokumentyPage() {
         title="Dokumenty"
         description="Hopíkovská pravidla, metodika, checklisty a formuláře — vždy po ruce."
       />
-      <DocumentsView documents={documents} canEdit={canEdit} />
+      <DocumentsView documents={documents} canEdit={canEdit} canSetAdminVisibility={isPrivileged} />
     </div>
   );
 }

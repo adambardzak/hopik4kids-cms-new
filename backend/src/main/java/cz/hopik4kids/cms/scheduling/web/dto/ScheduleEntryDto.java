@@ -30,6 +30,8 @@ public record ScheduleEntryDto(
         int spotsTaken,
         String overrideId,
         String overrideType,
-        String title
+        String title,
+        Integer trainersNeeded,
+        boolean adminOnly
 ) {
 }

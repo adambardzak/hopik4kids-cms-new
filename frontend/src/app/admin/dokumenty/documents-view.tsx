@@ -26,7 +26,7 @@ const CAT_LABEL = Object.fromEntries(CATEGORIES.map((c) => [c.value, c.label]));
 
 type FormState = Partial<DocumentItem> & { fileId?: string | null };
 
-export function DocumentsView({ documents, canEdit }: { documents: DocumentItem[]; canEdit: boolean }) {
+export function DocumentsView({ documents, canEdit, canSetAdminVisibility }: { documents: DocumentItem[]; canEdit: boolean; canSetAdminVisibility: boolean }) {
   const router = useRouter();
   const toast = useToast();
   const confirm = useConfirm();
@@ -219,11 +219,12 @@ export function DocumentsView({ documents, canEdit }: { documents: DocumentItem[
               <div className="flex flex-col gap-1.5">
                 <Label>Viditelnost</Label>
                 <Select
-                  value={form.visibility ?? "trainers"}
+                  value={canSetAdminVisibility ? (form.visibility ?? "trainers") : "trainers"}
+                  disabled={!canSetAdminVisibility}
                   onChange={(e) => setForm((f) => ({ ...f, visibility: e.target.value as "trainers" | "admin" }))}
                 >
                   <option value="trainers">Trenéři</option>
-                  <option value="admin">Jen admin</option>
+                  {canSetAdminVisibility && <option value="admin">Jen admin</option>}
                 </Select>
               </div>
             </div>

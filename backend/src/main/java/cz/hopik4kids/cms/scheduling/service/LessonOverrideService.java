@@ -67,7 +67,8 @@ public class LessonOverrideService {
     /** Add a one-off lesson/event (optionally tied to a program as a substitute). */
     @Transactional
     public String oneOff(String programId, String title, LocalDate date, String time,
-                         Integer durationMin, String locationId, String note) {
+                         Integer durationMin, String locationId, String note,
+                         Integer trainersNeeded, boolean adminOnly) {
         if (date == null || time == null || time.isBlank()) {
             throw ApiException.badRequest("MISSING_FIELDS", "Vyplň datum a čas");
         }
@@ -86,6 +87,8 @@ public class LessonOverrideService {
         o.setDurationMin(durationMin);
         o.setLocationId(locationId);
         o.setNote(note);
+        o.setTrainersNeeded(trainersNeeded != null && trainersNeeded > 0 ? trainersNeeded : null);
+        o.setAdminOnly(adminOnly);
         o = overrides.save(o);
         audit.record("shift.oneOff", "LessonOverride", o.getId());
         return o.getId();

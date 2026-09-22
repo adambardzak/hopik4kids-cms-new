@@ -148,6 +148,14 @@ export async function markInvoicePaid(id: string): Promise<ActionResult> {
   return run(() => api(`/admin/api/billing/invoices/${id}/paid`, { method: "POST" }), "/admin/fakturace");
 }
 
+export async function setInvoicePaidAmount(id: string, amount: number | null): Promise<ActionResult> {
+  const q = amount == null ? "" : `?amount=${amount}`;
+  return run(
+    () => api(`/admin/api/billing/invoices/${id}/paid-amount${q}`, { method: "POST" }),
+    "/admin/fakturace",
+  );
+}
+
 export async function cancelInvoice(id: string): Promise<ActionResult> {
   return run(() => api(`/admin/api/billing/invoices/${id}/cancel`, { method: "POST" }), "/admin/fakturace");
 }
@@ -286,7 +294,7 @@ export async function moveLesson(body: {
 }
 
 export async function addOneOffLesson(body: {
-  programId?: string | null; title?: string | null; date: string; time: string; durationMin?: number | null; locationId?: string | null; note?: string;
+  programId?: string | null; title?: string | null; date: string; time: string; durationMin?: number | null; locationId?: string | null; note?: string; trainersNeeded?: number | null; adminOnly?: boolean;
 }): Promise<ActionResult> {
   return run(() => api(`/admin/api/schedule/overrides/one-off`, { method: "POST", body }), "/admin/rozvrh");
 }

@@ -121,10 +121,15 @@ public class ShiftSignupService {
             if (o.getType() != LessonOverrideType.ONE_OFF || o.getDate() == null) {
                 continue;
             }
+            // Admin-only one-off events are never offered as shift slots to trainers.
+            if (o.isAdminOnly() && !SecurityUtils.isPrivileged()) {
+                continue;
+            }
             String slotKey = "override:" + o.getId();
             String name;
             String type = "one_off";
-            int trainersNeeded = 1;
+            int trainersNeeded = o.getTrainersNeeded() != null && o.getTrainersNeeded() > 0
+                    ? o.getTrainersNeeded() : 1;
             String locationName = null;
             if (o.getProgramId() != null) {
                 Program p = programCache.computeIfAbsent(o.getProgramId(),
@@ -132,7 +137,9 @@ public class ShiftSignupService {
                 if (p != null) {
                     name = p.getName();
                     type = p.getType().name().toLowerCase();
-                    trainersNeeded = p.getTrainersNeeded();
+                    if (o.getTrainersNeeded() == null || o.getTrainersNeeded() <= 0) {
+                        trainersNeeded = p.getTrainersNeeded();
+                    }
                     locationName = p.getLocation() == null ? null : p.getLocation().getName();
                 } else {
                     name = o.getTitle() != null ? o.getTitle() : "Jednorázová akce";

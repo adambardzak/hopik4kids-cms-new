@@ -124,6 +124,8 @@ export interface Registration {
   note?: string | null;
   consentPersonalData: boolean;
   consentMedia: boolean;
+  wantsInsuranceConfirmation: boolean;
+  insuranceConfirmationSent: boolean;
   paymentStatus: "unpaid" | "invoice_sent" | "paid" | "cancelled";
   overdue: boolean;
   invoiceId?: string | null;
@@ -232,6 +234,7 @@ export interface Invoice {
   variableSymbol: string;
   status: "unpaid" | "paid" | "cancelled";
   paidAt?: string | null;
+  paidAmount?: number | null;
 }
 
 export interface SupplierSettings {

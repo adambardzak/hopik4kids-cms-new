@@ -48,6 +48,14 @@ public class LessonOverride extends BaseEntity {
     @Column(name = "duration_min")
     private Integer durationMin;
 
+    /** For ONE_OFF events: how many trainers are needed (drives shift-signup open slots). */
+    @Column(name = "trainers_needed")
+    private Integer trainersNeeded;
+
+    /** For ONE_OFF events: when true, only owner/admin see this in the schedule (not trainers). */
+    @Column(name = "admin_only", nullable = false)
+    private boolean adminOnly = false;
+
     /** For ONE_OFF without a program: a display title. */
     @Column
     private String title;
@@ -105,6 +113,22 @@ public class LessonOverride extends BaseEntity {
 
     public void setDurationMin(Integer durationMin) {
         this.durationMin = durationMin;
+    }
+
+    public Integer getTrainersNeeded() {
+        return trainersNeeded;
+    }
+
+    public void setTrainersNeeded(Integer trainersNeeded) {
+        this.trainersNeeded = trainersNeeded;
+    }
+
+    public boolean isAdminOnly() {
+        return adminOnly;
+    }
+
+    public void setAdminOnly(boolean adminOnly) {
+        this.adminOnly = adminOnly;
     }
 
     public String getTitle() {

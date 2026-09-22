@@ -118,6 +118,13 @@ public class InvoiceController {
         return invoices.markPaid(id);
     }
 
+    /** Set the actual amount the parent paid (differs from invoiced total, e.g. extra shirt). */
+    @PostMapping("/{id}/paid-amount")
+    public InvoiceDto setPaidAmount(@PathVariable String id,
+                                    @RequestParam(required = false) Integer amount) {
+        return invoices.setPaidAmount(id, amount);
+    }
+
     @PostMapping("/{id}/cancel")
     public InvoiceDto cancel(@PathVariable String id) {
         return invoices.cancel(id);

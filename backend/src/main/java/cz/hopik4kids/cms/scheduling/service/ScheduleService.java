@@ -10,7 +10,9 @@ import cz.hopik4kids.cms.kernel.web.ApiException;
 import cz.hopik4kids.cms.kernel.web.SecurityUtils;
 import cz.hopik4kids.cms.scheduling.domain.LessonOverride;
 import cz.hopik4kids.cms.scheduling.domain.LessonOverrideType;
+import cz.hopik4kids.cms.scheduling.domain.ShiftStatus;
 import cz.hopik4kids.cms.scheduling.repository.LessonOverrideRepository;
+import cz.hopik4kids.cms.scheduling.repository.ShiftSignupRepository;
 import cz.hopik4kids.cms.scheduling.web.dto.ScheduleEntryDto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,12 +40,14 @@ public class ScheduleService {
     private final ProgramRepository programs;
     private final LessonOverrideRepository overrides;
     private final LocationRepository locations;
+    private final ShiftSignupRepository shiftSignups;
 
     public ScheduleService(ProgramRepository programs, LessonOverrideRepository overrides,
-                           LocationRepository locations) {
+                           LocationRepository locations, ShiftSignupRepository shiftSignups) {
         this.programs = programs;
         this.overrides = overrides;
         this.locations = locations;
+        this.shiftSignups = shiftSignups;
     }
 
     @Transactional(readOnly = true)
@@ -78,10 +82,27 @@ public class ScheduleService {
             }
         }
 
-        // Trainers see only their assigned programs (prd §7.5); owner/admin see all internally visible (incl. hidden).
-        List<Program> source = privileged
-                ? programs.findInternallyVisibleWithLocation()
-                : programs.findByTrainer(userId);
+        // Trainers see their assigned programs plus programs where they signed up for a shift
+        // (prd §7.5) — so a brigádník sees the schedule of lessons they are attending, not only
+        // programs where they are a permanent trainer. Owner/admin see all internally visible.
+        List<Program> source;
+        if (privileged) {
+            source = programs.findInternallyVisibleWithLocation();
+        } else {
+            Map<String, Program> byId = new HashMap<>();
+            for (Program p : programs.findByTrainer(userId)) {
+                byId.put(p.getId(), p);
+            }
+            List<String> shiftProgramIds = shiftSignups.findProgramIdsByTrainerAndStatusIn(
+                    userId, List.of(ShiftStatus.PENDING, ShiftStatus.APPROVED));
+            for (String pid : shiftProgramIds) {
+                if (pid == null || pid.startsWith("override:") || byId.containsKey(pid)) {
+                    continue; // override sentinels are handled separately; skip already-loaded
+                }
+                programs.findByIdWithLocation(pid).ifPresent(p -> byId.put(p.getId(), p));
+            }
+            source = new ArrayList<>(byId.values());
+        }
 
         for (Program p : source) {
             // Hidden programs are shown internally (schedule/shifts); only archived are excluded.
@@ -145,7 +166,9 @@ public class ScheduleService {
                         p.getSpotsTaken(),
                         null,
                         null,
-                        null
+                        null,
+                        p.getTrainersNeeded(),
+                        false
                 ));
             }
         }
@@ -164,6 +187,10 @@ public class ScheduleService {
             Program p = o.getProgramId() == null ? null
                     : programById.computeIfAbsent(o.getProgramId(),
                             id -> programs.findById(id).orElse(null));
+            // Admin-only one-off events are hidden from trainers entirely.
+            if (!privileged && o.isAdminOnly()) {
+                continue;
+            }
             // Trainers only see overrides for their programs (or program-less one-offs stay visible to all).
             if (!privileged && p != null
                     && !programs.isTrainerAssigned(p.getId(), userId)) {
@@ -208,7 +235,10 @@ public class ScheduleService {
                     p != null ? p.getSpotsTaken() : 0,
                     o.getId(),
                     o.getType().name().toLowerCase(),
-                    o.getTitle()
+                    o.getTitle(),
+                    o.getTrainersNeeded() != null ? o.getTrainersNeeded()
+                            : (p != null ? p.getTrainersNeeded() : null),
+                    o.isAdminOnly()
             ));
         }
 

@@ -30,18 +30,21 @@ public class InvoiceService {
     private final RegistrationRepository registrations;
     private final SupplierSettingsService supplier;
     private final AuditService audit;
+    private final InsuranceConfirmationService insuranceConfirmation;
     private final ObjectMapper json = new ObjectMapper();
 
     public InvoiceService(InvoiceRepository invoices,
                           InvoiceNumberService numbers,
                           RegistrationRepository registrations,
                           SupplierSettingsService supplier,
-                          AuditService audit) {
+                          AuditService audit,
+                          @org.springframework.context.annotation.Lazy InsuranceConfirmationService insuranceConfirmation) {
         this.invoices = invoices;
         this.numbers = numbers;
         this.registrations = registrations;
         this.supplier = supplier;
         this.audit = audit;
+        this.insuranceConfirmation = insuranceConfirmation;
     }
 
     public record Item(String label, int qty, int unitPrice) {
@@ -163,7 +166,9 @@ public class InvoiceService {
             registrations.save(r);
         });
         audit.record("invoice-paid", "Invoice", id);
-        return InvoiceDto.from(inv);
+        // Send the health-insurance confirmation if the parent requested it (idempotent, best-effort).
+        insuranceConfirmation.sendIfRequested(inv.getRegistrationId());
+        return dtoOf(inv);
     }
 
     @Transactional
@@ -172,7 +177,24 @@ public class InvoiceService {
         inv.setStatus(InvoiceStatus.CANCELLED);
         invoices.save(inv);
         audit.record("invoice-cancel", "Invoice", id);
-        return InvoiceDto.from(inv);
+        return dtoOf(inv);
+    }
+
+    /**
+     * Set the actual amount the parent paid (may differ from the invoiced total, e.g. an extra
+     * shirt paid on top). Passing null clears the override (= paid the invoiced amount).
+     * This value is what the accountant exports.
+     */
+    @Transactional
+    public InvoiceDto setPaidAmount(String id, Integer paidAmount) {
+        if (paidAmount != null && paidAmount < 0) {
+            throw ApiException.badRequest("INVALID_AMOUNT", "Částka nesmí být záporná");
+        }
+        Invoice inv = find(id);
+        inv.setPaidAmount(paidAmount);
+        invoices.save(inv);
+        audit.record("invoice-paid-amount", "Invoice", id);
+        return dtoOf(inv);
     }
 
     Invoice find(String id) {
