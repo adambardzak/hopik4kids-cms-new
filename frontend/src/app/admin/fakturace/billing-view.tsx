@@ -454,12 +454,12 @@ function PaidAmountCell({
     return <span className="text-sm text-[var(--muted-foreground)]">—</span>;
   }
 
-  const effective =
-    invoice.paidAmount != null
-      ? invoice.paidAmount
-      : invoice.status === "paid"
-        ? invoice.totalAmount
-        : null;
+  // Editing the actually-paid amount only makes sense once the invoice is paid.
+  if (invoice.status !== "paid") {
+    return <span className="text-sm text-[var(--muted-foreground)]">—</span>;
+  }
+
+  const effective = invoice.paidAmount != null ? invoice.paidAmount : invoice.totalAmount;
 
   function save() {
     const trimmed = value.trim();
@@ -488,7 +488,7 @@ function PaidAmountCell({
         onClick={() => setEditing(true)}
         title="Upravit skutečně zaplacenou částku"
       >
-        {effective != null ? czk(effective) : "—"}
+        {czk(effective)}
       </button>
     );
   }
