@@ -264,8 +264,7 @@ public class ShiftSignupService {
         if (approve) {
             long approved = signups.countByProgramIdAndLessonDateAndStatusIn(
                     s.getProgramId(), s.getLessonDate(), List.of(ShiftStatus.APPROVED));
-            Program p = programs.findById(s.getProgramId()).orElse(null);
-            int needed = p == null ? 1 : p.getTrainersNeeded();
+            int needed = neededTrainers(s.getProgramId());
             if (approved >= needed) {
                 throw ApiException.badRequest("SLOT_FULL", "Hodina je již plně obsazená");
             }
@@ -275,6 +274,27 @@ public class ShiftSignupService {
         }
         signups.save(s);
         audit.record(approve ? "shift.approve" : "shift.reject", "ShiftSignup", signupId);
+    }
+
+    /** How many trainers a slot needs — from the one-off override, or the program, default 1. */
+    private int neededTrainers(String programId) {
+        if (programId == null) {
+            return 1;
+        }
+        if (programId.startsWith("override:")) {
+            String overrideId = programId.substring("override:".length());
+            LessonOverride o = overrides.findById(overrideId).orElse(null);
+            if (o != null && o.getTrainersNeeded() != null && o.getTrainersNeeded() > 0) {
+                return o.getTrainersNeeded();
+            }
+            // Fall back to the linked program's need, if the override references one.
+            if (o != null && o.getProgramId() != null) {
+                return programs.findById(o.getProgramId())
+                        .map(Program::getTrainersNeeded).orElse(1);
+            }
+            return 1;
+        }
+        return programs.findById(programId).map(Program::getTrainersNeeded).orElse(1);
     }
 
     private static String key(String programId, LocalDate date) {
