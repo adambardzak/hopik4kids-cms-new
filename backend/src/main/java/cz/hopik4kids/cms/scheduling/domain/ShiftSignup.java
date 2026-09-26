@@ -20,7 +20,7 @@ import java.time.LocalDate;
         uniqueConstraints = @UniqueConstraint(columnNames = {"program_id", "lesson_date", "trainer_id"}))
 public class ShiftSignup extends BaseEntity {
 
-    @Column(name = "program_id", nullable = false)
+    @Column(name = "program_id", nullable = false, length = 64)
     private String programId;
 
     @Column(name = "lesson_date", nullable = false)
