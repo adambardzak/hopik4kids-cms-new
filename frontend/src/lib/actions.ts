@@ -168,6 +168,11 @@ export async function createCreditNote(invoiceId: string, reason?: string): Prom
   );
 }
 
+/** Send a credit note PDF to the payer by email. */
+export async function sendCreditNoteEmail(id: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/billing/credit-notes/${id}/send`, { method: "POST" }), "/admin/fakturace");
+}
+
 export async function saveSupplierSettings(body: unknown): Promise<ActionResult> {
   return run(() => api(`/admin/api/billing/supplier`, { method: "PUT", body }), "/admin/fakturace");
 }

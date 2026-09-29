@@ -1,5 +1,6 @@
 package cz.hopik4kids.cms.billing.web;
 
+import cz.hopik4kids.cms.billing.service.CreditNoteEmailService;
 import cz.hopik4kids.cms.billing.service.CreditNotePdfService;
 import cz.hopik4kids.cms.billing.service.CreditNoteService;
 import cz.hopik4kids.cms.billing.web.dto.CreditNoteDto;
@@ -24,10 +25,13 @@ public class CreditNoteController {
 
     private final CreditNoteService creditNotes;
     private final CreditNotePdfService pdf;
+    private final CreditNoteEmailService emailService;
 
-    public CreditNoteController(CreditNoteService creditNotes, CreditNotePdfService pdf) {
+    public CreditNoteController(CreditNoteService creditNotes, CreditNotePdfService pdf,
+                                CreditNoteEmailService emailService) {
         this.creditNotes = creditNotes;
         this.pdf = pdf;
+        this.emailService = emailService;
     }
 
     @GetMapping
@@ -52,5 +56,11 @@ public class CreditNoteController {
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         ContentDisposition.inline().filename("dobropis-" + cn.number() + ".pdf").build().toString())
                 .body(body);
+    }
+
+    /** Send the credit-note PDF to the payer by email. */
+    @PostMapping("/{id}/send")
+    public void send(@PathVariable String id) {
+        emailService.send(id);
     }
 }

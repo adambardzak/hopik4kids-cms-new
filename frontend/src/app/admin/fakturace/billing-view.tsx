@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { markInvoicePaid, cancelInvoice, saveSupplierSettings, lookupAres, sendInvoiceEmail, setInvoicePaidAmount, createCreditNote } from "@/lib/actions";
+import { markInvoicePaid, cancelInvoice, saveSupplierSettings, lookupAres, sendInvoiceEmail, setInvoicePaidAmount, createCreditNote, sendCreditNoteEmail } from "@/lib/actions";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { czk } from "@/lib/format";
@@ -339,6 +339,9 @@ function InvoicesTable({
 }
 
 function CreditNotesTable({ creditNotes }: { creditNotes: CreditNote[] }) {
+  const toast = useToast();
+  const [isPending, startTransition] = useTransition();
+
   if (creditNotes.length === 0) {
     return <EmptyState message="Zatím žádné dobropisy. Vystav je tlačítkem u faktury." />;
   }
@@ -368,11 +371,27 @@ function CreditNotesTable({ creditNotes }: { creditNotes: CreditNote[] }) {
               <TableCell className="text-[var(--destructive)]">−{czk(cn.totalAmount)}</TableCell>
               <TableCell className="text-sm text-[var(--muted-foreground)]">{cn.reason ?? "—"}</TableCell>
               <TableCell className="text-right">
-                <IconAction
-                  label="Stáhnout PDF"
-                  icon={Download}
-                  href={`/api/billing/credit-notes/${cn.id}/pdf`}
-                />
+                <div className="flex justify-end gap-1">
+                  <IconAction
+                    label="Stáhnout PDF"
+                    icon={Download}
+                    href={`/api/billing/credit-notes/${cn.id}/pdf`}
+                  />
+                  {cn.payerEmail && (
+                    <IconAction
+                      label={`Odeslat na ${cn.payerEmail}`}
+                      icon={Mail}
+                      disabled={isPending}
+                      onClick={() =>
+                        startTransition(async () => {
+                          const res = await sendCreditNoteEmail(cn.id);
+                          if (res.ok) toast.success("Dobropis odeslán e-mailem.");
+                          else toast.error(res.error ?? "Odeslání selhalo");
+                        })
+                      }
+                    />
+                  )}
+                </div>
               </TableCell>
             </TableRow>
           ))}
