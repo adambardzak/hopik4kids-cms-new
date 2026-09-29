@@ -126,7 +126,12 @@ public class InvoiceService {
 
         List<Item> items = new ArrayList<>();
         int programPrice = reg.getPriceSnapshot() - (reg.isWantsShirt() ? SHIRT_PRICE : 0);
-        items.add(new Item(program.getName() + " — " + child.getFullName(), 1, programPrice));
+        // For clubs/school activities (not camps), prefix the label so health insurers recognise it
+        // as a regular sports activity eligible for reimbursement.
+        boolean regularSport = program.getType() == cz.hopik4kids.cms.core.domain.ProgramType.CLUB
+                || program.getType() == cz.hopik4kids.cms.core.domain.ProgramType.SCHOOL;
+        String prefix = regularSport ? "Pravidelný pohybový/sportovní kroužek — " : "";
+        items.add(new Item(prefix + program.getName() + " — " + child.getFullName(), 1, programPrice));
         if (reg.isWantsShirt()) {
             items.add(new Item("Dres Hopík", 1, SHIRT_PRICE));
         }

@@ -53,7 +53,8 @@ public class InsuranceConfirmationService {
     public void sendIfRequested(String registrationId) {
         try {
             Registration reg = registrations.findById(registrationId).orElse(null);
-            if (reg == null || !reg.isWantsInsuranceConfirmation() || reg.isInsuranceConfirmationSent()) {
+            // Sent to every payer automatically on payment; idempotent via insuranceConfirmationSent.
+            if (reg == null || reg.isInsuranceConfirmationSent()) {
                 return;
             }
             Invoice inv = invoices.findByRegistrationId(registrationId).orElse(null);
@@ -77,11 +78,11 @@ public class InsuranceConfirmationService {
                 sender = "Hopík4Kids";
             }
             String childName = reg.getChild() != null ? reg.getChild().getFullName() : "";
-            String subject = "Potvrzení o zaplacení pro pojišťovnu — " + sender;
+            String subject = "Potvrzení o platbě — " + sender;
             String body = """
                     Dobrý den,
 
-                    v příloze zasíláme potvrzení o zaplacení úhrady za %s, které si můžete uplatnit
+                    v příloze zasíláme potvrzení o platbě úhrady za %s. Doklad si můžete uplatnit
                     u své zdravotní pojišťovny (řada pojišťoven přispívá na sportovní aktivity dětí).
 
                     Děkujeme,
@@ -94,7 +95,7 @@ public class InsuranceConfirmationService {
                     to,
                     subject,
                     body,
-                    "potvrzeni-pojistovna-" + inv.getInvoiceNumber() + ".pdf",
+                    "potvrzeni-o-platbe-" + inv.getInvoiceNumber() + ".pdf",
                     bytes,
                     "application/pdf");
 

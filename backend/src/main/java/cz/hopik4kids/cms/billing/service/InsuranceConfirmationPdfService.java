@@ -55,6 +55,15 @@ public class InsuranceConfirmationPdfService {
         SupplierSettings s = supplier.getOrDefault();
         Child child = reg.getChild();
         String programName = reg.getProgram() != null ? reg.getProgram().getName() : "—";
+        // Period/semester of the club — from the program's validity range (for insurers).
+        String period = null;
+        if (reg.getProgram() != null) {
+            LocalDate vf = reg.getProgram().getValidFrom();
+            LocalDate vt = reg.getProgram().getValidTo();
+            if (vf != null || vt != null) {
+                period = (vf != null ? vf.format(DATE) : "…") + " – " + (vt != null ? vt.format(DATE) : "…");
+            }
+        }
         LocalDate paidOn = inv.getPaidAt() != null
                 ? inv.getPaidAt().atZone(ZoneId.systemDefault()).toLocalDate()
                 : LocalDate.now();
@@ -74,8 +83,8 @@ public class InsuranceConfirmationPdfService {
             PdfPTable head = new PdfPTable(new float[]{3f, 1f});
             head.setWidthPercentage(100);
             PdfPCell titleCell = borderless();
-            titleCell.addElement(new Paragraph("POTVRZENÍ O ZAPLACENÍ", titleFont));
-            Paragraph sub = new Paragraph("pro zdravotní pojišťovnu", labelFont);
+            titleCell.addElement(new Paragraph("POTVRZENÍ O PLATBĚ", titleFont));
+            Paragraph sub = new Paragraph("doklad o zaplacení pro zdravotní pojišťovnu", labelFont);
             sub.setSpacingBefore(2);
             titleCell.addElement(sub);
             head.addCell(titleCell);
@@ -128,6 +137,9 @@ public class InsuranceConfirmationPdfService {
             }
             row(t, "Zdravotní pojišťovna", nz(child.getHealthInsurance(), "—"), labelFont, normal);
             row(t, "Program", programName, labelFont, normal);
+            if (period != null) {
+                row(t, "Období / pololetí", period, labelFont, normal);
+            }
             row(t, "Plátce", nz(inv.getPayerName(), "—"), labelFont, normal);
             row(t, "Variabilní symbol", nz(inv.getVariableSymbol(), "—"), labelFont, normal);
             row(t, "Datum úhrady", paidOn.format(DATE), labelFont, normal);
