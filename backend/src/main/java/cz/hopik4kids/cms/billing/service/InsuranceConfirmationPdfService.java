@@ -122,7 +122,7 @@ public class InsuranceConfirmationPdfService {
 
             // --- Statement ---
             Paragraph statement = new Paragraph(
-                    "Potvrzujeme, že za níže uvedené dítě byla uhrazena úhrada za sportovní kroužek / program.",
+                    "Potvrzujeme, že za níže uvedené dítě byla uhrazena úhrada za pravidelný sportovní kroužek / program.",
                     normal);
             statement.setSpacingBefore(18);
             doc.add(statement);
@@ -217,12 +217,18 @@ public class InsuranceConfirmationPdfService {
     }
 
     private static String supplierCity(SupplierSettings s) {
-        // Best-effort: last comma-separated part of the address is usually the city.
+        // Best-effort: last comma-separated part of the address is usually "PSČ Město".
         if (!has(s.getAddress())) {
             return null;
         }
         String[] parts = s.getAddress().split(",");
-        return parts.length > 0 ? parts[parts.length - 1].trim() : null;
+        String last = parts.length > 0 ? parts[parts.length - 1].trim() : null;
+        if (last == null || last.isBlank()) {
+            return null;
+        }
+        // Strip a leading postal code (e.g. "33011 Třemošná" or "330 11 Třemošná" -> "Třemošná").
+        String city = last.replaceFirst("^\\d{3}\\s?\\d{2}\\s+", "").trim();
+        return city.isBlank() ? last : city;
     }
 
     private static String money(int n) {
