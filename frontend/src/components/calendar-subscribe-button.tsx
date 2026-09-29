@@ -11,6 +11,7 @@ export function CalendarSubscribeButton() {
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [onlyMine, setOnlyMine] = useState(true);
 
   async function openDialog() {
     setOpen(true);
@@ -27,11 +28,13 @@ export function CalendarSubscribeButton() {
     }
   }
 
-  const webcalUrl = url ? url.replace(/^https?:\/\//, "webcal://") : "";
+  // Append the scope so trainers can subscribe to only their own approved shifts.
+  const scopedUrl = url ? `${url}${onlyMine ? "?scope=mine" : ""}` : "";
+  const webcalUrl = scopedUrl ? scopedUrl.replace(/^https?:\/\//, "webcal://") : "";
 
   async function copy() {
-    if (!url) return;
-    await navigator.clipboard.writeText(url);
+    if (!scopedUrl) return;
+    await navigator.clipboard.writeText(scopedUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -57,6 +60,37 @@ export function CalendarSubscribeButton() {
               <p className="text-[var(--muted-foreground)]">Připravuji odkaz…</p>
             ) : url ? (
               <>
+                <div className="flex flex-col gap-2 rounded-md border border-[var(--border)] p-3">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="cal-scope"
+                      checked={onlyMine}
+                      onChange={() => setOnlyMine(true)}
+                    />
+                    <span>
+                      <span className="font-medium text-[var(--foreground)]">Jen moje směny</span>
+                      <span className="block text-xs text-[var(--muted-foreground)]">
+                        Do kalendáře se přidají pouze směny, na které jsi schválený/á.
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="cal-scope"
+                      checked={!onlyMine}
+                      onChange={() => setOnlyMine(false)}
+                    />
+                    <span>
+                      <span className="font-medium text-[var(--foreground)]">Celý rozvrh</span>
+                      <span className="block text-xs text-[var(--muted-foreground)]">
+                        Všechny lekce programů, ke kterým máš přístup.
+                      </span>
+                    </span>
+                  </label>
+                </div>
+
                 <a href={webcalUrl}>
                   <Button className="w-full">
                     <ExternalLink className="h-4 w-4" /> Otevřít v kalendáři
@@ -66,7 +100,7 @@ export function CalendarSubscribeButton() {
                 <div className="flex items-center gap-2">
                   <input
                     readOnly
-                    value={url}
+                    value={scopedUrl}
                     onFocus={(e) => e.currentTarget.select()}
                     className="w-full truncate rounded-md border border-[var(--border)] bg-[var(--muted)]/30 px-3 py-2 text-xs"
                   />

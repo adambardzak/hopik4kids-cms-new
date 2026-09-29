@@ -36,8 +36,10 @@ public class CalendarController {
 
     /** Public iCal feed, authenticated by the unguessable token in the URL (calendar apps send no auth). */
     @GetMapping(value = "/api/calendar/{token}.ics", produces = "text/calendar; charset=utf-8")
-    public ResponseEntity<String> feed(@PathVariable String token) {
-        String ics = calendar.feedForToken(token);
+    public ResponseEntity<String> feed(@PathVariable String token,
+                                       @org.springframework.web.bind.annotation.RequestParam(required = false) String scope) {
+        boolean onlyMine = "mine".equalsIgnoreCase(scope);
+        String ics = calendar.feedForToken(token, onlyMine);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE, "text/calendar; charset=utf-8")
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"hopik4kids.ics\"")
