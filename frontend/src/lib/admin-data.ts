@@ -6,6 +6,7 @@ import type {
   DashboardStats,
   DocumentItem,
   Invoice,
+  CreditNote,
   Location,
   MarketingStats,
   PageResponse,
@@ -103,6 +104,10 @@ export function listInvoices(filters?: { from?: string; to?: string; status?: st
 
 export function getSupplierSettings() {
   return api<SupplierSettings>("/admin/api/billing/supplier");
+}
+
+export function listCreditNotes() {
+  return api<PageResponse<CreditNote>>("/admin/api/billing/credit-notes");
 }
 
 export function aresLookup(ico: string) {

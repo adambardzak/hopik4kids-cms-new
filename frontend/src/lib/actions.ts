@@ -160,6 +160,14 @@ export async function cancelInvoice(id: string): Promise<ActionResult> {
   return run(() => api(`/admin/api/billing/invoices/${id}/cancel`, { method: "POST" }), "/admin/fakturace");
 }
 
+/** Issue a credit note (dobropis) for an invoice — cancels the invoice. */
+export async function createCreditNote(invoiceId: string, reason?: string): Promise<ActionResult> {
+  return run(
+    () => api(`/admin/api/billing/credit-notes`, { method: "POST", body: { invoiceId, reason } }),
+    "/admin/fakturace",
+  );
+}
+
 export async function saveSupplierSettings(body: unknown): Promise<ActionResult> {
   return run(() => api(`/admin/api/billing/supplier`, { method: "PUT", body }), "/admin/fakturace");
 }

@@ -237,6 +237,22 @@ export interface Invoice {
   paidAmount?: number | null;
 }
 
+export interface CreditNote {
+  id: string;
+  number: string;
+  invoiceId: string;
+  invoiceNumber: string;
+  payerName: string;
+  payerAddress?: string | null;
+  payerEmail?: string | null;
+  items: string;
+  totalAmount: number;
+  issueDate: string;
+  variableSymbol?: string | null;
+  reason?: string | null;
+  createdAt: string;
+}
+
 export interface SupplierSettings {
   id?: string;
   name: string;

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Download, Check, Ban, Settings, Search, Mail, FileText } from "lucide-react";
-import type { Invoice, SupplierSettings } from "@/lib/types";
+import type { Invoice, SupplierSettings, CreditNote } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { markInvoicePaid, cancelInvoice, saveSupplierSettings, lookupAres, sendInvoiceEmail, setInvoicePaidAmount } from "@/lib/actions";
+import { markInvoicePaid, cancelInvoice, saveSupplierSettings, lookupAres, sendInvoiceEmail, setInvoicePaidAmount, createCreditNote } from "@/lib/actions";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { czk } from "@/lib/format";
@@ -35,12 +35,14 @@ export function BillingView({
   invoices,
   supplier,
   filters,
+  creditNotes,
 }: {
   invoices: Invoice[];
   supplier: SupplierSettings;
   filters: { from?: string; to?: string; status?: string; type?: string };
+  creditNotes: CreditNote[];
 }) {
-  const [tab, setTab] = useState<"invoices" | "supplier">("invoices");
+  const [tab, setTab] = useState<"invoices" | "credit-notes" | "supplier">("invoices");
 
   return (
     <div>
@@ -55,6 +57,15 @@ export function BillingView({
           Faktury
         </button>
         <button
+          onClick={() => setTab("credit-notes")}
+          className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            tab === "credit-notes" ? "" : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+          }`}
+          style={tab === "credit-notes" ? { background: "var(--accent)", color: "var(--accent-fg)" } : undefined}
+        >
+          Dobropisy
+        </button>
+        <button
           onClick={() => setTab("supplier")}
           className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             tab === "supplier" ? "" : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
@@ -66,7 +77,9 @@ export function BillingView({
       </div>
 
       {tab === "invoices" ? (
-        <InvoicesTable invoices={invoices} hasIban={!!supplier.iban} filters={filters} />
+        <InvoicesTable invoices={invoices} hasIban={!!supplier.iban} filters={filters} creditNotes={creditNotes} />
+      ) : tab === "credit-notes" ? (
+        <CreditNotesTable creditNotes={creditNotes} />
       ) : (
         <SupplierForm supplier={supplier} />
       )}
@@ -78,10 +91,12 @@ function InvoicesTable({
   invoices,
   hasIban,
   filters,
+  creditNotes,
 }: {
   invoices: Invoice[];
   hasIban: boolean;
   filters: { from?: string; to?: string; status?: string; type?: string };
+  creditNotes: CreditNote[];
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -217,6 +232,7 @@ function InvoicesTable({
           <TableBody>
             {invoices.map((inv) => {
               const st = STATUS[inv.status] ?? STATUS.unpaid;
+              const hasCreditNote = creditNotes.some((c) => c.invoiceId === inv.id);
               return (
                 <TableRow key={inv.id}>
                   <TableCell className="font-medium">{inv.invoiceNumber}</TableCell>
@@ -288,6 +304,28 @@ function InvoicesTable({
                           />
                         </>
                       )}
+                      {!hasCreditNote && inv.status !== "cancelled" && (
+                        <IconAction
+                          label="Vystavit dobropis"
+                          icon={FileText}
+                          disabled={isPending}
+                          onClick={async () => {
+                            if (
+                              !(await confirm({
+                                message: `Vystavit dobropis k faktuře ${inv.invoiceNumber}? Faktura bude stornována.`,
+                                confirmLabel: "Vystavit dobropis",
+                              }))
+                            )
+                              return;
+                            startTransition(async () => {
+                              const res = await createCreditNote(inv.id);
+                              if (res.ok) toast.success("Dobropis vystaven.");
+                              else toast.error(res.error ?? "Vystavení dobropisu selhalo");
+                              router.refresh();
+                            });
+                          }}
+                        />
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -296,6 +334,50 @@ function InvoicesTable({
           </TableBody>
         </Table>
       </div>
+    </div>
+  );
+}
+
+function CreditNotesTable({ creditNotes }: { creditNotes: CreditNote[] }) {
+  if (creditNotes.length === 0) {
+    return <EmptyState message="Zatím žádné dobropisy. Vystav je tlačítkem u faktury." />;
+  }
+  return (
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--background)]">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Číslo</TableHead>
+            <TableHead>K faktuře</TableHead>
+            <TableHead>Plátce</TableHead>
+            <TableHead>Vystaveno</TableHead>
+            <TableHead>Částka</TableHead>
+            <TableHead>Důvod</TableHead>
+            <TableHead></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {creditNotes.map((cn) => (
+            <TableRow key={cn.id}>
+              <TableCell className="font-medium">{cn.number}</TableCell>
+              <TableCell>{cn.invoiceNumber}</TableCell>
+              <TableCell>{cn.payerName}</TableCell>
+              <TableCell className="text-sm text-[var(--muted-foreground)]">
+                {new Date(cn.issueDate).toLocaleDateString("cs-CZ")}
+              </TableCell>
+              <TableCell className="text-[var(--destructive)]">−{czk(cn.totalAmount)}</TableCell>
+              <TableCell className="text-sm text-[var(--muted-foreground)]">{cn.reason ?? "—"}</TableCell>
+              <TableCell className="text-right">
+                <IconAction
+                  label="Stáhnout PDF"
+                  icon={Download}
+                  href={`/api/billing/credit-notes/${cn.id}/pdf`}
+                />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }
