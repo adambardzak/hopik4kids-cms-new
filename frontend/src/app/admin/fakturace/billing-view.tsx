@@ -107,6 +107,17 @@ function InvoicesTable({
   const [to, setTo] = useState(filters.to ?? "");
   const [status, setStatus] = useState(filters.status ?? "");
   const [type, setType] = useState(filters.type ?? "");
+  const [search, setSearch] = useState("");
+
+  // Client-side quick search over the loaded invoices (payer name or invoice number).
+  const q = search.trim().toLowerCase();
+  const visibleInvoices = q
+    ? invoices.filter(
+        (i) =>
+          i.payerName.toLowerCase().includes(q) ||
+          i.invoiceNumber.toLowerCase().includes(q),
+      )
+    : invoices;
 
   function applyFilters() {
     const q = new URLSearchParams();
@@ -175,6 +186,18 @@ function InvoicesTable({
           <Label className="text-xs">Do</Label>
           <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-9" />
         </div>
+        <div className="min-w-[180px] flex-1 max-w-[260px]">
+          <Label className="text-xs">Hledat</Label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-foreground)]" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Plátce nebo číslo faktury"
+              className="h-9 pl-8"
+            />
+          </div>
+        </div>
         <div className="w-auto min-w-[140px] max-w-[170px]">
           <Label className="text-xs">Stav</Label>
           <Select value={status} onChange={(e) => setStatus(e.target.value)} className="h-9">
@@ -230,7 +253,7 @@ function InvoicesTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {invoices.map((inv) => {
+            {visibleInvoices.map((inv) => {
               const st = STATUS[inv.status] ?? STATUS.unpaid;
               const hasCreditNote = creditNotes.some((c) => c.invoiceId === inv.id);
               return (
@@ -333,6 +356,11 @@ function InvoicesTable({
             })}
           </TableBody>
         </Table>
+        {visibleInvoices.length === 0 && (
+          <p className="p-4 text-center text-sm text-[var(--muted-foreground)]">
+            Žádná faktura neodpovídá hledání „{search}".
+          </p>
+        )}
       </div>
     </div>
   );
