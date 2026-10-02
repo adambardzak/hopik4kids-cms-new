@@ -1,5 +1,5 @@
 import { getSession } from "@/lib/session";
-import { listWorkLogs, getWorkLogSummary, listPrograms } from "@/lib/admin-data";
+import { listWorkLogs, getWorkLogSummary, listWorkLogPrograms } from "@/lib/admin-data";
 import { PageHeader } from "@/components/page-header";
 import { WorkLogView } from "./worklog-view";
 import type { WorkLogSummary } from "@/lib/types";
@@ -27,7 +27,7 @@ export default async function VykazyPage({
 
   const [{ items: logs }, { items: programs }] = await Promise.all([
     listWorkLogs(from, to),
-    listPrograms(),
+    listWorkLogPrograms(),
   ]);
 
   let summary: WorkLogSummary[] = [];

@@ -76,6 +76,28 @@ public class AdminProgramService {
         return byId.values().stream().map(AdminProgramDto::from).toList();
     }
 
+    /**
+     * Programs selectable in a timesheet: everything {@link #list()} returns plus all one-off
+     * programs (camps / non-recurring, no weekday) so part-timers can log hours on them
+     * even when not assigned.
+     */
+    @Transactional(readOnly = true)
+    public List<AdminProgramDto> listForWorkLog() {
+        java.util.Map<String, Program> byId = new java.util.LinkedHashMap<>();
+        for (AdminProgramDto d : list()) {
+            byId.put(d.id(), null);
+        }
+        List<AdminProgramDto> out = new java.util.ArrayList<>(list());
+        for (Program p : programs.findAll()) {
+            boolean oneOff = p.getType() == cz.hopik4kids.cms.core.domain.ProgramType.CAMP
+                    || p.getWeekday() == null;
+            if (oneOff && !byId.containsKey(p.getId())) {
+                out.add(AdminProgramDto.from(p));
+            }
+        }
+        return out;
+    }
+
     @Transactional(readOnly = true)
     public AdminProgramDto get(String id) {
         return AdminProgramDto.from(find(id));

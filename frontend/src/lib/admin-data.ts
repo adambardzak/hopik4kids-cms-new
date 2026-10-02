@@ -44,6 +44,10 @@ export function listPrograms() {
   return api<PageResponse<Program>>("/admin/api/programs");
 }
 
+export function listWorkLogPrograms() {
+  return api<PageResponse<Program>>("/admin/api/programs/worklog-options");
+}
+
 export function getProgram(id: string) {
   return api<Program>(`/admin/api/programs/${id}`);
 }

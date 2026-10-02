@@ -147,7 +147,7 @@ public class RegistrationService {
         try {
             var invoice = invoiceService.getObject().createFromRegistration(reg.getId());
             invoiceEmailService.getObject().sendWelcome(
-                    invoice.id(), reg.getChild().getFullName(), program.getName());
+                    invoice.id(), reg.getChild().getFullName(), program);
         } catch (Exception e) {
             // Auto-invoicing is best-effort; admins can always issue/send the invoice manually.
             org.slf4j.LoggerFactory.getLogger(RegistrationService.class)

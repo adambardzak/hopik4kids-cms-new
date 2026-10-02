@@ -78,18 +78,22 @@ public class InsuranceConfirmationService {
                 sender = "Hopík4Kids";
             }
             String childName = reg.getChild() != null ? reg.getChild().getFullName() : "";
-            String subject = "Potvrzení o platbě — " + sender;
+            String programName = reg.getProgram() != null ? reg.getProgram().getName() : "kroužek";
+            String child = childName.isBlank() ? "dítě" : childName;
+            String subject = "Potvrzení o úhradě pro pojišťovnu – " + child + " | Hopík4Kids";
             String body = """
-                    Dobrý den,
+                    Dobrý den, přijali jsme vaši platbu za kroužek pro %s (program: %s). Vše je v pořádku vyřízeno a místo na kroužku je plně rezervované!
 
-                    v příloze zasíláme potvrzení o platbě úhrady za %s. Doklad si můžete uplatnit
-                    u své zdravotní pojišťovny (řada pojišťoven přispívá na sportovní aktivity dětí).
+                    V příloze tohoto e-mailu najdete potvrzení o úhradě (doklad o zaplacení). Ten obsahuje všechny potřebné náležitosti, takže ho můžete přímo vytisknout nebo přiložit k online žádosti o finanční příspěvek na sportovní aktivitu u Vaší zdravotní pojišťovny. Pokud byste na potvrzení potřebovali cokoliv upravit nebo doplnit, stačí nám odpovědět na tento e-mail a rádi Vám pomůžeme!
 
-                    Děkujeme,
-                    %s
-                    """.formatted(
-                    childName.isBlank() ? "sportovní kroužek" : childName,
-                    sender);
+                    Moc se těšíme na první lekci a na společné sportování!
+
+                    S pozdravem,
+
+                    Tým Hopík4Kids s.r.o.
+
+                    +420 730 634 153
+                    """.formatted(child, programName);
 
             boolean ok = email.sendWithAttachment(
                     to,

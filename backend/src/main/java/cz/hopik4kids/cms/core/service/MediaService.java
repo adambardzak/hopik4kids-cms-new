@@ -25,7 +25,13 @@ import java.util.UUID;
 public class MediaService {
 
     private static final Set<String> ALLOWED = Set.of(
-            "image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf");
+            "image/jpeg", "image/jpg", "image/pjpeg", "image/png", "image/webp", "image/gif",
+            "image/avif", "image/bmp", "image/tiff", "image/heic", "image/heif", "application/pdf");
+
+    /** Fallback by extension - some browsers send octet-stream/empty type (e.g. HEIC from iPhone). */
+    private static final Set<String> ALLOWED_EXT = Set.of(
+            ".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif", ".bmp", ".tif", ".tiff",
+            ".heic", ".heif", ".pdf");
 
     private final MediaRepository media;
     private final AuditService audit;
@@ -47,7 +53,10 @@ public class MediaService {
         if (file == null || file.isEmpty()) {
             throw ApiException.badRequest("EMPTY_FILE", "Soubor je prázdný");
         }
-        if (!ALLOWED.contains(file.getContentType())) {
+        String ct = file.getContentType() == null ? "" : file.getContentType().toLowerCase();
+        boolean genericType = ct.isBlank() || ct.equals("application/octet-stream");
+        if (!ALLOWED.contains(ct)
+                && !(genericType && ALLOWED_EXT.contains(extensionOf(file.getOriginalFilename())))) {
             throw ApiException.badRequest("UNSUPPORTED_TYPE", "Nepodporovaný typ souboru");
         }
 

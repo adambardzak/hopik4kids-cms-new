@@ -34,6 +34,13 @@ public class AdminProgramController {
         return PageResponse.ofAll(service.list());
     }
 
+    /** Programs for the timesheet picker: own programs + all one-off programs. */
+    @GetMapping("/worklog-options")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER')")
+    public PageResponse<AdminProgramDto> worklogOptions() {
+        return PageResponse.ofAll(service.listForWorkLog());
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
     public AdminProgramDto get(@PathVariable String id) {
