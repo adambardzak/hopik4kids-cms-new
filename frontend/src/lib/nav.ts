@@ -4,7 +4,7 @@ import type { Role } from "./types";
 export type IconKey =
   | "dashboard" | "registrations" | "programs" | "locations" | "articles" | "team"
   | "schedule" | "attendance" | "billing" | "marketing" | "documents" | "shifts"
-  | "waitlist" | "worklog" | "records" | "matching"
+  | "waitlist" | "mail" | "worklog" | "records" | "matching"
   | "operations" | "participants" | "content" | "settings";
 
 export interface NavItem {
@@ -59,6 +59,7 @@ export const NAV_MODULES: NavModule[] = [
       { href: "/admin/cekaci-listina", label: "Čekací listina", icon: "waitlist", roles: ["owner", "admin"] },
       { href: "/admin/fakturace", label: "Fakturace", icon: "billing", roles: ["owner", "admin", "accountant"] },
       { href: "/admin/parovani", label: "Párování plateb", icon: "matching", roles: ["owner", "admin", "accountant"] },
+      { href: "/admin/emaily", label: "Odeslané e-maily", icon: "mail", roles: ["owner", "admin"] },
       { href: "/admin/doklady", label: "Doklady", icon: "records", roles: ["owner", "admin", "accountant"] },
     ],
   },

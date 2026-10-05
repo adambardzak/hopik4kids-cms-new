@@ -255,7 +255,8 @@ function InvoicesTable({
           <TableBody>
             {visibleInvoices.map((inv) => {
               const st = STATUS[inv.status] ?? STATUS.unpaid;
-              const hasCreditNote = creditNotes.some((c) => c.invoiceId === inv.id);
+              const creditNote = creditNotes.find((c) => c.invoiceId === inv.id);
+              const hasCreditNote = !!creditNote;
               return (
                 <TableRow key={inv.id}>
                   <TableCell className="font-medium">{inv.invoiceNumber}</TableCell>
@@ -325,6 +326,31 @@ function InvoicesTable({
                               });
                             }}
                           />
+                        </>
+                      )}
+                      {creditNote && (
+                        <>
+                          <IconAction
+                            label={`Stáhnout dobropis ${creditNote.number}`}
+                            icon={FileText}
+                            className="text-[var(--destructive)]"
+                            href={`/api/billing/credit-notes/${creditNote.id}/pdf`}
+                          />
+                          {creditNote.payerEmail && (
+                            <IconAction
+                              label={`Odeslat dobropis na ${creditNote.payerEmail}`}
+                              icon={Mail}
+                              className="text-[var(--destructive)]"
+                              disabled={isPending}
+                              onClick={() =>
+                                startTransition(async () => {
+                                  const res = await sendCreditNoteEmail(creditNote.id);
+                                  if (res.ok) toast.success("Dobropis odeslán e-mailem.");
+                                  else toast.error(res.error ?? "Odeslání selhalo");
+                                })
+                              }
+                            />
+                          )}
                         </>
                       )}
                       {!hasCreditNote && inv.status !== "cancelled" && (

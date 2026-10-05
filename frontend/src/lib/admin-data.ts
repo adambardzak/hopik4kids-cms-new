@@ -179,3 +179,17 @@ export function listRecords(type?: string, person?: string) {
   const qs = q.toString();
   return api<PageResponse<RecordDocument>>(`/admin/api/records${qs ? `?${qs}` : ""}`);
 }
+
+export interface EmailLogEntry {
+  id: string;
+  sentAt: string;
+  recipient: string;
+  subject: string;
+  success: boolean;
+  error: string | null;
+  attachment: string | null;
+}
+
+export function listEmailLog(q?: string) {
+  return api<PageResponse<EmailLogEntry>>(`/admin/api/email-log${q ? `?q=${encodeURIComponent(q)}` : ""}`);
+}
