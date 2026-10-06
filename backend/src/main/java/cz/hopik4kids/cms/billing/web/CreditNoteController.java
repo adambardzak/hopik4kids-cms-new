@@ -60,7 +60,8 @@ public class CreditNoteController {
 
     /** Send the credit-note PDF to the payer by email. */
     @PostMapping("/{id}/send")
-    public void send(@PathVariable String id) {
-        emailService.send(id);
+    public void send(@PathVariable String id,
+                     @org.springframework.web.bind.annotation.RequestParam(required = false) String to) {
+        emailService.send(id, to);
     }
 }

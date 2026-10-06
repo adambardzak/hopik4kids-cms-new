@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { markInvoicePaid, cancelInvoice, saveSupplierSettings, lookupAres, sendInvoiceEmail, setInvoicePaidAmount, createCreditNote, sendCreditNoteEmail, getPendingConfirmations, sendTestConfirmation, sendPendingConfirmations } from "@/lib/actions";
+import { markInvoicePaid, cancelInvoice, saveSupplierSettings, lookupAres, sendInvoiceEmail, setInvoicePaidAmount, createCreditNote, sendCreditNoteEmail, getPendingConfirmations, sendTestConfirmation, sendPendingConfirmations, sendTestCreditNote } from "@/lib/actions";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { czk } from "@/lib/format";
@@ -487,6 +487,20 @@ function CreditNotesTable({ creditNotes }: { creditNotes: CreditNote[] }) {
                     label="Stáhnout PDF"
                     icon={Download}
                     href={`/api/billing/credit-notes/${cn.id}/pdf`}
+                  />
+                  <IconAction
+                    label="Poslat test na můj e-mail"
+                    icon={FileText}
+                    disabled={isPending}
+                    onClick={() => {
+                      const to = window.prompt("Na jaký e-mail poslat testovací dobropis?");
+                      if (!to) return;
+                      startTransition(async () => {
+                        const res = await sendTestCreditNote(cn.id, to.trim());
+                        if (res.ok) toast.success("Testovací dobropis odeslán.");
+                        else toast.error(res.error ?? "Odeslání selhalo");
+                      });
+                    }}
                   />
                   {cn.payerEmail && (
                     <IconAction

@@ -29,8 +29,13 @@ public class CreditNoteEmailService {
     }
 
     public void send(String creditNoteId) {
+        send(creditNoteId, null);
+    }
+
+    /** @param testTo when set, sends there (subject prefixed TEST) instead of the payer. */
+    public void send(String creditNoteId, String testTo) {
         CreditNote cn = creditNotes.find(creditNoteId);
-        if (cn.getPayerEmail() == null || cn.getPayerEmail().isBlank()) {
+        if (testTo == null && (cn.getPayerEmail() == null || cn.getPayerEmail().isBlank())) {
             throw ApiException.badRequest("NO_PAYER_EMAIL", "Dobropis nemá e-mail plátce");
         }
 
@@ -38,7 +43,7 @@ public class CreditNoteEmailService {
         String supplierName = supplier.getOrDefault().getName();
         String sender = supplierName == null || supplierName.isBlank() ? "Hopík4Kids" : supplierName;
 
-        String subject = "Dobropis č. " + cn.getNumber() + " — " + sender;
+        String subject = (testTo != null ? "TEST – " : "") + "Dobropis č. " + cn.getNumber() + " — " + sender;
         String body = """
                 Dobrý den,
 
@@ -49,7 +54,7 @@ public class CreditNoteEmailService {
                 """.formatted(cn.getNumber(), cn.getInvoiceNumber(), cn.getTotalAmount(), sender);
 
         boolean ok = email.sendWithAttachment(
-                cn.getPayerEmail(),
+                testTo != null ? testTo : cn.getPayerEmail(),
                 subject,
                 body,
                 "dobropis-" + cn.getNumber() + ".pdf",
