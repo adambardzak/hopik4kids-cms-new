@@ -73,7 +73,7 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
 
   // Desktop: compact module list (module pages become tabs at the top of the page).
   const nav = (
-    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto py-2 pl-2">
+    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden py-2 pl-2">
       {modules.map((m) => {
         // The dashboard is a plain link; other modules link to their first page.
         const target = m.items[0]?.href ?? "/admin";
@@ -103,7 +103,7 @@ export function Sidebar({ modules, session }: { modules: NavModule[]; session: S
 
   // Mobile drawer: full flat list grouped by module (no tabs — everything is one tap here).
   const mobileNav = (
-    <nav className="flex flex-1 flex-col gap-3 overflow-y-auto px-3 py-2">
+    <nav className="flex flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden px-3 py-2">
       {modules.map((m) => (
         <div key={m.id} className="flex flex-col gap-1">
           {m.title && (
