@@ -390,7 +390,3 @@ export async function sendPendingConfirmations(): Promise<{ ok: boolean; sent?: 
     return { ok: false, error: e instanceof Error ? e.message : "Chyba" };
   }
 }
-
-export async function sendTestCreditNote(id: string, to: string): Promise<ActionResult> {
-  return run(() => api(`/admin/api/billing/credit-notes/${id}/send?to=${encodeURIComponent(to)}`, { method: "POST" }), "/admin/fakturace");
-}
