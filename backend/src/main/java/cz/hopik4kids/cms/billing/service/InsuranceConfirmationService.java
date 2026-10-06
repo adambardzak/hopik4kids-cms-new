@@ -51,23 +51,56 @@ public class InsuranceConfirmationService {
      */
     @Transactional
     public void sendIfRequested(String registrationId) {
+        deliver(registrationId, null);
+    }
+
+    /** Paid registrations whose confirmation has not been sent yet. */
+    @Transactional(readOnly = true)
+    public java.util.List<String> pendingRegistrationIds() {
+        return invoices.findAll().stream()
+                .filter(i -> i.getStatus() == InvoiceStatus.PAID)
+                .map(Invoice::getRegistrationId)
+                .distinct()
+                .filter(id -> registrations.findById(id).map(r -> !r.isInsuranceConfirmationSent()).orElse(false))
+                .toList();
+    }
+
+    /** Sends a sample (first pending registration) to {@code to}; does not mark anything as sent. */
+    @Transactional
+    public boolean sendTest(String to) {
+        var ids = pendingRegistrationIds();
+        return !ids.isEmpty() && deliver(ids.get(0), to);
+    }
+
+    /** Sends all pending confirmations to their real recipients. Returns {sent, failed}. */
+    @Transactional
+    public int[] sendAllPending() {
+        int ok = 0, fail = 0;
+        for (String id : pendingRegistrationIds()) {
+            if (deliver(id, null)) ok++; else fail++;
+        }
+        return new int[]{ok, fail};
+    }
+
+    /** @param testTo when non-null: send there instead of the payer and leave the sent flag untouched. */
+    private boolean deliver(String registrationId, String testTo) {
         try {
             Registration reg = registrations.findById(registrationId).orElse(null);
             // Sent to every payer automatically on payment; idempotent via insuranceConfirmationSent.
-            if (reg == null || reg.isInsuranceConfirmationSent()) {
-                return;
+            if (reg == null || (testTo == null && reg.isInsuranceConfirmationSent())) {
+                return false;
             }
             Invoice inv = invoices.findByRegistrationId(registrationId).orElse(null);
             if (inv == null || inv.getStatus() != InvoiceStatus.PAID) {
-                return; // no paid invoice to base the confirmation on
+                return false; // no paid invoice to base the confirmation on
             }
-            String to = inv.getPayerEmail();
+            String to = testTo != null ? testTo : inv.getPayerEmail();
             if (to == null || to.isBlank()) {
                 to = reg.getChild().getParent().getEmail();
             }
             if (to == null || to.isBlank()) {
                 log.warn("Insurance confirmation requested for registration {} but no e-mail on file", registrationId);
-                return;
+                return false;
             }
 
             int paidAmount = inv.getPaidAmount() != null ? inv.getPaidAmount() : inv.getTotalAmount();
@@ -80,7 +113,7 @@ public class InsuranceConfirmationService {
             String childName = reg.getChild() != null ? reg.getChild().getFullName() : "";
             String programName = reg.getProgram() != null ? reg.getProgram().getName() : "kroužek";
             String child = childName.isBlank() ? "dítě" : childName;
-            String subject = "Potvrzení o úhradě pro pojišťovnu – " + child + " | Hopík4Kids";
+            String subject = (testTo != null ? "TEST – " : "") + "Potvrzení o úhradě pro pojišťovnu – " + child + " | Hopík4Kids";
             String body = """
                     Dobrý den, přijali jsme vaši platbu za kroužek pro %s (program: %s). Vše je v pořádku vyřízeno a místo na kroužku je plně rezervované!
 
@@ -103,15 +136,17 @@ public class InsuranceConfirmationService {
                     bytes,
                     "application/pdf");
 
-            if (ok) {
+            if (ok && testTo == null) {
                 reg.setInsuranceConfirmationSent(true);
                 registrations.save(reg);
                 audit.record("insurance-confirmation-email", "Registration", registrationId);
-            } else {
+            } else if (!ok) {
                 log.warn("Failed to e-mail insurance confirmation for registration {}", registrationId);
             }
+            return ok;
         } catch (Exception e) {
             log.error("Insurance confirmation send failed for registration {}: {}", registrationId, e.getMessage());
+            return false;
         }
     }
 }

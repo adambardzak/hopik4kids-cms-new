@@ -362,3 +362,31 @@ export async function seedWorkLogsFromShifts(
 export async function deleteRecord(id: string): Promise<ActionResult> {
   return run(() => api(`/admin/api/records/${id}`, { method: "DELETE" }), "/admin/doklady");
 }
+
+// --- payment-confirmation backfill ---
+export async function getPendingConfirmations(): Promise<number> {
+  try {
+    const r = await api<{ pending: number }>(`/admin/api/billing/payment-confirmations/pending`);
+    return r.pending;
+  } catch {
+    return 0;
+  }
+}
+
+export async function sendTestConfirmation(to: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const r = await api<{ sent: number }>(`/admin/api/billing/payment-confirmations/test?to=${encodeURIComponent(to)}`, { method: "POST" });
+    return r.sent > 0 ? { ok: true } : { ok: false, error: "Odeslání testu selhalo" };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Chyba" };
+  }
+}
+
+export async function sendPendingConfirmations(): Promise<{ ok: boolean; sent?: number; failed?: number; error?: string }> {
+  try {
+    const r = await api<{ sent: number; failed: number }>(`/admin/api/billing/payment-confirmations/send-pending`, { method: "POST" });
+    return { ok: true, sent: r.sent, failed: r.failed };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Chyba" };
+  }
+}

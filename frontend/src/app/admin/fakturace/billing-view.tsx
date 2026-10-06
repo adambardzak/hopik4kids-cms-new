@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Download, Check, Ban, Settings, Search, Mail, FileText } from "lucide-react";
 import type { Invoice, SupplierSettings, CreditNote } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { markInvoicePaid, cancelInvoice, saveSupplierSettings, lookupAres, sendInvoiceEmail, setInvoicePaidAmount, createCreditNote, sendCreditNoteEmail } from "@/lib/actions";
+import { markInvoicePaid, cancelInvoice, saveSupplierSettings, lookupAres, sendInvoiceEmail, setInvoicePaidAmount, createCreditNote, sendCreditNoteEmail, getPendingConfirmations, sendTestConfirmation, sendPendingConfirmations } from "@/lib/actions";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 import { czk } from "@/lib/format";
@@ -76,6 +76,7 @@ export function BillingView({
         </button>
       </div>
 
+      {tab === "invoices" && <ConfirmationBackfill />}
       {tab === "invoices" ? (
         <InvoicesTable invoices={invoices} hasIban={!!supplier.iban} filters={filters} creditNotes={creditNotes} />
       ) : tab === "credit-notes" ? (
@@ -83,6 +84,62 @@ export function BillingView({
       ) : (
         <SupplierForm supplier={supplier} />
       )}
+    </div>
+  );
+}
+
+/** Backfill of payment confirmations that were never e-mailed: test to one address, then send to all. */
+function ConfirmationBackfill() {
+  const toast = useToast();
+  const confirm = useConfirm();
+  const [pending, setPending] = useState<number | null>(null);
+  const [testTo, setTestTo] = useState("");
+  const [busy, startTransition] = useTransition();
+
+  useEffect(() => {
+    getPendingConfirmations().then(setPending);
+  }, []);
+
+  if (!pending) return null;
+
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-[var(--border)] p-3 text-sm">
+      <span className="mr-2">
+        <strong>{pending}</strong> zaplacených faktur zatím nemá odeslané potvrzení o platbě.
+      </span>
+      <input
+        value={testTo}
+        onChange={(e) => setTestTo(e.target.value)}
+        placeholder="testovací e-mail"
+        className="h-9 rounded-md border border-[var(--border)] bg-transparent px-2"
+      />
+      <Button
+        variant="outline"
+        disabled={busy || !testTo.includes("@")}
+        onClick={() =>
+          startTransition(async () => {
+            const r = await sendTestConfirmation(testTo.trim());
+            if (r.ok) toast.success("Test odeslán.");
+            else toast.error(r.error ?? "Test selhal");
+          })
+        }
+      >
+        Poslat test
+      </Button>
+      <Button
+        disabled={busy}
+        onClick={async () => {
+          if (!(await confirm({ message: `Odeslat potvrzení o platbě ${pending} plátcům?`, confirmLabel: "Odeslat všem" }))) return;
+          startTransition(async () => {
+            const r = await sendPendingConfirmations();
+            if (r.ok) toast.success(`Odesláno ${r.sent}, selhalo ${r.failed}.`);
+            else toast.error(r.error ?? "Odeslání selhalo");
+            setPending(await getPendingConfirmations());
+          });
+        }}
+      >
+        Odeslat všem
+      </Button>
     </div>
   );
 }
