@@ -103,6 +103,19 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
     });
   }, [programId, date]);
 
+  // Per-child totals for the selected program, shown inline in the roster (loaded up-front, not only
+  // behind the "Statistiky" button) and refreshed after each save.
+  function loadStats() {
+    if (!programId) return;
+    fetchAttendanceStats(programId).then((res) => setStats(res.stats));
+  }
+  useEffect(() => {
+    setStats(null);
+    loadStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [programId]);
+  const totalsByChild = new Map((stats?.children ?? []).map((c) => [c.childId, c]));
+
   function confirmDiscard(): Promise<boolean> {
     if (!dirty) return Promise.resolve(true);
     return confirm({ message: "Máš neuložené změny v docházce. Opravdu je zahodit?", danger: true, confirmLabel: "Zahodit" });
@@ -157,6 +170,7 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
       if (res.ok) {
         setSaved(true);
         setDirty(false);
+        loadStats();
       } else {
         toast.error(res.error ?? "Uložení selhalo");
       }
@@ -224,11 +238,13 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
                 <TableRow>
                   <TableHead>Dítě</TableHead>
                   <TableHead className="min-w-[240px]">Stav</TableHead>
+                  <TableHead className="hidden whitespace-nowrap md:table-cell">Docházka celkem</TableHead>
                   <TableHead>Poznámka</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rows.map((r) => {
+                  const t = totalsByChild.get(r.childId);
                   const cur = draft[r.childId]?.status ?? null;
                   return (
                     <TableRow key={r.childId}>
@@ -261,6 +277,17 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
                             );
                           })}
                         </div>
+                      </TableCell>
+                      <TableCell className="hidden whitespace-nowrap text-sm md:table-cell">
+                        {t ? (
+                          <span className="inline-flex gap-3 tabular-nums" title="Přítomen / omluven / nepřítomen">
+                            <span className="text-success">{t.present}×</span>
+                            <span className="text-warning">{t.excused}×</span>
+                            <span className="text-danger">{t.absent}×</span>
+                          </span>
+                        ) : (
+                          <span className="text-[var(--muted-foreground)]">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Input

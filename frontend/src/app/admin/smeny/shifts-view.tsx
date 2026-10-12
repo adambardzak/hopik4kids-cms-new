@@ -18,6 +18,20 @@ function fmtDate(iso: string) {
   return `${WEEKDAYS[d.getDay()]} ${d.getDate()}. ${d.getMonth() + 1}.`;
 }
 
+/** Slot length in hours from "HH:MM" start/end; 1 h when the end is unknown. */
+function slotHours(s: ShiftSlot): number {
+  const toMin = (t?: string | null) => {
+    if (!t) return null;
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  };
+  const a = toMin(s.startTime);
+  const b = toMin(s.endTime);
+  return a != null && b != null && b > a ? (b - a) / 60 : 1;
+}
+
+const fmtH = (h: number) => `${Math.round(h * 100) / 100} h`.replace(".", ",");
+
 function statusBadge(status?: string | null) {
   if (status === "APPROVED") return <Badge variant="success">Potvrzeno</Badge>;
   if (status === "PENDING") return <Badge variant="warning">Čeká na schválení</Badge>;
@@ -48,6 +62,23 @@ export function ShiftsView({
     }
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [slots]);
+
+  // Per-person totals over the listed period (admins): confirmed vs. waiting for approval.
+  const totals = useMemo(() => {
+    const map = new Map<string, { name: string; approved: number; pending: number; shifts: number }>();
+    for (const s of open) {
+      const h = slotHours(s);
+      for (const p of s.signups) {
+        if (p.status !== "APPROVED" && p.status !== "PENDING") continue;
+        const t = map.get(p.trainerId) ?? { name: p.trainerName, approved: 0, pending: 0, shifts: 0 };
+        if (p.status === "APPROVED") t.approved += h;
+        else t.pending += h;
+        t.shifts += 1;
+        map.set(p.trainerId, t);
+      }
+    }
+    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "cs"));
+  }, [open]);
 
   function act(key: string, fn: () => Promise<{ ok: boolean; error?: string }>) {
     setBusyKey(key);
@@ -86,6 +117,34 @@ export function ShiftsView({
           Moje hodiny {mine.length > 0 && <span className="ml-1 opacity-70">({mine.length})</span>}
         </button>
       </div>
+
+      {canApprove && tab === "open" && totals.length > 0 && (
+        <div className="mb-6 rounded-lg border border-[var(--border)] bg-[var(--background)]">
+          <div className="border-b border-[var(--border)] px-4 py-2.5 text-sm font-semibold">
+            Hodiny brigádníků v zobrazeném období
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-[var(--muted-foreground)]">
+                <th className="px-4 py-2 font-medium">Brigádník</th>
+                <th className="px-4 py-2 text-right font-medium">Potvrzeno</th>
+                <th className="px-4 py-2 text-right font-medium">Čeká na schválení</th>
+                <th className="px-4 py-2 text-right font-medium">Celkem</th>
+              </tr>
+            </thead>
+            <tbody>
+              {totals.map((t) => (
+                <tr key={t.name} className="border-t border-[var(--border)]">
+                  <td className="px-4 py-2 font-medium">{t.name}</td>
+                  <td className="px-4 py-2 text-right tabular-nums text-success">{fmtH(t.approved)}</td>
+                  <td className="px-4 py-2 text-right tabular-nums text-warning">{fmtH(t.pending)}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">{fmtH(t.approved + t.pending)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {byDate.length === 0 ? (
         <EmptyState

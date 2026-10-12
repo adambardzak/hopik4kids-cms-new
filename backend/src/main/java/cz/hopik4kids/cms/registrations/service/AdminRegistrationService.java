@@ -126,6 +126,29 @@ public class AdminRegistrationService {
         return AdminRegistrationDto.from(r);
     }
 
+    /**
+     * Correct the parent/payer name (e.g. the child's name was typed into the parent field).
+     * Also rewrites the payer name on this registration's open invoice so the PDF is right.
+     */
+    @Transactional
+    public AdminRegistrationDto updateParentName(String id, String name) {
+        if (name == null || name.isBlank()) {
+            throw ApiException.badRequest("NAME_REQUIRED", "Jméno rodiče je povinné");
+        }
+        String clean = name.trim();
+        Registration r = find(id);
+        r.getChild().getParent().setName(clean);
+        registrations.save(r);
+        invoices.findByRegistrationId(id).ifPresent(inv -> {
+            if (inv.getStatus() != InvoiceStatus.CANCELLED) {
+                inv.setPayerName(clean);
+                invoices.save(inv);
+            }
+        });
+        audit.record("parent-name", "Registration", id);
+        return AdminRegistrationDto.from(r);
+    }
+
     private Registration find(String id) {
         return registrations.findById(id)
                 .orElseThrow(() -> ApiException.notFound("Registrace nenalezena"));

@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { cancelRegistration, setPaymentStatus } from "@/lib/actions";
+import { cancelRegistration, setPaymentStatus, updateParentName } from "@/lib/actions";
 import { createInvoiceReturningId } from "@/lib/actions";
 import { BulkEmailDialog } from "@/components/bulk-email-dialog";
 import { WaitlistDialog } from "@/components/waitlist-dialog";
@@ -222,7 +222,18 @@ export function RegistrationsTable({
         ) : showGroups ? (
           <div className="space-y-3">
             {grouped.map((g) => (
-              <ProgramGroup key={g.id} programId={g.id} name={g.name} meta={g.meta} rows={g.rows} onDetail={setDetail} />
+              <ProgramGroup
+                key={g.id}
+                programId={g.id}
+                name={g.name}
+                meta={g.meta}
+                rows={g.rows}
+                occupancy={(() => {
+                  const p = programs.find((x) => x.id === g.id);
+                  return p && p.capacity ? { taken: p.spotsTaken, capacity: p.capacity } : null;
+                })()}
+                onDetail={setDetail}
+              />
             ))}
           </div>
         ) : (
@@ -258,8 +269,10 @@ function ProgramGroup({
   name,
   meta,
   rows,
+  occupancy,
   onDetail,
 }: {
+  occupancy: { taken: number; capacity: number } | null;
   programId: string;
   name: string;
   meta: string;
@@ -284,7 +297,7 @@ function ProgramGroup({
             {meta && <span className="truncate text-xs text-[var(--muted-foreground)]">{meta}</span>}
           </span>
           <span className="flex shrink-0 items-center gap-1 text-sm text-[var(--muted-foreground)]">
-            <Users className="h-3.5 w-3.5" /> {active}
+            <Users className="h-3.5 w-3.5" /> {occupancy ? `${occupancy.taken}/${occupancy.capacity}` : active}
           </span>
           {unpaid > 0 && (
             <Badge variant="warning" className="ml-1 shrink-0">
@@ -443,6 +456,31 @@ function DetailDialog({
   onCancel: (id: string) => void;
 }) {
   const confirm = useConfirm();
+  const toast = useToast();
+  const router = useRouter();
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [savingName, startSaveName] = useTransition();
+
+  useEffect(() => {
+    setEditingName(false);
+  }, [detail?.id]);
+
+  function saveName() {
+    if (!detail || !nameDraft.trim()) return;
+    startSaveName(async () => {
+      const res = await updateParentName(detail.id, nameDraft.trim());
+      if (res.ok) {
+        toast.success("Jméno rodiče opraveno (včetně faktury).");
+        setEditingName(false);
+        onClose();
+        router.refresh();
+      } else {
+        toast.error(res.error ?? "Uložení selhalo");
+      }
+    });
+  }
+
   return (
     <Dialog open={detail !== null} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[85vh] overflow-auto">
@@ -470,7 +508,37 @@ function DetailDialog({
               <section>
                 <SectionTitle>Rodič</SectionTitle>
                 <dl className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
-                  <Field label="Jméno" value={detail.parentName} />
+                  {editingName ? (
+                    <>
+                      <dt className="text-[var(--muted-foreground)]">Jméno</dt>
+                      <dd className="flex flex-wrap gap-2">
+                        <Input value={nameDraft} onChange={(e) => setNameDraft(e.target.value)} className="h-8 basis-full" autoFocus />
+                        <Button size="sm" onClick={saveName} disabled={savingName || !nameDraft.trim()}>
+                          Uložit
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setEditingName(false)} disabled={savingName}>
+                          Zrušit
+                        </Button>
+                      </dd>
+                    </>
+                  ) : (
+                    <>
+                      <dt className="text-[var(--muted-foreground)]">Jméno</dt>
+                      <dd className="flex items-center gap-2 font-medium break-words">
+                        {detail.parentName || "—"}
+                        <button
+                          type="button"
+                          className="text-xs font-normal text-[var(--primary)] hover:underline"
+                          onClick={() => {
+                            setNameDraft(detail.parentName ?? "");
+                            setEditingName(true);
+                          }}
+                        >
+                          Upravit
+                        </button>
+                      </dd>
+                    </>
+                  )}
                   <Field label="Telefon" value={detail.parentPhone} href={detail.parentPhone ? `tel:${detail.parentPhone}` : undefined} />
                   <Field label="E-mail" value={detail.parentEmail} href={detail.parentEmail ? `mailto:${detail.parentEmail}` : undefined} />
                   <Field label="Druhý rodič" value={detail.secondParentName} />

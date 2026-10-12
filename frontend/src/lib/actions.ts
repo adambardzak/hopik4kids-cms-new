@@ -37,6 +37,13 @@ export async function cancelRegistration(id: string): Promise<ActionResult> {
   return run(() => api(`/admin/api/registrations/${id}/cancel`, { method: "POST" }), "/admin/registrace");
 }
 
+export async function updateParentName(id: string, parentName: string): Promise<ActionResult> {
+  return run(
+    () => api(`/admin/api/registrations/${id}/parent-name`, { method: "POST", body: { parentName } }),
+    "/admin/registrace",
+  );
+}
+
 export async function setPaymentStatus(id: string, status: string): Promise<ActionResult> {
   return run(
     () => api(`/admin/api/registrations/${id}/payment-status?status=${status}`, { method: "POST" }),
