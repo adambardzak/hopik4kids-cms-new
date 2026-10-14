@@ -9,6 +9,8 @@ import cz.hopik4kids.cms.scheduling.domain.ShiftStatus;
 import cz.hopik4kids.cms.scheduling.domain.WorkLog;
 import cz.hopik4kids.cms.scheduling.domain.WorkLogSource;
 import cz.hopik4kids.cms.scheduling.domain.WorkLogStatus;
+import cz.hopik4kids.cms.scheduling.domain.LessonOverride;
+import cz.hopik4kids.cms.scheduling.repository.LessonOverrideRepository;
 import cz.hopik4kids.cms.scheduling.repository.ShiftSignupRepository;
 import cz.hopik4kids.cms.scheduling.repository.WorkLogRepository;
 import cz.hopik4kids.cms.scheduling.web.dto.WorkLogDto;
@@ -41,9 +43,12 @@ public class WorkLogService {
     private final ProgramRepository programs;
     private final UserRepository users;
     private final AuditService audit;
+    private final LessonOverrideRepository overrides;
 
     public WorkLogService(WorkLogRepository logs, ShiftSignupRepository signups,
-                          ProgramRepository programs, UserRepository users, AuditService audit) {
+                          ProgramRepository programs, UserRepository users, AuditService audit,
+                          LessonOverrideRepository overrides) {
+        this.overrides = overrides;
         this.logs = logs;
         this.signups = signups;
         this.programs = programs;
@@ -201,6 +206,67 @@ public class WorkLogService {
             audit.record("worklog.seed", "WorkLog", me, created + " z směn");
         }
         return created;
+    }
+
+    // --- automatic sync with confirmed shifts ---
+
+    /** Confirmed shift -> approved work-log row (idempotent: one SHIFT row per trainer/program/date). */
+    @Transactional
+    public boolean syncApprovedShift(ShiftSignup s) {
+        String pid = s.getProgramId();
+        String logProgramId = pid != null && pid.startsWith("override:") ? null : pid;
+        if (logs.findByTrainerIdAndProgramIdAndWorkDateAndSource(
+                s.getTrainerId(), logProgramId, s.getLessonDate(), WorkLogSource.SHIFT).isPresent()) {
+            return false;
+        }
+        Program p = null;
+        Integer durationOverride = null;
+        String label = null;
+        if (pid != null && pid.startsWith("override:")) {
+            LessonOverride o = overrides.findById(pid.substring("override:".length())).orElse(null);
+            if (o != null) {
+                durationOverride = o.getDurationMin();
+                label = o.getTitle();
+                if (o.getProgramId() != null) {
+                    p = programs.findById(o.getProgramId()).orElse(null);
+                }
+            }
+        } else if (pid != null) {
+            p = programs.findById(pid).orElse(null);
+        }
+        Integer minutes = durationOverride != null && durationOverride > 0 ? durationOverride
+                : (p != null ? p.getDurationMin() : null);
+        BigDecimal hours = BigDecimal.valueOf(minutes != null && minutes > 0 ? minutes : 60)
+                .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
+        WorkLog w = new WorkLog();
+        w.setTrainerId(s.getTrainerId());
+        w.setWorkDate(s.getLessonDate());
+        w.setHours(hours);
+        w.setProgramId(logProgramId);
+        w.setNote(p != null ? p.getName() : label);
+        w.setSource(WorkLogSource.SHIFT);
+        w.setStatus(WorkLogStatus.APPROVED);
+        logs.save(w);
+        return true;
+    }
+
+    /** Shift cancelled/rejected -> drop its auto-created work-log row. */
+    @Transactional
+    public void removeForShift(ShiftSignup s) {
+        String pid = s.getProgramId() != null && s.getProgramId().startsWith("override:") ? null : s.getProgramId();
+        logs.findByTrainerIdAndProgramIdAndWorkDateAndSource(
+                s.getTrainerId(), pid, s.getLessonDate(), WorkLogSource.SHIFT).ifPresent(logs::delete);
+    }
+
+    /** One-off: create work-log rows for every already-confirmed shift. */
+    @Transactional
+    public int backfillApprovedShifts() {
+        int n = 0;
+        for (ShiftSignup s : signups.findAll()) {
+            if (s.getStatus() == ShiftStatus.APPROVED && syncApprovedShift(s)) n++;
+        }
+        audit.record("worklog.backfill", "WorkLog", "-", n + " ze směn");
+        return n;
     }
 
     // --- helpers ---

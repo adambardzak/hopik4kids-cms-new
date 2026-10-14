@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { signupShift, cancelShift, approveShift, rejectShift } from "@/lib/actions";
 import { EmptyState } from "@/components/page-header";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm";
 
 const WEEKDAYS = ["Ne", "Po", "Út", "St", "Čt", "Pá", "So"];
 
@@ -49,6 +50,7 @@ export function ShiftsView({
 }) {
   const router = useRouter();
   const toast = useToast();
+  const confirm = useConfirm();
   const [tab, setTab] = useState<"open" | "mine">("open");
   const [isPending, start] = useTransition();
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -199,6 +201,19 @@ export function ShiftsView({
                                 {p.trainerName}
                                 {p.status === "APPROVED" && <Check className="h-3.5 w-3.5 text-[var(--success,green)]" />}
                               </span>
+                              {p.status === "APPROVED" && (
+                                <button
+                                  title="Zrušit potvrzení"
+                                  disabled={isPending}
+                                  onClick={async () => {
+                                    if (!(await confirm({ message: `Zrušit ${p.trainerName} tuto hodinu? Odstraní se i z výkazů.`, danger: true, confirmLabel: "Zrušit hodinu" }))) return;
+                                    act(p.signupId, () => cancelShift(p.signupId));
+                                  }}
+                                  className="rounded p-1 text-[var(--destructive)] hover:bg-[var(--muted)]"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              )}
                               {p.status === "PENDING" && (
                                 <span className="flex gap-1">
                                   <button

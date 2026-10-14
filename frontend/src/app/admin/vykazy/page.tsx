@@ -19,11 +19,11 @@ export default async function VykazyPage({
 }) {
   const sp = await searchParams;
   const def = monthRange();
-  const from = sp.from ?? def.from;
-  const to = sp.to ?? def.to;
-
   const session = await getSession();
   const privileged = session?.role === "owner" || session?.role === "admin";
+  // Admins start on the current month; trainers see their whole history unless they pick a period.
+  const from = sp.from ?? (privileged ? def.from : undefined);
+  const to = sp.to ?? (privileged ? def.to : undefined);
 
   const [{ items: logs }, { items: programs }] = await Promise.all([
     listWorkLogs(from, to),
@@ -46,8 +46,8 @@ export default async function VykazyPage({
         summary={summary}
         programs={programs}
         privileged={privileged}
-        from={from}
-        to={to}
+        from={from ?? ""}
+        to={to ?? ""}
       />
     </div>
   );

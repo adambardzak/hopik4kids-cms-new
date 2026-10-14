@@ -102,6 +102,13 @@ public class WorkLogController {
 
     public record SeedResult(int created) {}
 
+    /** Admin: create approved work-log rows for all already-confirmed shifts (one-off backfill). */
+    @PostMapping("/backfill-from-shifts")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+    public SeedResult backfill() {
+        return new SeedResult(service.backfillApprovedShifts());
+    }
+
     // --- admin approval ---
 
     @PostMapping("/{id}/status")

@@ -397,3 +397,12 @@ export async function sendPendingConfirmations(): Promise<{ ok: boolean; sent?: 
     return { ok: false, error: e instanceof Error ? e.message : "Chyba" };
   }
 }
+
+export async function backfillWorkLogsFromShifts(): Promise<{ ok: boolean; created?: number; error?: string }> {
+  try {
+    const r = await api<{ created: number }>(`/admin/api/work-logs/backfill-from-shifts`, { method: "POST" });
+    return { ok: true, created: r.created };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Chyba" };
+  }
+}

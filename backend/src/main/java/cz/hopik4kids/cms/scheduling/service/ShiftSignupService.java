@@ -44,10 +44,13 @@ public class ShiftSignupService {
     private final ScheduleService schedule;
     private final AuditService audit;
     private final LessonOverrideRepository overrides;
+    private final WorkLogService workLogs;
 
     public ShiftSignupService(ShiftSignupRepository signups, ProgramRepository programs,
                               UserRepository users, ScheduleService schedule, AuditService audit,
-                              LessonOverrideRepository overrides) {
+                              LessonOverrideRepository overrides,
+                              WorkLogService workLogs) {
+        this.workLogs = workLogs;
         this.signups = signups;
         this.programs = programs;
         this.users = users;
@@ -241,6 +244,7 @@ public class ShiftSignupService {
         }
         s.setStatus(ShiftStatus.CANCELLED);
         signups.save(s);
+        workLogs.removeForShift(s);
         audit.record("shift.cancel", "ShiftSignup", signupId);
     }
 
@@ -269,10 +273,13 @@ public class ShiftSignupService {
                 throw ApiException.badRequest("SLOT_FULL", "Hodina je již plně obsazená");
             }
             s.setStatus(ShiftStatus.APPROVED);
+            signups.save(s);
+            workLogs.syncApprovedShift(s);
         } else {
             s.setStatus(ShiftStatus.REJECTED);
+            signups.save(s);
+            workLogs.removeForShift(s);
         }
-        signups.save(s);
         audit.record(approve ? "shift.approve" : "shift.reject", "ShiftSignup", signupId);
     }
 

@@ -25,7 +25,7 @@ import {
   updateWorkLog,
   deleteWorkLog,
   setWorkLogStatus,
-  seedWorkLogsFromShifts,
+  backfillWorkLogsFromShifts,
 } from "@/lib/actions";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
@@ -134,13 +134,13 @@ export function WorkLogView({
     });
   }
 
-  function seedFromShifts() {
+  function backfillFromShifts() {
     start(async () => {
-      const res = await seedWorkLogsFromShifts(periodFrom, periodTo);
+      const res = await backfillWorkLogsFromShifts();
       if (res.ok) {
         toast.success(
           res.created && res.created > 0
-            ? `Načteno ${res.created} výkazů ze schválených směn.`
+            ? `Doplněno ${res.created} výkazů ze schválených směn.`
             : "Žádné nové směny k načtení (nebo už jsou načtené).",
         );
         router.refresh();
@@ -151,7 +151,7 @@ export function WorkLogView({
   }
 
   const totalHours = logs.reduce((s, w) => s + w.hours, 0);
-  const exportQuery = new URLSearchParams({ from: periodFrom, to: periodTo, format: "xlsx" }).toString();
+  const exportQuery = new URLSearchParams({ ...(periodFrom ? { from: periodFrom } : {}), ...(periodTo ? { to: periodTo } : {}), format: "xlsx" }).toString();
 
   return (
     <div className="space-y-5">
@@ -166,9 +166,12 @@ export function WorkLogView({
           <Input type="date" value={periodTo} onChange={(e) => setPeriodTo(e.target.value)} className="h-9" />
         </div>
         <Button size="sm" onClick={applyPeriod} disabled={pending}>Zobrazit období</Button>
-        <Button variant="outline" size="sm" onClick={seedFromShifts} disabled={pending}>
-          <CalendarClock className="h-4 w-4" /> Načíst ze směn
-        </Button>
+        {privileged && (
+          <Button variant="outline" size="sm" onClick={backfillFromShifts} disabled={pending}
+            title="Doplní výkazy ke všem už potvrzeným směnám, které ještě výkaz nemají">
+            <CalendarClock className="h-4 w-4" /> Doplnit ze směn
+          </Button>
+        )}
         <div className="ml-auto flex gap-2">
           {privileged && (
             <Button variant="outline" size="sm" asChild>
