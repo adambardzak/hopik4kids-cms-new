@@ -3,7 +3,15 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { Download, Check, Ban, Settings, Search, Mail, FileText } from "lucide-react";
-import type { Invoice, SupplierSettings, CreditNote } from "@/lib/types";
+import { SchoolBilling, SentCell } from "./school-billing";
+import type {
+  CreditNote,
+  Invoice,
+  Location,
+  Program,
+  SchoolContract,
+  SupplierSettings,
+} from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,55 +44,87 @@ export function BillingView({
   supplier,
   filters,
   creditNotes,
+  schoolContracts,
+  schoolCandidates,
+  locations,
 }: {
   invoices: Invoice[];
   supplier: SupplierSettings;
   filters: { from?: string; to?: string; status?: string; type?: string };
   creditNotes: CreditNote[];
+  schoolContracts: SchoolContract[];
+  schoolCandidates: Program[];
+  locations: Location[];
 }) {
-  const [tab, setTab] = useState<"invoices" | "credit-notes" | "supplier">("invoices");
+  const [tab, setTab] = useState<"invoices" | "school" | "credit-notes" | "supplier">("invoices");
+
+  // Children's invoices and kindergarten ones live on separate tabs.
+  const parentInvoices = invoices.filter((i) => i.payerKind !== "school");
+  const schoolInvoices = invoices.filter((i) => i.payerKind === "school");
 
   return (
     <div>
-      <div className="mb-4 inline-flex gap-1 rounded-lg border border-[var(--border)] bg-[var(--background)] p-1">
-        <button
-          onClick={() => setTab("invoices")}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-            tab === "invoices" ? "" : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-          }`}
-          style={tab === "invoices" ? { background: "var(--accent)", color: "var(--accent-fg)" } : undefined}
-        >
-          Faktury
-        </button>
-        <button
-          onClick={() => setTab("credit-notes")}
-          className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-            tab === "credit-notes" ? "" : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-          }`}
-          style={tab === "credit-notes" ? { background: "var(--accent)", color: "var(--accent-fg)" } : undefined}
-        >
+      <div className="mb-4 inline-flex flex-wrap gap-1 rounded-lg border border-[var(--border)] bg-[var(--background)] p-1">
+        <TabButton active={tab === "invoices"} onClick={() => setTab("invoices")}>
+          Faktury děti
+        </TabButton>
+        <TabButton active={tab === "school"} onClick={() => setTab("school")}>
+          Faktury školky
+        </TabButton>
+        <TabButton active={tab === "credit-notes"} onClick={() => setTab("credit-notes")}>
           Dobropisy
-        </button>
-        <button
-          onClick={() => setTab("supplier")}
-          className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-            tab === "supplier" ? "" : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-          }`}
-          style={tab === "supplier" ? { background: "var(--accent)", color: "var(--accent-fg)" } : undefined}
-        >
+        </TabButton>
+        <TabButton active={tab === "supplier"} onClick={() => setTab("supplier")}>
           <Settings className="h-4 w-4" /> Nastavení dodavatele
-        </button>
+        </TabButton>
       </div>
 
       {tab === "invoices" && <ConfirmationBackfill />}
       {tab === "invoices" ? (
-        <InvoicesTable invoices={invoices} hasIban={!!supplier.iban} filters={filters} creditNotes={creditNotes} />
+        <InvoicesTable
+          invoices={parentInvoices}
+          hasIban={!!supplier.iban}
+          filters={filters}
+          creditNotes={creditNotes}
+        />
+      ) : tab === "school" ? (
+        <SchoolBilling
+          contracts={schoolContracts}
+          candidates={schoolCandidates}
+          locations={locations}
+          invoices={schoolInvoices}
+          creditNotes={creditNotes}
+        />
       ) : tab === "credit-notes" ? (
         <CreditNotesTable creditNotes={creditNotes} />
       ) : (
         <SupplierForm supplier={supplier} />
       )}
     </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+        active
+          ? ""
+          : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+      }`}
+      style={active ? { background: "var(--accent)", color: "var(--accent-fg)" } : undefined}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -200,6 +240,7 @@ function InvoicesTable({
     if (to) q.set("to", to);
     if (status) q.set("status", status);
     if (type) q.set("type", type);
+    q.set("payerKind", "parent");
     return q.toString();
   })();
 
@@ -305,6 +346,7 @@ function InvoicesTable({
               <TableHead>Kroužek</TableHead>
               <TableHead>Dres</TableHead>
               <TableHead>Zaplaceno</TableHead>
+              <TableHead>Posláno</TableHead>
               <TableHead>Stav</TableHead>
               <TableHead></TableHead>
             </TableRow>
@@ -333,6 +375,9 @@ function InvoicesTable({
                     <PaidAmountCell invoice={inv} disabled={isPending} onSaved={() => router.refresh()} />
                   </TableCell>
                   <TableCell>
+                    <SentCell invoice={inv} />
+                  </TableCell>
+                  <TableCell>
                     <Badge variant={st.variant}>{st.label}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -352,6 +397,7 @@ function InvoicesTable({
                               const res = await sendInvoiceEmail(inv.id);
                               if (res.ok) toast.success("Faktura odeslána e-mailem.");
                               else toast.error(res.error ?? "Odeslání selhalo");
+                              router.refresh();
                             })
                           }
                         />

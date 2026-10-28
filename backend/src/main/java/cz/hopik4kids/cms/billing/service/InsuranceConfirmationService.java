@@ -60,6 +60,7 @@ public class InsuranceConfirmationService {
         return invoices.findAll().stream()
                 .filter(i -> i.getStatus() == InvoiceStatus.PAID)
                 .map(Invoice::getRegistrationId)
+                .filter(java.util.Objects::nonNull) // school invoices have no registration
                 .distinct()
                 .filter(id -> registrations.findById(id).map(r -> !r.isInsuranceConfirmationSent()).orElse(false))
                 .toList();

@@ -220,11 +220,17 @@ export interface AttendanceStats {
 export interface Invoice {
   id: string;
   invoiceNumber: string;
-  registrationId: string;
+  /** Null on kindergarten invoices (those carry schoolContractId instead). */
+  registrationId: string | null;
+  schoolContractId?: string | null;
+  payerKind: "parent" | "school";
   type: string;
   payerName: string;
   payerAddress?: string | null;
   payerEmail?: string | null;
+  payerIco?: string | null;
+  periodFrom?: string | null;
+  periodTo?: string | null;
   items: string; // JSON array
   totalAmount: number;
   programAmount: number;
@@ -235,6 +241,60 @@ export interface Invoice {
   status: "unpaid" | "paid" | "cancelled";
   paidAt?: string | null;
   paidAmount?: number | null;
+  /** When the invoice was last e-mailed to the payer; null = never sent. */
+  sentAt?: string | null;
+  sentCount: number;
+}
+
+/** Kindergarten morning program with its billing data ("Faktury školky"). */
+export interface SchoolContract {
+  id: string;
+  programId: string;
+  schoolName: string;
+  locationId?: string | null;
+  locationName?: string | null;
+  locationAddress?: string | null;
+  weekday?: number | null;
+  time?: string | null;
+  durationMin?: number | null;
+  periodFrom?: string | null;
+  periodTo?: string | null;
+  trainersNeeded: number;
+  programStatus: string;
+  billingName?: string | null;
+  billingEmail?: string | null;
+  billingAddress?: string | null;
+  ico?: string | null;
+  dic?: string | null;
+  price: number;
+  priceUnit: SchoolPriceUnit;
+  note?: string | null;
+  /** Lessons in the program's whole period (cancelled ones excluded). */
+  lessonsInPeriod: number;
+  /** What a single invoice for the whole period would come to. */
+  periodAmount: number;
+}
+
+export type SchoolPriceUnit = "lesson" | "month" | "period";
+
+export interface SchoolContractInput {
+  programId?: string | null;
+  schoolName?: string | null;
+  locationId?: string | null;
+  weekday?: number | null;
+  time?: string | null;
+  durationMin?: number | null;
+  periodFrom?: string | null;
+  periodTo?: string | null;
+  trainersNeeded?: number | null;
+  billingName?: string | null;
+  billingEmail?: string | null;
+  billingAddress?: string | null;
+  ico?: string | null;
+  dic?: string | null;
+  price?: number | null;
+  priceUnit?: SchoolPriceUnit | null;
+  note?: string | null;
 }
 
 export interface CreditNote {

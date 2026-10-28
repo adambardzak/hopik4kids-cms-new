@@ -23,8 +23,18 @@ public class Invoice extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String invoiceNumber;
 
-    @Column(nullable = false)
+    /** Set for parent invoices; null for school invoices (then {@link #schoolContractId} is set). */
+    @Column
     private String registrationId;
+
+    /** Set for kindergarten invoices (morning programs) — mutually exclusive with registrationId. */
+    @Column
+    private String schoolContractId;
+
+    /** Who is billed: a parent (registration) or a kindergarten (school contract). */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private InvoicePayerKind payerKind = InvoicePayerKind.PARENT;
 
     /** club | school | camp — type of the source program. */
     @Column(nullable = false, length = 20)
@@ -38,6 +48,17 @@ public class Invoice extends BaseEntity {
 
     @Column
     private String payerEmail;
+
+    /** Buyer's company id — only school invoices carry one (required on a B2B invoice). */
+    @Column(length = 50)
+    private String payerIco;
+
+    /** Billed period (school invoices): first and last day the invoice covers. */
+    @Column
+    private LocalDate periodFrom;
+
+    @Column
+    private LocalDate periodTo;
 
     /** JSON: [{label, qty, unitPrice}] */
     @Column(columnDefinition = "text", nullable = false)
@@ -61,6 +82,14 @@ public class Invoice extends BaseEntity {
 
     @Column
     private Instant paidAt;
+
+    /** When the invoice PDF was last e-mailed to the payer; null = never sent. */
+    @Column
+    private Instant sentAt;
+
+    /** How many times the invoice was e-mailed (re-sends included). */
+    @Column(nullable = false)
+    private int sentCount = 0;
 
     /**
      * Actual amount the parent paid, when it differs from {@code totalAmount}
@@ -180,5 +209,61 @@ public class Invoice extends BaseEntity {
 
     public void setPaidAmount(Integer paidAmount) {
         this.paidAmount = paidAmount;
+    }
+
+    public String getSchoolContractId() {
+        return schoolContractId;
+    }
+
+    public void setSchoolContractId(String schoolContractId) {
+        this.schoolContractId = schoolContractId;
+    }
+
+    public InvoicePayerKind getPayerKind() {
+        return payerKind;
+    }
+
+    public void setPayerKind(InvoicePayerKind payerKind) {
+        this.payerKind = payerKind;
+    }
+
+    public String getPayerIco() {
+        return payerIco;
+    }
+
+    public void setPayerIco(String payerIco) {
+        this.payerIco = payerIco;
+    }
+
+    public LocalDate getPeriodFrom() {
+        return periodFrom;
+    }
+
+    public void setPeriodFrom(LocalDate periodFrom) {
+        this.periodFrom = periodFrom;
+    }
+
+    public LocalDate getPeriodTo() {
+        return periodTo;
+    }
+
+    public void setPeriodTo(LocalDate periodTo) {
+        this.periodTo = periodTo;
+    }
+
+    public Instant getSentAt() {
+        return sentAt;
+    }
+
+    public void setSentAt(Instant sentAt) {
+        this.sentAt = sentAt;
+    }
+
+    public int getSentCount() {
+        return sentCount;
+    }
+
+    public void setSentCount(int sentCount) {
+        this.sentCount = sentCount;
     }
 }

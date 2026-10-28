@@ -9,10 +9,15 @@ public record InvoiceDto(
         String id,
         String invoiceNumber,
         String registrationId,
+        String schoolContractId,
+        String payerKind,
         String type,
         String payerName,
         String payerAddress,
         String payerEmail,
+        String payerIco,
+        LocalDate periodFrom,
+        LocalDate periodTo,
         String items,
         int totalAmount,
         int programAmount,
@@ -22,7 +27,9 @@ public record InvoiceDto(
         String variableSymbol,
         String status,
         Instant paidAt,
-        Integer paidAmount
+        Integer paidAmount,
+        Instant sentAt,
+        int sentCount
 ) {
     public static InvoiceDto from(Invoice i) {
         return from(i, 0, 0);
@@ -34,10 +41,15 @@ public record InvoiceDto(
                 i.getId(),
                 i.getInvoiceNumber(),
                 i.getRegistrationId(),
+                i.getSchoolContractId(),
+                i.getPayerKind().name().toLowerCase(),
                 i.getType(),
                 i.getPayerName(),
                 i.getPayerAddress(),
                 i.getPayerEmail(),
+                i.getPayerIco(),
+                i.getPeriodFrom(),
+                i.getPeriodTo(),
                 i.getItems(),
                 i.getTotalAmount(),
                 programAmount,
@@ -47,6 +59,8 @@ public record InvoiceDto(
                 i.getVariableSymbol(),
                 i.getStatus().name().toLowerCase(),
                 i.getPaidAt(),
-                i.getPaidAmount());
+                i.getPaidAmount(),
+                i.getSentAt(),
+                i.getSentCount());
     }
 }

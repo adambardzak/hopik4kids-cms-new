@@ -48,12 +48,13 @@ public class InvoiceController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String type) {
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String payerKind) {
         if (from == null && to == null && (status == null || status.isBlank())
-                && (type == null || type.isBlank())) {
+                && (type == null || type.isBlank()) && (payerKind == null || payerKind.isBlank())) {
             return PageResponse.ofAll(invoices.list());
         }
-        return PageResponse.ofAll(invoices.list(from, to, status, type));
+        return PageResponse.ofAll(invoices.list(from, to, status, type, payerKind));
     }
 
     /** Export the (optionally filtered) invoice list as CSV/XLSX (prd todo #2). */
@@ -63,11 +64,12 @@ public class InvoiceController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String type,
+            @RequestParam(required = false) String payerKind,
             @RequestParam(defaultValue = "xlsx") String format) {
         boolean xlsx = "xlsx".equalsIgnoreCase(format);
         byte[] body = xlsx
-                ? export.exportXlsx(from, to, status, type)
-                : export.exportCsv(from, to, status, type);
+                ? export.exportXlsx(from, to, status, type, payerKind)
+                : export.exportCsv(from, to, status, type, payerKind);
         String filename = "faktury." + (xlsx ? "xlsx" : "csv");
         MediaType contentType = xlsx
                 ? MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")

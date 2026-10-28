@@ -155,6 +155,37 @@ public class InvoiceEmailService {
                     inv.totalAmount(),
                     czDate(inv.dueDate()),
                     inv.variableSymbol());
+        } else if ("school".equals(inv.payerKind())) {
+            subject = "Faktura č. " + inv.invoiceNumber() + " — " + sender;
+            String period = inv.periodFrom() != null && inv.periodTo() != null
+                    ? " za období " + czDate(inv.periodFrom()) + " – " + czDate(inv.periodTo())
+                    : "";
+            body = """
+                    Dobrý den,
+
+                    v příloze zasíláme fakturu č. %s%s za pohybový program pro děti ve Vaší školce,
+                    na částku %d Kč se splatností %s.
+
+                    Částka k úhradě: %d Kč
+
+                    Variabilní symbol: %s
+
+                    Splatnost: %s
+
+                    Zaplatit můžete bankovním převodem nebo naskenováním QR platby přímo z faktury
+                    v příloze. V případě jakýchkoli dotazů k fakturaci se nám prosím ozvěte.
+
+                    Děkujeme za spolupráci,
+                    %s
+                    """.formatted(
+                    inv.invoiceNumber(),
+                    period,
+                    inv.totalAmount(),
+                    czDate(inv.dueDate()),
+                    inv.totalAmount(),
+                    inv.variableSymbol(),
+                    czDate(inv.dueDate()),
+                    sender);
         } else {
             subject = "Faktura č. " + inv.invoiceNumber() + " — " + sender;
             body = """
@@ -188,12 +219,18 @@ public class InvoiceEmailService {
         }
         audit.record("invoice-email", "Invoice", invoiceId, "{\"to\":\"" + inv.payerEmail() + "\"}");
 
+        // Stamp "sent" on the invoice itself so the billing table shows it immediately.
+        invoices.markSent(invoiceId);
+
         // Reflect that the invoice was sent on the registration's payment status (unless already paid).
-        registrations.findById(inv.registrationId()).ifPresent(reg -> {
-            if (reg.getPaymentStatus() == PaymentStatus.UNPAID) {
-                reg.setPaymentStatus(PaymentStatus.INVOICE_SENT);
-                registrations.save(reg);
-            }
-        });
+        // School invoices have no registration.
+        if (inv.registrationId() != null) {
+            registrations.findById(inv.registrationId()).ifPresent(reg -> {
+                if (reg.getPaymentStatus() == PaymentStatus.UNPAID) {
+                    reg.setPaymentStatus(PaymentStatus.INVOICE_SENT);
+                    registrations.save(reg);
+                }
+            });
+        }
     }
 }

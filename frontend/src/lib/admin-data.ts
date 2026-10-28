@@ -14,6 +14,7 @@ import type {
   Registration,
   ScheduleEntry,
   ShiftSlot,
+  SchoolContract,
   SupplierSettings,
   Trainer,
   User,
@@ -96,14 +97,31 @@ export function getAttendanceStats(program: string) {
 }
 
 // --- billing ---
-export function listInvoices(filters?: { from?: string; to?: string; status?: string; type?: string }) {
+export function listInvoices(filters?: {
+  from?: string;
+  to?: string;
+  status?: string;
+  type?: string;
+  payerKind?: string;
+}) {
   const q = new URLSearchParams();
   if (filters?.from) q.set("from", filters.from);
   if (filters?.to) q.set("to", filters.to);
   if (filters?.status) q.set("status", filters.status);
   if (filters?.type) q.set("type", filters.type);
+  if (filters?.payerKind) q.set("payerKind", filters.payerKind);
   const qs = q.toString();
   return api<PageResponse<Invoice>>(`/admin/api/billing/invoices${qs ? `?${qs}` : ""}`);
+}
+
+// --- school contracts (faktury školky) ---
+export function listSchoolContracts() {
+  return api<PageResponse<SchoolContract>>("/admin/api/billing/school-contracts");
+}
+
+/** School programs that have no billing record yet — offered when adding a kindergarten. */
+export function listSchoolContractCandidates() {
+  return api<PageResponse<Program>>("/admin/api/billing/school-contracts/candidates");
 }
 
 export function getSupplierSettings() {

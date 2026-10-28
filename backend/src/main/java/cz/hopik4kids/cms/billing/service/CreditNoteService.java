@@ -86,10 +86,13 @@ public class CreditNoteService {
         invoices.save(inv);
 
         // Reopen the registration's payment status (money is being returned).
-        registrations.findById(inv.getRegistrationId()).ifPresent(r -> {
-            r.setPaymentStatus(PaymentStatus.UNPAID);
-            registrations.save(r);
-        });
+        // School invoices have no registration — nothing to reopen there.
+        if (inv.getRegistrationId() != null) {
+            registrations.findById(inv.getRegistrationId()).ifPresent(r -> {
+                r.setPaymentStatus(PaymentStatus.UNPAID);
+                registrations.save(r);
+            });
+        }
 
         audit.record("credit-note-create", "CreditNote", c.getId(),
                 "{\"number\":\"" + c.getNumber() + "\",\"invoice\":\"" + inv.getInvoiceNumber() + "\"}");

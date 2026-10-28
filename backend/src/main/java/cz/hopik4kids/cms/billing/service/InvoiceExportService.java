@@ -36,8 +36,8 @@ public class InvoiceExportService {
         this.invoices = invoices;
     }
 
-    public byte[] exportCsv(LocalDate from, LocalDate to, String status, String type) {
-        List<InvoiceDto> rows = invoices.list(from, to, status, type);
+    public byte[] exportCsv(LocalDate from, LocalDate to, String status, String type, String payerKind) {
+        List<InvoiceDto> rows = invoices.list(from, to, status, type, payerKind);
         StringBuilder sb = new StringBuilder("\uFEFF");
         sb.append(String.join(";", HEADERS)).append('\n');
         for (InvoiceDto r : rows) {
@@ -53,8 +53,8 @@ public class InvoiceExportService {
         return sb.toString().getBytes(StandardCharsets.UTF_8);
     }
 
-    public byte[] exportXlsx(LocalDate from, LocalDate to, String status, String type) {
-        List<InvoiceDto> rows = invoices.list(from, to, status, type);
+    public byte[] exportXlsx(LocalDate from, LocalDate to, String status, String type, String payerKind) {
+        List<InvoiceDto> rows = invoices.list(from, to, status, type, payerKind);
         try (Workbook wb = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = wb.createSheet("Faktury");
             Row header = sheet.createRow(0);

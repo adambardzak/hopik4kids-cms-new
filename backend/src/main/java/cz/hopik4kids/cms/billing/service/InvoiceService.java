@@ -2,7 +2,9 @@ package cz.hopik4kids.cms.billing.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.hopik4kids.cms.billing.domain.Invoice;
+import cz.hopik4kids.cms.billing.domain.InvoicePayerKind;
 import cz.hopik4kids.cms.billing.domain.InvoiceStatus;
+import cz.hopik4kids.cms.billing.domain.SchoolContract;
 import cz.hopik4kids.cms.billing.repository.InvoiceRepository;
 import cz.hopik4kids.cms.billing.web.dto.InvoiceDto;
 import cz.hopik4kids.cms.kernel.web.ApiException;
@@ -59,13 +61,35 @@ public class InvoiceService {
     /** Filtered list for the invoice table/export (prd todo #2). All filters optional. */
     @Transactional(readOnly = true)
     public List<InvoiceDto> list(LocalDate from, LocalDate to, String status, String type) {
+        return list(from, to, status, type, null);
+    }
+
+    /**
+     * Filtered list. {@code payerKind} (parent|school) separates the two invoice tabs —
+     * children's invoices from kindergarten ones; null = both.
+     */
+    @Transactional(readOnly = true)
+    public List<InvoiceDto> list(LocalDate from, LocalDate to, String status, String type, String payerKind) {
         InvoiceStatus st = parseStatus(status);
+        InvoicePayerKind kind = parsePayerKind(payerKind);
         return invoices.findAllByOrderByIssueDateDescInvoiceNumberDesc().stream()
                 .filter(i -> from == null || !i.getIssueDate().isBefore(from))
                 .filter(i -> to == null || !i.getIssueDate().isAfter(to))
                 .filter(i -> st == null || i.getStatus() == st)
                 .filter(i -> type == null || type.isBlank() || type.equalsIgnoreCase(i.getType()))
+                .filter(i -> kind == null || i.getPayerKind() == kind)
                 .map(this::dtoOf).toList();
+    }
+
+    private static InvoicePayerKind parsePayerKind(String payerKind) {
+        if (payerKind == null || payerKind.isBlank()) {
+            return null;
+        }
+        try {
+            return InvoicePayerKind.valueOf(payerKind.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private static InvoiceStatus parseStatus(String status) {
@@ -159,20 +183,76 @@ public class InvoiceService {
         return InvoiceDto.from(inv);
     }
 
+    /**
+     * Create an invoice billed to a kindergarten for a period of its morning program.
+     * Items/amount are computed by the caller (price unit depends on the contract).
+     */
+    @Transactional
+    public InvoiceDto createForSchoolContract(SchoolContract contract,
+                                              String payerName,
+                                              String payerAddress,
+                                              List<Item> items,
+                                              int totalAmount,
+                                              LocalDate periodFrom,
+                                              LocalDate periodTo) {
+        if (items.isEmpty() || totalAmount <= 0) {
+            throw ApiException.badRequest("INVALID_AMOUNT", "Částka faktury musí být větší než nula");
+        }
+
+        int dueDays = supplier.getOrDefault().getDefaultDueDays();
+        LocalDate issue = LocalDate.now();
+        String number = numbers.next();
+
+        Invoice inv = new Invoice();
+        inv.setInvoiceNumber(number);
+        inv.setSchoolContractId(contract.getId());
+        inv.setPayerKind(InvoicePayerKind.SCHOOL);
+        inv.setType("school");
+        inv.setPayerName(payerName);
+        inv.setPayerAddress(payerAddress);
+        inv.setPayerEmail(contract.getBillingEmail());
+        inv.setPayerIco(contract.getIco());
+        inv.setPeriodFrom(periodFrom);
+        inv.setPeriodTo(periodTo);
+        inv.setItems(writeItems(items));
+        inv.setTotalAmount(totalAmount);
+        inv.setIssueDate(issue);
+        inv.setDueDate(issue.plusDays(dueDays));
+        inv.setVariableSymbol(number.replaceAll("[^0-9]", ""));
+        inv.setStatus(InvoiceStatus.UNPAID);
+        inv = invoices.save(inv);
+
+        audit.record("invoice-create-school", "Invoice", inv.getId(), "{\"number\":\"" + number + "\"}");
+        return dtoOf(inv);
+    }
+
+    /** Record that the invoice PDF was e-mailed (shown as "Posláno" in the table). */
+    @Transactional
+    public void markSent(String id) {
+        Invoice inv = find(id);
+        inv.setSentAt(Instant.now());
+        inv.setSentCount(inv.getSentCount() + 1);
+        invoices.save(inv);
+    }
+
     @Transactional
     public InvoiceDto markPaid(String id) {
         Invoice inv = find(id);
         inv.setStatus(InvoiceStatus.PAID);
         inv.setPaidAt(Instant.now());
         invoices.save(inv);
-        // Keep the registration payment status in sync.
-        registrations.findById(inv.getRegistrationId()).ifPresent(r -> {
-            r.setPaymentStatus(PaymentStatus.PAID);
-            registrations.save(r);
-        });
+        // Keep the registration payment status in sync (school invoices have no registration).
+        if (inv.getRegistrationId() != null) {
+            registrations.findById(inv.getRegistrationId()).ifPresent(r -> {
+                r.setPaymentStatus(PaymentStatus.PAID);
+                registrations.save(r);
+            });
+        }
         audit.record("invoice-paid", "Invoice", id);
         // Send the health-insurance confirmation if the parent requested it (idempotent, best-effort).
-        insuranceConfirmation.sendIfRequested(inv.getRegistrationId());
+        if (inv.getRegistrationId() != null) {
+            insuranceConfirmation.sendIfRequested(inv.getRegistrationId());
+        }
         return dtoOf(inv);
     }
 

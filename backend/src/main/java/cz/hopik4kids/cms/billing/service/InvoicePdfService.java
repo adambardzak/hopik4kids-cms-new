@@ -112,6 +112,8 @@ public class InvoicePdfService {
             pay.addElement(new Paragraph("ODBĚRATEL", labelFont));
             pay.addElement(spaced(new Paragraph(nz(inv.getPayerName()), PdfFonts.bold(11, DARK)), 3, 0));
             if (has(inv.getPayerAddress())) pay.addElement(new Paragraph(inv.getPayerAddress(), normal));
+            // School invoices are B2B — the buyer's IČO belongs on the document.
+            if (has(inv.getPayerIco())) pay.addElement(spaced(new Paragraph("IČO: " + inv.getPayerIco(), small), 2, 0));
             if (has(inv.getPayerEmail())) pay.addElement(spaced(new Paragraph(inv.getPayerEmail(), small), 2, 0));
             parties.addCell(pay);
             doc.add(parties);
@@ -125,10 +127,18 @@ public class InvoicePdfService {
             meta.addCell(metaCell("Forma úhrady", "Převodem", labelFont, boldSm));
             meta.addCell(metaCell("Variabilní symbol", inv.getVariableSymbol(), labelFont, boldSm));
             doc.add(meta);
-            if (has(s.getAccountNumber())) {
-                PdfPTable acc = new PdfPTable(1);
+            if (has(s.getAccountNumber()) || inv.getPeriodFrom() != null) {
+                boolean period = inv.getPeriodFrom() != null && inv.getPeriodTo() != null;
+                PdfPTable acc = new PdfPTable(period && has(s.getAccountNumber()) ? 2 : 1);
                 acc.setWidthPercentage(100);
-                acc.addCell(metaCell("Číslo bankovního účtu", s.getAccountNumber(), labelFont, boldSm));
+                if (has(s.getAccountNumber())) {
+                    acc.addCell(metaCell("Číslo bankovního účtu", s.getAccountNumber(), labelFont, boldSm));
+                }
+                if (period) {
+                    acc.addCell(metaCell("Fakturované období",
+                            inv.getPeriodFrom().format(DATE) + " – " + inv.getPeriodTo().format(DATE),
+                            labelFont, boldSm));
+                }
                 doc.add(acc);
             }
 

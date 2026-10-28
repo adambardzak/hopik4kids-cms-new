@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { api, ApiRequestError } from "@/lib/api";
-import type { WaitlistEntry } from "@/lib/types";
+import type { SchoolContractInput, WaitlistEntry } from "@/lib/types";
 
 export interface ActionResult {
   ok: boolean;
@@ -219,6 +219,50 @@ export async function lookupAres(ico: string): Promise<{
 
 export async function sendInvoiceEmail(id: string): Promise<ActionResult> {
   return run(() => api(`/admin/api/billing/invoices/${id}/send`, { method: "POST" }), "/admin/fakturace");
+}
+
+// --- school contracts (faktury školky) ---
+
+/** Create or update a kindergarten: lesson fields are written through to its program. */
+export async function saveSchoolContract(
+  id: string | null,
+  body: SchoolContractInput,
+): Promise<ActionResult> {
+  return run(
+    () =>
+      api(`/admin/api/billing/school-contracts${id ? `/${id}` : ""}`, {
+        method: id ? "PUT" : "POST",
+        body,
+      }),
+    "/admin/fakturace",
+  );
+}
+
+/** Removes the billing record only — the program stays in the calendar. */
+export async function deleteSchoolContract(id: string): Promise<ActionResult> {
+  return run(
+    () => api(`/admin/api/billing/school-contracts/${id}`, { method: "DELETE" }),
+    "/admin/fakturace",
+  );
+}
+
+/** Issue an invoice to a kindergarten; returns the new invoice id (to open its PDF). */
+export async function createSchoolInvoice(
+  id: string,
+  body: { periodFrom?: string | null; periodTo?: string | null; lessonCount?: number | null; totalAmount?: number | null },
+): Promise<{ ok: boolean; id?: string; error?: string }> {
+  try {
+    const inv = await api<{ id: string }>(`/admin/api/billing/school-contracts/${id}/invoice`, {
+      method: "POST",
+      body,
+    });
+    revalidatePath("/admin/fakturace");
+    return { ok: true, id: inv.id };
+  } catch (e) {
+    if (isRedirect(e)) throw e;
+    if (e instanceof ApiRequestError) return { ok: false, error: e.message };
+    return { ok: false, error: "Neočekávaná chyba" };
+  }
 }
 
 // --- bulk email ---
