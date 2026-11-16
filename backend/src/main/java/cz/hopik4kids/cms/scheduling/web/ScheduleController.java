@@ -16,7 +16,7 @@ import java.util.List;
 /** Weekly schedule (prd §6A.8 A). Occurrences generated from programs for a date range. */
 @RestController
 @RequestMapping("/admin/api/schedule")
-@PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER')")
+@PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER','PR')")
 public class ScheduleController {
 
     private final ScheduleService service;

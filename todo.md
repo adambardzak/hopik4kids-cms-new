@@ -30,4 +30,5 @@
 POZNAMKY / TECH DLUH:
 - DEPLOY: GitHub fetch na VPS selhava (chybi credential/token, repo private). Docasne reseno git bundle (scp souboru). NUTNO SPRAVIT: deploy token na VPS nebo prepnout remote na SSH.
 - Migrace na prod: aplikovano do V17 (bank_transaction). Dalsi bude V18.
+- V25 (PR role, hodinova sazba, mesicni vykazy work_report) - nasadit spolu s backendem.
 - Dark mode: barvy sjednocene pres CSS promenne (success/warning/danger/info). Pokud neco svetli v tmavem rezimu, poslat screenshot.

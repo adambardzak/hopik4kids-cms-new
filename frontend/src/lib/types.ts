@@ -1,4 +1,4 @@
-export type Role = "owner" | "admin" | "trainer" | "accountant" | "viewer";
+export type Role = "owner" | "admin" | "trainer" | "accountant" | "viewer" | "pr";
 
 export interface Session {
   userId: string;
@@ -57,6 +57,8 @@ export interface ShiftSignupTrainer {
   trainerId: string;
   trainerName: string;
   status: string;
+  /** TRAINER = regular shift, FILMING = PR manager comes to film. */
+  kind?: "TRAINER" | "FILMING";
 }
 
 export interface ShiftSlot {
@@ -156,6 +158,8 @@ export interface User {
   phone?: string | null;
   color?: string | null;
   lastLoginAt?: string | null;
+  /** CZK per hour for monthly work reports. */
+  hourlyRate?: number | null;
 }
 
 export interface Media {
@@ -396,6 +400,36 @@ export interface WorkLogSummary {
   approvedHours: number;
   pendingHours: number;
   entryCount: number;
+}
+
+export type WorkReportStatus = "draft" | "submitted" | "approved" | "returned";
+
+/** Monthly work report of one person (totals live until approved, then frozen). */
+export interface WorkReport {
+  userId: string;
+  userName: string;
+  role: Role;
+  period: string; // YYYY-MM
+  status: WorkReportStatus;
+  totalHours: number;
+  hourlyRate?: number | null;
+  totalAmount?: number | null;
+  entryCount: number;
+  pendingCount: number;
+  submittedAt?: string | null;
+  decidedAt?: string | null;
+  decidedByName?: string | null;
+  returnNote?: string | null;
+}
+
+/** Children of a program with only their photo/video consent (for the PR manager). */
+export interface MediaConsentGroup {
+  programId: string;
+  programName: string;
+  locationName?: string | null;
+  locationAddress?: string | null;
+  consentCount: number;
+  children: { name: string; consentMedia: boolean }[];
 }
 
 export interface RecordDocument {

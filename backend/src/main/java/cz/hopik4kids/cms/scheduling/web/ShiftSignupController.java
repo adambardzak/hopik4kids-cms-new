@@ -32,7 +32,7 @@ public class ShiftSignupController {
 
     /** All lesson occurrences in the range (with occupancy + my own status). */
     @GetMapping("/open")
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER')")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER','PR')")
     public PageResponse<ShiftSlotDto> open(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
@@ -41,7 +41,7 @@ public class ShiftSignupController {
 
     /** Only slots the current trainer is signed up for. */
     @GetMapping("/mine")
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER')")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER','PR')")
     public PageResponse<ShiftSlotDto> mine(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
@@ -51,14 +51,14 @@ public class ShiftSignupController {
     public record SignupRequest(String programId, LocalDate date) {}
 
     @PostMapping("/signup")
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER')")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER','PR')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void signup(@RequestBody SignupRequest req) {
         service.signup(req.programId(), req.date());
     }
 
     @DeleteMapping("/{signupId}")
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER')")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER','PR')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancel(@PathVariable String signupId) {
         service.cancel(signupId);

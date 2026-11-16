@@ -12,7 +12,8 @@ public record UserDto(
         String status,
         String phone,
         String color,
-        Instant lastLoginAt
+        Instant lastLoginAt,
+        java.math.BigDecimal hourlyRate
 ) {
     public static UserDto from(User u) {
         return new UserDto(
@@ -23,7 +24,8 @@ public record UserDto(
                 u.getStatus().name().toLowerCase(),
                 u.getPhone(),
                 u.getColor(),
-                u.getLastLoginAt()
+                u.getLastLoginAt(),
+                u.getHourlyRate()
         );
     }
 }

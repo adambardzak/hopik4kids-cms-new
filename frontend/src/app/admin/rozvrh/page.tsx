@@ -1,5 +1,6 @@
 import { listLocations, listSchedule, listPrograms } from "@/lib/admin-data";
 import { PageHeader } from "@/components/page-header";
+import { getSession } from "@/lib/session";
 import { ScheduleView } from "./schedule-view";
 
 /** Monday (ISO) of the week containing the given date. */
@@ -29,10 +30,13 @@ export default async function RozvrhPage({
   const from = iso(monday);
   const to = iso(sunday);
 
+  const session = await getSession();
+  // PR manager: read-only schedule; program admin data (prices etc.) isn't available to them.
+  const readOnly = session?.role === "pr";
   const [{ items: entries }, { items: locations }, { items: programs }] = await Promise.all([
     listSchedule({ from, to, location: sp.location }),
     listLocations(),
-    listPrograms(),
+    readOnly ? Promise.resolve({ items: [] }) : listPrograms(),
   ]);
 
   return (
@@ -48,6 +52,7 @@ export default async function RozvrhPage({
           programs={programs}
           weekStart={from}
           currentLocation={sp.location ?? ""}
+          readOnly={readOnly}
         />
       </div>
     </div>

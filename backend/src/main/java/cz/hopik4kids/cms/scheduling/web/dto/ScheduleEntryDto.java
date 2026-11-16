@@ -34,4 +34,11 @@ public record ScheduleEntryDto(
         Integer trainersNeeded,
         boolean adminOnly
 ) {
+    /** Copy without the venue contact person (for roles that only need the address). */
+    public ScheduleEntryDto withoutContacts() {
+        return new ScheduleEntryDto(programId, programName, type, status, date, weekday, startTime, endTime,
+                durationMin, schoolPart, locationId, locationName, locationAddress, null, null, null,
+                validFrom, validTo, capacity, spotsTaken, overrideId, overrideType, title, trainersNeeded,
+                adminOnly);
+    }
 }

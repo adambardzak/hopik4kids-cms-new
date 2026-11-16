@@ -13,6 +13,9 @@ import cz.hopik4kids.cms.scheduling.domain.LessonOverride;
 import cz.hopik4kids.cms.scheduling.repository.LessonOverrideRepository;
 import cz.hopik4kids.cms.scheduling.repository.ShiftSignupRepository;
 import cz.hopik4kids.cms.scheduling.repository.WorkLogRepository;
+import cz.hopik4kids.cms.scheduling.repository.WorkReportRepository;
+import cz.hopik4kids.cms.scheduling.domain.WorkReport;
+import cz.hopik4kids.cms.scheduling.domain.WorkReportStatus;
 import cz.hopik4kids.cms.scheduling.web.dto.WorkLogDto;
 import cz.hopik4kids.cms.scheduling.web.dto.WorkLogRequest;
 import cz.hopik4kids.cms.scheduling.web.dto.WorkLogSummaryDto;
@@ -25,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -44,11 +48,13 @@ public class WorkLogService {
     private final UserRepository users;
     private final AuditService audit;
     private final LessonOverrideRepository overrides;
+    private final WorkReportRepository reports;
 
     public WorkLogService(WorkLogRepository logs, ShiftSignupRepository signups,
                           ProgramRepository programs, UserRepository users, AuditService audit,
-                          LessonOverrideRepository overrides) {
+                          LessonOverrideRepository overrides, WorkReportRepository reports) {
         this.overrides = overrides;
+        this.reports = reports;
         this.logs = logs;
         this.signups = signups;
         this.programs = programs;
@@ -111,6 +117,7 @@ public class WorkLogService {
     @Transactional
     public WorkLogDto create(WorkLogRequest req) {
         String me = SecurityUtils.currentUserId();
+        requireEditable(me, req.workDate());
         WorkLog w = new WorkLog();
         w.setTrainerId(me);
         w.setWorkDate(req.workDate());
@@ -127,10 +134,10 @@ public class WorkLogService {
     @Transactional
     public WorkLogDto update(String id, WorkLogRequest req) {
         WorkLog w = mustAccess(id);
-        // Once approved, only privileged users may edit.
-        if (w.getStatus() == WorkLogStatus.APPROVED && !SecurityUtils.isPrivileged()) {
-            throw ApiException.badRequest("ALREADY_APPROVED", "Schválený výkaz už nelze upravit");
-        }
+        // Entries (incl. ones auto-created from confirmed shifts) stay correctable until the
+        // month's report is submitted/approved.
+        requireEditable(w.getTrainerId(), w.getWorkDate());
+        requireEditable(w.getTrainerId(), req.workDate());
         w.setWorkDate(req.workDate());
         w.setHours(req.hours());
         w.setNote(req.note());
@@ -147,9 +154,7 @@ public class WorkLogService {
     @Transactional
     public void delete(String id) {
         WorkLog w = mustAccess(id);
-        if (w.getStatus() == WorkLogStatus.APPROVED && !SecurityUtils.isPrivileged()) {
-            throw ApiException.badRequest("ALREADY_APPROVED", "Schválený výkaz nelze smazat");
-        }
+        requireEditable(w.getTrainerId(), w.getWorkDate());
         logs.delete(w);
         audit.record("worklog.delete", "WorkLog", id);
     }
@@ -160,6 +165,7 @@ public class WorkLogService {
     public WorkLogDto setStatus(String id, String status) {
         WorkLog w = logs.findById(id)
                 .orElseThrow(() -> ApiException.notFound("Výkaz nenalezen"));
+        requireEditable(w.getTrainerId(), w.getWorkDate());
         WorkLogStatus st;
         try {
             st = WorkLogStatus.valueOf(status.trim().toUpperCase());
@@ -182,7 +188,8 @@ public class WorkLogService {
         String me = SecurityUtils.currentUserId();
         int created = 0;
         for (ShiftSignup s : signups.findByTrainerIdAndLessonDateGreaterThanEqualOrderByLessonDateAsc(me, from)) {
-            if (s.getLessonDate().isAfter(to) || s.getStatus() != ShiftStatus.APPROVED) {
+            if (s.getLessonDate().isAfter(to) || s.getStatus() != ShiftStatus.APPROVED
+                    || isLocked(me, s.getLessonDate())) {
                 continue;
             }
             if (logs.findByTrainerIdAndProgramIdAndWorkDateAndSource(
@@ -215,6 +222,9 @@ public class WorkLogService {
     public boolean syncApprovedShift(ShiftSignup s) {
         String pid = s.getProgramId();
         String logProgramId = pid != null && pid.startsWith("override:") ? null : pid;
+        if (isApprovedMonth(s.getTrainerId(), s.getLessonDate())) {
+            return false; // approved reports are frozen
+        }
         if (logs.findByTrainerIdAndProgramIdAndWorkDateAndSource(
                 s.getTrainerId(), logProgramId, s.getLessonDate(), WorkLogSource.SHIFT).isPresent()) {
             return false;
@@ -253,6 +263,9 @@ public class WorkLogService {
     /** Shift cancelled/rejected -> drop its auto-created work-log row. */
     @Transactional
     public void removeForShift(ShiftSignup s) {
+        if (isApprovedMonth(s.getTrainerId(), s.getLessonDate())) {
+            return; // approved reports are frozen
+        }
         String pid = s.getProgramId() != null && s.getProgramId().startsWith("override:") ? null : s.getProgramId();
         logs.findByTrainerIdAndProgramIdAndWorkDateAndSource(
                 s.getTrainerId(), pid, s.getLessonDate(), WorkLogSource.SHIFT).ifPresent(logs::delete);
@@ -270,6 +283,34 @@ public class WorkLogService {
     }
 
     // --- helpers ---
+
+    private java.util.Optional<WorkReportStatus> reportStatus(String userId, LocalDate date) {
+        return reports.findByUserIdAndPeriod(userId, YearMonth.from(date).toString()).map(WorkReport::getStatus);
+    }
+
+    private boolean isApprovedMonth(String userId, LocalDate date) {
+        return reportStatus(userId, date).filter(st -> st == WorkReportStatus.APPROVED).isPresent();
+    }
+
+    private boolean isLocked(String userId, LocalDate date) {
+        return reportStatus(userId, date)
+                .filter(st -> st == WorkReportStatus.APPROVED || st == WorkReportStatus.SUBMITTED)
+                .isPresent();
+    }
+
+    /** Approved month: nobody edits (owner must return it first). Submitted: only owner/admin. */
+    public void requireEditable(String userId, LocalDate date) {
+        WorkReportStatus st = reportStatus(userId, date).orElse(null);
+        if (st == WorkReportStatus.APPROVED) {
+            throw ApiException.badRequest("MONTH_APPROVED",
+                    "Výkaz za tento měsíc je už schválený. Pro opravu ho musí jednatel vrátit.");
+        }
+        if (st == WorkReportStatus.SUBMITTED && !SecurityUtils.isPrivileged()) {
+            throw ApiException.badRequest("MONTH_SUBMITTED",
+                    "Výkaz za tento měsíc je odeslaný ke schválení, úpravy už nejdou.");
+        }
+    }
+
     private WorkLog mustAccess(String id) {
         WorkLog w = logs.findById(id)
                 .orElseThrow(() -> ApiException.notFound("Výkaz nenalezen"));

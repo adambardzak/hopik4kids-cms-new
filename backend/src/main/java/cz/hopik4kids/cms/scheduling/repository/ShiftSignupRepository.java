@@ -24,8 +24,14 @@ public interface ShiftSignupRepository extends JpaRepository<ShiftSignup, String
 
     long countByProgramIdAndLessonDateAndStatusIn(String programId, LocalDate lessonDate, List<ShiftStatus> statuses);
 
+    long countByProgramIdAndLessonDateAndKindAndStatusIn(String programId, LocalDate lessonDate,
+                                                         cz.hopik4kids.cms.scheduling.domain.ShiftKind kind,
+                                                         List<ShiftStatus> statuses);
+
     /** Distinct program ids where the trainer has a signup with any of the given statuses. */
-    @Query("select distinct s.programId from ShiftSignup s where s.trainerId = :trainerId and s.status in :statuses")
+    // Only regular trainer shifts grant program access — never PR filming signups.
+    @Query("select distinct s.programId from ShiftSignup s where s.trainerId = :trainerId and s.status in :statuses"
+            + " and s.kind = cz.hopik4kids.cms.scheduling.domain.ShiftKind.TRAINER")
     List<String> findProgramIdsByTrainerAndStatusIn(@Param("trainerId") String trainerId,
                                                      @Param("statuses") List<ShiftStatus> statuses);
 }

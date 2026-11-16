@@ -6,5 +6,7 @@ public enum Role {
     ADMIN,
     TRAINER,
     ACCOUNTANT,
+    /** PR / social media manager: schedule, filming signups, locations, media consents only. */
+    PR,
     VIEWER
 }

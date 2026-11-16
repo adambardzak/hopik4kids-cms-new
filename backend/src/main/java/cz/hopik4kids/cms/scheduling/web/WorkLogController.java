@@ -35,7 +35,7 @@ public class WorkLogController {
 
     /** Trainer sees own entries; owner/admin see everyone's (optionally by date range). */
     @GetMapping
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER')")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER','PR')")
     public PageResponse<WorkLogDto> list(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
@@ -73,19 +73,19 @@ public class WorkLogController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER')")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER','PR')")
     public WorkLogDto create(@Valid @RequestBody WorkLogRequest req) {
         return service.create(req);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER')")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER','PR')")
     public WorkLogDto update(@PathVariable String id, @Valid @RequestBody WorkLogRequest req) {
         return service.update(id, req);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER')")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER','PR')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable String id) {
         service.delete(id);
@@ -93,7 +93,7 @@ public class WorkLogController {
 
     /** Seed pending entries from the current trainer's approved shifts in a period. */
     @PostMapping("/seed-from-shifts")
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER')")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER','PR')")
     public SeedResult seedFromShifts(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {

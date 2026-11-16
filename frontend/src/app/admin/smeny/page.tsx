@@ -19,14 +19,19 @@ export default async function SmenyPage() {
     getSession(),
   ]);
   const canApprove = session?.role === "owner" || session?.role === "admin";
+  const filming = session?.role === "pr";
 
   return (
     <div>
       <PageHeader
         title="Směny"
-        description="Přihlas se na volné hodiny. Admin přihlášení schvaluje."
+        description={
+          filming
+            ? "Přehled všech lekcí. Přihlas se na lekci, kterou přijdeš natáčet – trenéři to uvidí."
+            : "Přihlas se na volné hodiny. Admin přihlášení schvaluje."
+        }
       />
-      <ShiftsView open={open} mine={mine} canApprove={canApprove} />
+      <ShiftsView open={open} mine={mine} canApprove={canApprove} filming={filming} />
     </div>
   );
 }

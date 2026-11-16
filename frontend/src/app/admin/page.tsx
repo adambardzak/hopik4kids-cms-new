@@ -74,6 +74,13 @@ export default async function DashboardPage() {
         title={`Vítej${firstName ? ", " + firstName : ""}`}
         description="Přehled administrace Hopík4Kids."
         action={
+          session?.role === "pr" ? (
+            <Button variant="outline" asChild>
+              <Link href="/admin/smeny">
+                <CalendarDays className="h-4 w-4" /> Přihlásit natáčení
+              </Link>
+            </Button>
+          ) : (
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" asChild>
               <Link href="/admin/dochazka">
@@ -91,13 +98,16 @@ export default async function DashboardPage() {
               </Link>
             </Button>
           </div>
+          )
         }
       />
 
       {!stats ? (
         <Card>
           <CardContent className="p-6 text-sm text-[var(--muted-foreground)]">
-            Vítej v administraci. V menu vlevo najdeš rozvrh a registrace svých lekcí.
+            {session?.role === "pr"
+              ? "Vítej v administraci. V menu vlevo najdeš rozvrh lekcí, přihlášení na natáčení, místa konání a souhlasy se zveřejněním fotek."
+              : "Vítej v administraci. V menu vlevo najdeš rozvrh a registrace svých lekcí."}
           </CardContent>
         </Card>
       ) : (

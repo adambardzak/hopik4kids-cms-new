@@ -105,6 +105,11 @@ export async function changeUserRole(id: string, role: string): Promise<ActionRe
   return run(() => api(`/admin/api/users/${id}/role?role=${role}`, { method: "POST" }), "/admin/tym");
 }
 
+export async function setUserHourlyRate(id: string, rate: number | null): Promise<ActionResult> {
+  const qs = rate == null ? "" : `?rate=${rate}`;
+  return run(() => api(`/admin/api/users/${id}/hourly-rate${qs}`, { method: "POST" }), "/admin/tym");
+}
+
 export async function deactivateUser(id: string): Promise<ActionResult> {
   return run(() => api(`/admin/api/users/${id}/deactivate`, { method: "POST" }), "/admin/tym");
 }
@@ -386,6 +391,22 @@ export async function updateWorkLog(
 
 export async function deleteWorkLog(id: string): Promise<ActionResult> {
   return run(() => api(`/admin/api/work-logs/${id}`, { method: "DELETE" }), "/admin/vykazy");
+}
+
+// --- monthly work reports ---
+export async function submitWorkReport(period: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/work-reports/mine/submit?period=${period}`, { method: "POST" }), "/admin/vykazy");
+}
+
+export async function approveWorkReport(userId: string, period: string): Promise<ActionResult> {
+  return run(() => api(`/admin/api/work-reports/${userId}/${period}/approve`, { method: "POST" }), "/admin/vykazy");
+}
+
+export async function returnWorkReport(userId: string, period: string, note: string): Promise<ActionResult> {
+  return run(
+    () => api(`/admin/api/work-reports/${userId}/${period}/return`, { method: "POST", body: { note } }),
+    "/admin/vykazy",
+  );
 }
 
 export async function setWorkLogStatus(id: string, status: string): Promise<ActionResult> {

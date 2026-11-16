@@ -49,6 +49,18 @@ public class User extends BaseEntity {
     @Column
     private Instant lastLoginAt;
 
+    /** CZK per hour for the monthly work report; null = not set. */
+    @Column(name = "hourly_rate", precision = 8, scale = 2)
+    private java.math.BigDecimal hourlyRate;
+
+    public java.math.BigDecimal getHourlyRate() {
+        return hourlyRate;
+    }
+
+    public void setHourlyRate(java.math.BigDecimal hourlyRate) {
+        this.hourlyRate = hourlyRate;
+    }
+
     public String getName() {
         return name;
     }

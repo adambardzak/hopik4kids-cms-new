@@ -33,6 +33,18 @@ public class ShiftSignup extends BaseEntity {
     @Column(nullable = false, length = 20)
     private ShiftStatus status = ShiftStatus.PENDING;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ShiftKind kind = ShiftKind.TRAINER;
+
+    public ShiftKind getKind() {
+        return kind;
+    }
+
+    public void setKind(ShiftKind kind) {
+        this.kind = kind;
+    }
+
     public String getProgramId() {
         return programId;
     }

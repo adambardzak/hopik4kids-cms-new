@@ -44,6 +44,12 @@ public class AdminUserController {
         return service.changeRole(id, role);
     }
 
+    @PostMapping("/{id}/hourly-rate")
+    public UserDto setHourlyRate(@PathVariable String id,
+                                 @RequestParam(required = false) java.math.BigDecimal rate) {
+        return service.setHourlyRate(id, rate);
+    }
+
     @PostMapping("/{id}/deactivate")
     public UserDto deactivate(@PathVariable String id) {
         return service.deactivate(id);

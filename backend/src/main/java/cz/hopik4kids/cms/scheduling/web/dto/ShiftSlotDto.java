@@ -22,5 +22,7 @@ public record ShiftSlotDto(
         String myStatus,
         List<ShiftSignupTrainerDto> signups
 ) {
-    public record ShiftSignupTrainerDto(String signupId, String trainerId, String trainerName, String status) {}
+    /** {@code kind} = TRAINER (regular shift) or FILMING (PR manager comes to film). */
+    public record ShiftSignupTrainerDto(String signupId, String trainerId, String trainerName, String status,
+                                        String kind) {}
 }

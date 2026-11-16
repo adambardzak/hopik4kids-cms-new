@@ -43,6 +43,11 @@
   --info-border: #bfdbfe;
   --info-solid: #3b82f6;
   --on-solid: #ffffff;
+  /* Alternating tints for stacked registration lists (blue / yellow). */
+  --group-a-bg: #eff6ff;
+  --group-a-border: #bfdbfe;
+  --group-b-bg: #fefce8;
+  --group-b-border: #fde68a;
 }
 
 .dark {
@@ -76,6 +81,10 @@
   --info-border: rgba(59, 130, 246, 0.35);
   --info-solid: #3b82f6;
   --on-solid: #ffffff;
+  --group-a-bg: rgba(59, 130, 246, 0.08);
+  --group-a-border: rgba(59, 130, 246, 0.35);
+  --group-b-bg: rgba(234, 179, 8, 0.08);
+  --group-b-border: rgba(234, 179, 8, 0.35);
 }
 
 * {

@@ -22,6 +22,8 @@ import type {
   WorkLog,
   WorkLogSummary,
   RecordDocument,
+  WorkReport,
+  MediaConsentGroup,
 } from "./types";
 
 // --- registrations ---
@@ -210,4 +212,18 @@ export interface EmailLogEntry {
 
 export function listEmailLog(q?: string) {
   return api<PageResponse<EmailLogEntry>>(`/admin/api/email-log${q ? `?q=${encodeURIComponent(q)}` : ""}`);
+}
+
+// --- monthly work reports ---
+export function getMyWorkReport(period: string) {
+  return api<WorkReport>(`/admin/api/work-reports/mine?period=${period}`);
+}
+
+export function listWorkReports(period: string) {
+  return api<PageResponse<WorkReport>>(`/admin/api/work-reports?period=${period}`);
+}
+
+// --- media consents (PR manager) ---
+export function listMediaConsents() {
+  return api<PageResponse<MediaConsentGroup>>("/admin/api/media-consents");
 }

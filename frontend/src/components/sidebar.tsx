@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, LayoutDashboard, Users2, CalendarDays, CalendarClock, ClipboardCheck, FileText, TrendingUp, BookOpen, CalendarPlus, MapPin, Newspaper, ClipboardList, Menu, X, Hourglass, Clock, Receipt, ArrowLeftRight, CalendarRange, FileEdit, Settings, Mail, type LucideIcon } from "lucide-react";
+import { LogOut, LayoutDashboard, Users2, CalendarDays, CalendarClock, ClipboardCheck, FileText, TrendingUp, BookOpen, CalendarPlus, MapPin, Newspaper, ClipboardList, Menu, X, Hourglass, Clock, Receipt, ArrowLeftRight, CalendarRange, FileEdit, Settings, Mail, Camera, type LucideIcon } from "lucide-react";
 import type { IconKey, NavModule } from "@/lib/nav";
 import { moduleForPath } from "@/lib/nav";
 import type { Session } from "@/lib/types";
@@ -35,6 +35,7 @@ const ICONS: Record<IconKey, LucideIcon> = {
   participants: Users2,
   content: FileEdit,
   settings: Settings,
+  consents: Camera,
 };
 
 const ROLE_LABELS: Record<string, string> = {
@@ -42,6 +43,7 @@ const ROLE_LABELS: Record<string, string> = {
   admin: "Správce",
   trainer: "Trenér",
   accountant: "Účetní",
+  pr: "PR manažer",
   viewer: "Náhled",
 };
 

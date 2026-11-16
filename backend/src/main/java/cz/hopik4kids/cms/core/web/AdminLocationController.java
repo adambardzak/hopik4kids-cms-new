@@ -36,9 +36,14 @@ public class AdminLocationController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER')")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER','PR')")
     public PageResponse<AdminLocationDto> list() {
-        return PageResponse.ofAll(locations.findAll().stream().map(AdminLocationDto::from).toList());
+        // PR manager gets addresses only, not the venue contact people.
+        boolean pr = cz.hopik4kids.cms.kernel.web.SecurityUtils.hasRole("PR");
+        return PageResponse.ofAll(locations.findAll().stream()
+                .map(AdminLocationDto::from)
+                .map(l -> pr ? new AdminLocationDto(l.id(), l.name(), l.kind(), l.address(), null, null, null, null) : l)
+                .toList());
     }
 
     @GetMapping("/{id}")

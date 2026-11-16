@@ -18,7 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { changeUserRole, deactivateUser, inviteUser } from "@/lib/actions";
+import { changeUserRole, deactivateUser, inviteUser, setUserHourlyRate } from "@/lib/actions";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm";
 
@@ -27,6 +27,7 @@ const ROLE_OPTIONS: { value: Role; label: string }[] = [
   { value: "admin", label: "Správce" },
   { value: "trainer", label: "Trenér" },
   { value: "accountant", label: "Účetní" },
+  { value: "pr", label: "PR manažer" },
   { value: "viewer", label: "Náhled" },
 ];
 const STATUS: Record<string, { label: string; variant: "success" | "warning" | "danger" }> = {
@@ -67,6 +68,22 @@ export function TeamManager({ users, currentUserId }: { users: User[]; currentUs
     });
   }
 
+  function onRateChange(u: User, raw: string) {
+    const trimmed = raw.trim().replace(",", ".");
+    const rate = trimmed === "" ? null : Number(trimmed);
+    if (rate !== null && (isNaN(rate) || rate < 0)) {
+      toast.error("Sazba musí být kladné číslo.");
+      return;
+    }
+    if (rate === (u.hourlyRate ?? null)) return;
+    startTransition(async () => {
+      const res = await setUserHourlyRate(u.id, rate);
+      if (!res.ok) toast.error(res.error ?? "Uložení sazby selhalo");
+      else toast.success(`Sazba pro ${u.name} uložena.`);
+      router.refresh();
+    });
+  }
+
   async function onDeactivate(u: User) {
     if (!(await confirm({ message: `Opravdu deaktivovat člena ${u.name}?`, danger: true, confirmLabel: "Deaktivovat" }))) return;
     startTransition(async () => {
@@ -91,6 +108,7 @@ export function TeamManager({ users, currentUserId }: { users: User[]; currentUs
               <TableHead>Jméno</TableHead>
               <TableHead>E-mail</TableHead>
               <TableHead>Role</TableHead>
+              <TableHead title="Hodinová sazba pro měsíční výkazy práce">Sazba (Kč/h)</TableHead>
               <TableHead>Stav</TableHead>
               <TableHead></TableHead>
             </TableRow>
@@ -98,7 +116,7 @@ export function TeamManager({ users, currentUserId }: { users: User[]; currentUs
           <TableBody>
             {users.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="py-10 text-center text-sm text-[var(--muted-foreground)]">
+                <TableCell colSpan={6} className="py-10 text-center text-sm text-[var(--muted-foreground)]">
                   Zatím žádní členové týmu. Pozvi prvního přes „Pozvat člena".
                 </TableCell>
               </TableRow>
@@ -123,6 +141,18 @@ export function TeamManager({ users, currentUserId }: { users: User[]; currentUs
                         </option>
                       ))}
                     </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      key={`${u.id}-${u.hourlyRate ?? ""}`}
+                      className="h-9 w-24 tabular-nums"
+                      inputMode="decimal"
+                      placeholder="—"
+                      defaultValue={u.hourlyRate ?? ""}
+                      disabled={isPending || u.status === "disabled"}
+                      onBlur={(e) => onRateChange(u, e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+                    />
                   </TableCell>
                   <TableCell>
                     <Badge variant={st.variant}>{st.label}</Badge>

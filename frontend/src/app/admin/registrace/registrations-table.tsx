@@ -221,9 +221,10 @@ export function RegistrationsTable({
           <EmptyState icon={Search} message="Nic nenalezeno pro zadané filtry." />
         ) : showGroups ? (
           <div className="space-y-3">
-            {grouped.map((g) => (
+            {grouped.map((g, i) => (
               <ProgramGroup
                 key={g.id}
+                tint={i % 2 === 0 ? "a" : "b"}
                 programId={g.id}
                 name={g.name}
                 meta={g.meta}
@@ -271,7 +272,9 @@ function ProgramGroup({
   rows,
   occupancy,
   onDetail,
+  tint,
 }: {
+  tint: "a" | "b";
   occupancy: { taken: number; capacity: number } | null;
   programId: string;
   name: string;
@@ -288,8 +291,11 @@ function ProgramGroup({
   ).length;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--background)]">
-      <div className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-[var(--muted)]">
+    <div
+      className="overflow-hidden rounded-lg border-2"
+      style={{ background: `var(--group-${tint}-bg)`, borderColor: `var(--group-${tint}-border)` }}
+    >
+      <div className="flex flex-wrap items-center gap-3 px-4 py-3">
         <button onClick={() => setOpen((o) => !o)} className="flex w-full flex-1 items-center gap-3 text-left sm:w-auto">
           {open ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
           <span className="flex min-w-0 flex-col">

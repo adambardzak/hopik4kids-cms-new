@@ -52,6 +52,14 @@ public class ScheduleService {
 
     @Transactional(readOnly = true)
     public List<ScheduleEntryDto> forRange(LocalDate from, LocalDate to, String locationId) {
+        if (SecurityUtils.hasRole("PR")) {
+            // PR manager plans filming across all lessons: full schedule, but without admin-only
+            // events and without the venue contact people (addresses stay).
+            return forRange(from, to, locationId, true, SecurityUtils.currentUserId()).stream()
+                    .filter(e -> !e.adminOnly())
+                    .map(ScheduleEntryDto::withoutContacts)
+                    .toList();
+        }
         return forRange(from, to, locationId, SecurityUtils.isPrivileged(), SecurityUtils.currentUserId());
     }
 

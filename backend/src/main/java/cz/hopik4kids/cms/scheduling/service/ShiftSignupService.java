@@ -5,6 +5,7 @@ import cz.hopik4kids.cms.core.domain.ProgramStatus;
 import cz.hopik4kids.cms.core.repository.ProgramRepository;
 import cz.hopik4kids.cms.kernel.web.ApiException;
 import cz.hopik4kids.cms.kernel.web.SecurityUtils;
+import cz.hopik4kids.cms.scheduling.domain.ShiftKind;
 import cz.hopik4kids.cms.scheduling.domain.ShiftSignup;
 import cz.hopik4kids.cms.scheduling.domain.ShiftStatus;
 import cz.hopik4kids.cms.scheduling.domain.LessonOverride;
@@ -94,8 +95,10 @@ public class ShiftSignupService {
                 String mySignupId = null, myStatus = null;
                 List<ShiftSlotDto.ShiftSignupTrainerDto> people = new ArrayList<>();
                 for (ShiftSignup s : here) {
-                    if (s.getStatus() == ShiftStatus.APPROVED) approved++;
-                    else if (s.getStatus() == ShiftStatus.PENDING) pending++;
+                    if (s.getKind() == ShiftKind.TRAINER) {
+                        if (s.getStatus() == ShiftStatus.APPROVED) approved++;
+                        else if (s.getStatus() == ShiftStatus.PENDING) pending++;
+                    }
                     if (s.getTrainerId().equals(me) && s.getStatus() != ShiftStatus.CANCELLED
                             && s.getStatus() != ShiftStatus.REJECTED) {
                         mySignupId = s.getId();
@@ -105,7 +108,7 @@ public class ShiftSignupService {
                         String name = trainerNames.computeIfAbsent(s.getTrainerId(),
                                 id -> users.findById(id).map(User::getName).orElse("—"));
                         people.add(new ShiftSlotDto.ShiftSignupTrainerDto(
-                                s.getId(), s.getTrainerId(), name, s.getStatus().name()));
+                                s.getId(), s.getTrainerId(), name, s.getStatus().name(), s.getKind().name()));
                     }
                 }
                 slots.add(new ShiftSlotDto(
@@ -161,8 +164,10 @@ public class ShiftSignupService {
             String mySignupId = null, myStatus = null;
             List<ShiftSlotDto.ShiftSignupTrainerDto> people = new ArrayList<>();
             for (ShiftSignup s : here) {
-                if (s.getStatus() == ShiftStatus.APPROVED) approved++;
-                else if (s.getStatus() == ShiftStatus.PENDING) pending++;
+                if (s.getKind() == ShiftKind.TRAINER) {
+                    if (s.getStatus() == ShiftStatus.APPROVED) approved++;
+                    else if (s.getStatus() == ShiftStatus.PENDING) pending++;
+                }
                 if (s.getTrainerId().equals(me) && s.getStatus() != ShiftStatus.CANCELLED
                         && s.getStatus() != ShiftStatus.REJECTED) {
                     mySignupId = s.getId();
@@ -172,7 +177,7 @@ public class ShiftSignupService {
                     String tname = trainerNames.computeIfAbsent(s.getTrainerId(),
                             id -> users.findById(id).map(User::getName).orElse("—"));
                     people.add(new ShiftSlotDto.ShiftSignupTrainerDto(
-                            s.getId(), s.getTrainerId(), tname, s.getStatus().name()));
+                            s.getId(), s.getTrainerId(), tname, s.getStatus().name(), s.getKind().name()));
                 }
             }
             slots.add(new ShiftSlotDto(
@@ -214,25 +219,42 @@ public class ShiftSignupService {
                 throw ApiException.badRequest("INVALID_OCCURRENCE", "V tento den lekce neprobíhá");
             }
         }
+        // The PR manager signs up to film the lesson: it doesn't take a trainer slot and needs no
+        // approval (trainers just see who is coming), but still lands in their work report.
+        boolean filming = SecurityUtils.hasRole("PR");
+        if (filming) {
+            // Filming is confirmed straight away (and paid), so it can only be planned ahead.
+            if (date.isBefore(LocalDate.now(java.time.ZoneId.of("Europe/Prague")))) {
+                throw ApiException.badRequest("PAST_LESSON", "Na lekci, která už proběhla, se přihlásit nelze");
+            }
+            workLogs.requireEditable(me, date);
+        }
+        ShiftKind kind = filming ? ShiftKind.FILMING : ShiftKind.TRAINER;
+        ShiftStatus initial = filming ? ShiftStatus.APPROVED : ShiftStatus.PENDING;
         signups.findByProgramIdAndLessonDateAndTrainerId(programId, date, me).ifPresent(existing -> {
             if (existing.getStatus() == ShiftStatus.PENDING || existing.getStatus() == ShiftStatus.APPROVED) {
                 throw ApiException.badRequest("ALREADY_SIGNED", "Na tuto hodinu už jsi přihlášený/á");
             }
             // Re-activate a previously cancelled/rejected signup.
-            existing.setStatus(ShiftStatus.PENDING);
+            existing.setStatus(initial);
+            existing.setKind(kind);
             signups.save(existing);
         });
         if (signups.findByProgramIdAndLessonDateAndTrainerId(programId, date, me)
-                .filter(s -> s.getStatus() == ShiftStatus.PENDING).isEmpty()) {
+                .filter(s -> s.getStatus() == initial).isEmpty()) {
             ShiftSignup s = new ShiftSignup();
             s.setProgramId(programId);
             s.setLessonDate(date);
             s.setTrainerId(me);
-            s.setStatus(ShiftStatus.PENDING);
+            s.setStatus(initial);
+            s.setKind(kind);
             signups.save(s);
         }
         ShiftSignup saved = signups.findByProgramIdAndLessonDateAndTrainerId(programId, date, me).orElseThrow();
-        audit.record("shift.signup", "ShiftSignup", saved.getId(), programId + "@" + date);
+        if (filming) {
+            workLogs.syncApprovedShift(saved);
+        }
+        audit.record(filming ? "shift.filming" : "shift.signup", "ShiftSignup", saved.getId(), programId + "@" + date);
     }
 
     @Transactional
@@ -241,6 +263,10 @@ public class ShiftSignupService {
                 .orElseThrow(() -> ApiException.notFound("Přihlášení nenalezeno"));
         if (!SecurityUtils.isPrivileged() && !s.getTrainerId().equals(SecurityUtils.currentUserId())) {
             throw ApiException.forbidden("FORBIDDEN", "Nemůžeš zrušit cizí přihlášení");
+        }
+        // A confirmed shift is part of the month's work report; don't change a locked month.
+        if (s.getStatus() == ShiftStatus.APPROVED) {
+            workLogs.requireEditable(s.getTrainerId(), s.getLessonDate());
         }
         s.setStatus(ShiftStatus.CANCELLED);
         signups.save(s);
@@ -257,7 +283,7 @@ public class ShiftSignupService {
                 .map(s -> new ShiftSlotDto.ShiftSignupTrainerDto(
                         s.getId(), s.getTrainerId(),
                         users.findById(s.getTrainerId()).map(User::getName).orElse("—"),
-                        s.getStatus().name()))
+                        s.getStatus().name(), s.getKind().name()))
                 .toList();
     }
 
@@ -265,11 +291,12 @@ public class ShiftSignupService {
     public void decide(String signupId, boolean approve) {
         ShiftSignup s = signups.findById(signupId)
                 .orElseThrow(() -> ApiException.notFound("Přihlášení nenalezeno"));
+        workLogs.requireEditable(s.getTrainerId(), s.getLessonDate());
         if (approve) {
-            long approved = signups.countByProgramIdAndLessonDateAndStatusIn(
-                    s.getProgramId(), s.getLessonDate(), List.of(ShiftStatus.APPROVED));
+            long approved = signups.countByProgramIdAndLessonDateAndKindAndStatusIn(
+                    s.getProgramId(), s.getLessonDate(), ShiftKind.TRAINER, List.of(ShiftStatus.APPROVED));
             int needed = neededTrainers(s.getProgramId());
-            if (approved >= needed) {
+            if (s.getKind() == ShiftKind.TRAINER && approved >= needed) {
                 throw ApiException.badRequest("SLOT_FULL", "Hodina je již plně obsazená");
             }
             s.setStatus(ShiftStatus.APPROVED);

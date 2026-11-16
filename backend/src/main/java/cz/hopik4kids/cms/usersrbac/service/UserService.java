@@ -124,6 +124,20 @@ public class UserService {
         return UserDto.from(user);
     }
 
+    /** Set (or clear with null) the hourly rate used in monthly work reports. */
+    @Transactional
+    public UserDto setHourlyRate(String userId, java.math.BigDecimal rate) {
+        if (rate != null && (rate.signum() < 0 || rate.stripTrailingZeros().scale() > 2
+                || rate.compareTo(java.math.BigDecimal.valueOf(1_000_000)) >= 0)) {
+            throw ApiException.badRequest("INVALID_RATE", "Sazba musí být kladné číslo (max. 2 desetinná místa)");
+        }
+        User user = find(userId);
+        user.setHourlyRate(rate);
+        users.save(user);
+        audit.record("change-hourly-rate", "User", userId, rate == null ? "-" : rate.toPlainString());
+        return UserDto.from(user);
+    }
+
     @Transactional
     public UserDto deactivate(String userId) {
         User user = find(userId);

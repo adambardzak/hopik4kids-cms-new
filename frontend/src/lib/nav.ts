@@ -5,7 +5,7 @@ export type IconKey =
   | "dashboard" | "registrations" | "programs" | "locations" | "articles" | "team"
   | "schedule" | "attendance" | "billing" | "marketing" | "documents" | "shifts"
   | "waitlist" | "mail" | "worklog" | "records" | "matching"
-  | "operations" | "participants" | "content" | "settings";
+  | "operations" | "participants" | "content" | "settings" | "consents";
 
 export interface NavItem {
   href: string;
@@ -44,10 +44,11 @@ export const NAV_MODULES: NavModule[] = [
     title: "Provoz",
     icon: "operations",
     items: [
-      { href: "/admin/rozvrh", label: "Rozvrh", icon: "schedule", roles: ["owner", "admin", "trainer"] },
+      { href: "/admin/rozvrh", label: "Rozvrh", icon: "schedule", roles: ["owner", "admin", "trainer", "pr"] },
       { href: "/admin/dochazka", label: "Docházka", icon: "attendance", roles: ["owner", "admin", "trainer"] },
-      { href: "/admin/smeny", label: "Směny", icon: "shifts", roles: ["owner", "admin", "trainer"] },
-      { href: "/admin/vykazy", label: "Výkazy hodin", icon: "worklog", roles: ["owner", "admin", "trainer"] },
+      { href: "/admin/smeny", label: "Směny", icon: "shifts", roles: ["owner", "admin", "trainer", "pr"] },
+      { href: "/admin/vykazy", label: "Výkazy práce", icon: "worklog", roles: ["owner", "admin", "trainer", "pr", "accountant"] },
+      { href: "/admin/mista-prehled", label: "Místa konání", icon: "locations", roles: ["pr"] },
     ],
   },
   {
@@ -56,6 +57,7 @@ export const NAV_MODULES: NavModule[] = [
     icon: "participants",
     items: [
       { href: "/admin/registrace", label: "Registrace", icon: "registrations", roles: ["owner", "admin", "viewer"] },
+      { href: "/admin/souhlasy", label: "Souhlasy foto/video", icon: "consents", roles: ["owner", "admin", "pr"] },
       { href: "/admin/cekaci-listina", label: "Čekací listina", icon: "waitlist", roles: ["owner", "admin"] },
       { href: "/admin/fakturace", label: "Fakturace", icon: "billing", roles: ["owner", "admin", "accountant"] },
       { href: "/admin/parovani", label: "Párování plateb", icon: "matching", roles: ["owner", "admin", "accountant"] },

@@ -183,6 +183,7 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
   }
 
   const recordedCount = Object.values(draft).filter((x) => x.status).length;
+  const presentCount = rows.filter((r) => draft[r.childId]?.status === "present").length;
 
   return (
     <div className="space-y-4">
@@ -218,10 +219,20 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
               Nepodařilo se načíst docházku. Zkontroluj připojení a zkus to prosím znovu.
             </div>
           )}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-[var(--muted-foreground)]">
-              {loading ? "Načítám…" : `${rows.length} dětí · zaznamenáno ${recordedCount}`}
-            </p>
+          {/* Sticky so the live "present" counter and Save stay visible while scrolling the roster. */}
+          <div className="sticky top-0 z-10 -mx-1 flex flex-col gap-2 rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-base font-bold tabular-nums text-white"
+                style={{ background: "var(--success-solid)" }}
+                aria-live="polite"
+              >
+                <Check className="h-4 w-4" /> Přítomno: {loading ? "…" : `${presentCount} / ${rows.length}`}
+              </span>
+              <p className="text-sm text-[var(--muted-foreground)]">
+                {loading ? "Načítám…" : `zaznamenáno ${recordedCount}`}
+              </p>
+            </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={markAllPresent} disabled={loading || rows.length === 0}>
                 <Check className="h-4 w-4" /> Všichni přítomni

@@ -64,7 +64,8 @@ public class AttendanceService {
         // Approved shift signup grants access to that single lesson date only.
         if (date != null && shiftSignups
                 .findByProgramIdAndLessonDateAndTrainerId(programId, date, userId)
-                .filter(s -> s.getStatus() == ShiftStatus.APPROVED)
+                .filter(s -> s.getStatus() == ShiftStatus.APPROVED
+                        && s.getKind() == cz.hopik4kids.cms.scheduling.domain.ShiftKind.TRAINER)
                 .isPresent()) {
             return;
         }

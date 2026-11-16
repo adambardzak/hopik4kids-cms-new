@@ -36,7 +36,7 @@ public class AdminProgramController {
 
     /** Programs for the timesheet picker: own programs + all one-off programs. */
     @GetMapping("/worklog-options")
-    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER')")
+    @PreAuthorize("hasAnyRole('OWNER','ADMIN','TRAINER','PR')")
     public PageResponse<AdminProgramDto> worklogOptions() {
         return PageResponse.ofAll(service.listForWorkLog());
     }

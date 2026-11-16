@@ -82,12 +82,15 @@ export function ScheduleView({
   programs,
   weekStart,
   currentLocation,
+  readOnly = false,
 }: {
   entries: ScheduleEntry[];
   locations: Location[];
   programs: Program[];
   weekStart: string;
   currentLocation: string;
+  /** View-only schedule (PR manager): no cancel/move/add actions, no registrations link. */
+  readOnly?: boolean;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -195,10 +198,12 @@ export function ScheduleView({
 
         <div className="ml-auto flex items-center gap-3">
           <Legend />
-          <CalendarSubscribeButton />
-          <Button size="sm" onClick={() => setOneOffOpen(true)}>
-            <Plus className="h-4 w-4" /> Přidat akci
-          </Button>
+          {!readOnly && <CalendarSubscribeButton />}
+          {!readOnly && (
+            <Button size="sm" onClick={() => setOneOffOpen(true)}>
+              <Plus className="h-4 w-4" /> Přidat akci
+            </Button>
+          )}
           <Select
             className=""
             value={currentLocation}
@@ -439,6 +444,7 @@ export function ScheduleView({
                 )}
               </div>
 
+              {!readOnly && (
               <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-[var(--border)] pt-4">
                 {detail.overrideId ? (
                   // One-off or moved lesson: allow removing the override.
@@ -480,6 +486,7 @@ export function ScheduleView({
                   </Button>
                 )}
               </div>
+              )}
             </>
           )}
         </DialogContent>

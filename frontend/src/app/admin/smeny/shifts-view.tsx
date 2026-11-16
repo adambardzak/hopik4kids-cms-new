@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { CalendarPlus, Check, X, Clock, MapPin, Users2 } from "lucide-react";
+import { CalendarPlus, Check, X, Clock, MapPin, Users2, Video } from "lucide-react";
 import type { ShiftSlot } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +35,7 @@ const fmtH = (h: number) => `${Math.round(h * 100) / 100} h`.replace(".", ",");
 
 function statusBadge(status?: string | null) {
   if (status === "APPROVED") return <Badge variant="success">Potvrzeno</Badge>;
+  // (PR filming signups are auto-confirmed, so they show "Potvrzeno" too.)
   if (status === "PENDING") return <Badge variant="warning">Čeká na schválení</Badge>;
   return null;
 }
@@ -43,10 +44,13 @@ export function ShiftsView({
   open,
   mine,
   canApprove,
+  filming = false,
 }: {
   open: ShiftSlot[];
   mine: ShiftSlot[];
   canApprove: boolean;
+  /** Current user is the PR manager: signs up to film lessons (no trainer slot, no approval). */
+  filming?: boolean;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -163,7 +167,8 @@ export function ShiftsView({
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {daySlots.map((s) => {
                   const key = `${s.programId}|${s.date}`;
-                  const full = s.approvedCount >= s.trainersNeeded;
+                  const full = !filming && s.approvedCount >= s.trainersNeeded;
+                  const filmers = s.signups.filter((p) => p.kind === "FILMING" && p.status === "APPROVED");
                   const busy = busyKey === key || (s.mySignupId ? busyKey === s.mySignupId : false);
                   return (
                     <div key={key} className="rounded-lg border border-[var(--border)] bg-[var(--background)] p-4">
@@ -190,6 +195,12 @@ export function ShiftsView({
                           {s.approvedCount}/{s.trainersNeeded} trenérů
                           {s.pendingCount > 0 && ` (+${s.pendingCount} čeká)`}
                         </p>
+                        {filmers.length > 0 && (
+                          <p className="flex items-center gap-1.5 font-medium text-info">
+                            <Video className="h-3.5 w-3.5" />
+                            Natáčí: {filmers.map((p) => p.trainerName).join(", ")}
+                          </p>
+                        )}
                       </div>
 
                       {/* Signed-up trainers (visible to admins for approval) */}
@@ -199,6 +210,7 @@ export function ShiftsView({
                             <div key={p.signupId} className="flex items-center justify-between gap-2 text-sm">
                               <span className="flex items-center gap-1.5">
                                 {p.trainerName}
+                                {p.kind === "FILMING" && <Video className="h-3.5 w-3.5 text-info" aria-label="natáčení" />}
                                 {p.status === "APPROVED" && <Check className="h-3.5 w-3.5 text-[var(--success,green)]" />}
                               </span>
                               {p.status === "APPROVED" && (
@@ -241,10 +253,12 @@ export function ShiftsView({
 
                       {/* Co-trainers on this shift (read-only, visible to trainers so they know
                           who they're working with — not just the count). */}
-                      {!canApprove && s.signups.length > 0 && (
+                      {!canApprove && s.signups.some((p) => p.kind !== "FILMING") && (
                         <div className="mt-3 space-y-1 border-t border-[var(--border)] pt-3">
-                          <p className="text-xs font-medium text-[var(--muted-foreground)]">Jde s tebou:</p>
-                          {s.signups.map((p) => (
+                          <p className="text-xs font-medium text-[var(--muted-foreground)]">
+                            {filming ? "Trenéři:" : "Jde s tebou:"}
+                          </p>
+                          {s.signups.filter((p) => p.kind !== "FILMING").map((p) => (
                             <div key={p.signupId} className="flex items-center gap-1.5 text-sm">
                               {p.trainerName}
                               {p.status === "APPROVED" ? (
@@ -265,7 +279,7 @@ export function ShiftsView({
                             disabled={busy}
                             onClick={() => act(s.mySignupId!, () => cancelShift(s.mySignupId!))}
                           >
-                            Zrušit přihlášení
+                            {filming ? "Zrušit natáčení" : "Zrušit přihlášení"}
                           </Button>
                         ) : (
                           <Button
@@ -273,8 +287,8 @@ export function ShiftsView({
                             disabled={busy || full}
                             onClick={() => act(key, () => signupShift(s.programId, s.date))}
                           >
-                            <CalendarPlus className="h-4 w-4" />
-                            {full ? "Obsazeno" : "Přihlásit se"}
+                            {filming ? <Video className="h-4 w-4" /> : <CalendarPlus className="h-4 w-4" />}
+                            {filming ? "Přijdu natáčet" : full ? "Obsazeno" : "Přihlásit se"}
                           </Button>
                         )}
                       </div>

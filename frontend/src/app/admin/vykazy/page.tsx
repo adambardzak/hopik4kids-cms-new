@@ -1,53 +1,64 @@
 import { getSession } from "@/lib/session";
-import { listWorkLogs, getWorkLogSummary, listWorkLogPrograms } from "@/lib/admin-data";
+import { listWorkLogs, listWorkLogPrograms, getMyWorkReport, listWorkReports } from "@/lib/admin-data";
 import { PageHeader } from "@/components/page-header";
 import { WorkLogView } from "./worklog-view";
-import type { WorkLogSummary } from "@/lib/types";
+import type { Program, WorkLog, WorkReport } from "@/lib/types";
 
-/** First / last day of the current month as ISO, for the default period filter. */
-function monthRange(): { from: string; to: string } {
-  const now = new Date();
-  const first = new Date(now.getFullYear(), now.getMonth(), 1);
-  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  return { from: first.toISOString().slice(0, 10), to: last.toISOString().slice(0, 10) };
+/** Current month as YYYY-MM. */
+function currentMonth(): string {
+  // Server runs in UTC; the business month is Prague's.
+  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Prague" }).format(new Date()).slice(0, 7);
+}
+
+/** First / last day of a YYYY-MM month as ISO dates. */
+function monthRange(month: string): { from: string; to: string } {
+  const [y, m] = month.split("-").map(Number);
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return { from: `${month}-01`, to: `${month}-${String(last).padStart(2, "0")}` };
 }
 
 export default async function VykazyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string }>;
+  searchParams: Promise<{ month?: string }>;
 }) {
   const sp = await searchParams;
-  const def = monthRange();
+  const month = sp.month && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : currentMonth();
+  const { from, to } = monthRange(month);
+
   const session = await getSession();
-  const privileged = session?.role === "owner" || session?.role === "admin";
-  // Admins start on the current month; trainers see their whole history unless they pick a period.
-  const from = sp.from ?? (privileged ? def.from : undefined);
-  const to = sp.to ?? (privileged ? def.to : undefined);
+  const role = session?.role;
+  const privileged = role === "owner" || role === "admin";
+  // The accountant only sees the team's monthly reports (no individual entries).
+  const accountant = role === "accountant";
+  const worksShifts = !accountant;
 
-  const [{ items: logs }, { items: programs }] = await Promise.all([
-    listWorkLogs(from, to),
-    listWorkLogPrograms(),
+  const [logsRes, programsRes, myReport, reportsRes] = await Promise.all([
+    worksShifts ? listWorkLogs(from, to) : Promise.resolve({ items: [] as WorkLog[] }),
+    worksShifts ? listWorkLogPrograms() : Promise.resolve({ items: [] as Program[] }),
+    worksShifts ? getMyWorkReport(month) : Promise.resolve(null),
+    privileged || accountant ? listWorkReports(month) : Promise.resolve({ items: [] as WorkReport[] }),
   ]);
-
-  let summary: WorkLogSummary[] = [];
-  if (privileged) {
-    summary = (await getWorkLogSummary(from, to)).items;
-  }
 
   return (
     <div>
       <PageHeader
-        title="Výkazy hodin"
-        description="Evidence odpracovaných hodin. Zapiš hodiny, admin je schválí."
+        title="Výkazy práce"
+        description={
+          accountant
+            ? "Schválené měsíční výkazy brigádníků. Stáhni je jednotlivě, nebo všechny najednou."
+            : "Hodiny se zapisují samy z potvrzených směn. Na konci měsíce je zkontroluj, případně oprav, a odešli výkaz ke schválení."
+        }
       />
       <WorkLogView
-        logs={logs}
-        summary={summary}
-        programs={programs}
+        month={month}
+        logs={logsRes.items}
+        programs={programsRes.items}
+        myReport={myReport}
+        reports={reportsRes.items}
         privileged={privileged}
-        from={from ?? ""}
-        to={to ?? ""}
+        accountant={accountant}
+        currentUserId={session?.userId ?? ""}
       />
     </div>
   );
