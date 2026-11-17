@@ -17,4 +17,6 @@ public interface LessonOverrideRepository extends JpaRepository<LessonOverride, 
                or (o.date between :from and :to)
             """)
     List<LessonOverride> findInRange(@Param("from") LocalDate from, @Param("to") LocalDate to);
+
+    List<LessonOverride> findByProgramId(String programId);
 }

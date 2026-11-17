@@ -14,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 /** Media upload (prd §5.6, §6.6 - article covers). Restricted to owner/admin. */
 @RestController
 @RequestMapping("/admin/api/media")
-@PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+@PreAuthorize("hasAnyRole('OWNER','ADMIN','PR')")
 public class AdminMediaController {
 
     private final MediaService service;

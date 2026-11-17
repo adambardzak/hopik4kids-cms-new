@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 /** Admin Article CRUD (prd §5.6, §6.6). Restricted to owner/admin. Only entity with draft/publish. */
 @RestController
 @RequestMapping("/admin/api/articles")
-@PreAuthorize("hasAnyRole('OWNER','ADMIN')")
+@PreAuthorize("hasAnyRole('OWNER','ADMIN','PR')")
 public class AdminArticleController {
 
     private final ArticleRepository articles;

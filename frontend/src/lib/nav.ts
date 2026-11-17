@@ -70,7 +70,7 @@ export const NAV_MODULES: NavModule[] = [
     title: "Obsah",
     icon: "content",
     items: [
-      { href: "/admin/aktuality", label: "Aktuality", icon: "articles", roles: ["owner", "admin"] },
+      { href: "/admin/aktuality", label: "Aktuality", icon: "articles", roles: ["owner", "admin", "pr"] },
       { href: "/admin/dokumenty", label: "Dokumenty", icon: "documents", roles: ["owner", "admin", "trainer"] },
       { href: "/admin/marketing", label: "Marketing", icon: "marketing", roles: ["owner", "admin"] },
     ],

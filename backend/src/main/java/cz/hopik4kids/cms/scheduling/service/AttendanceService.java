@@ -9,7 +9,10 @@ import cz.hopik4kids.cms.registrations.repository.RegistrationRepository;
 import cz.hopik4kids.cms.scheduling.domain.AttendanceRecord;
 import cz.hopik4kids.cms.scheduling.domain.AttendanceStatus;
 import cz.hopik4kids.cms.scheduling.domain.ShiftStatus;
+import cz.hopik4kids.cms.scheduling.domain.LessonOverride;
+import cz.hopik4kids.cms.scheduling.domain.LessonOverrideType;
 import cz.hopik4kids.cms.scheduling.repository.AttendanceRecordRepository;
+import cz.hopik4kids.cms.scheduling.repository.LessonOverrideRepository;
 import cz.hopik4kids.cms.scheduling.repository.ShiftSignupRepository;
 import cz.hopik4kids.cms.scheduling.web.dto.AttendanceRowDto;
 import cz.hopik4kids.cms.scheduling.web.dto.AttendanceSaveRequest;
@@ -19,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -32,17 +36,23 @@ public class AttendanceService {
     private final RegistrationRepository registrations;
     private final ProgramRepository programs;
     private final ShiftSignupRepository shiftSignups;
+    private final LessonOverrideRepository overrides;
+    private final ScheduleService schedule;
     private final AuditService audit;
 
     public AttendanceService(AttendanceRecordRepository attendance,
                              RegistrationRepository registrations,
                              ProgramRepository programs,
                              ShiftSignupRepository shiftSignups,
+                             LessonOverrideRepository overrides,
+                             ScheduleService schedule,
                              AuditService audit) {
         this.attendance = attendance;
         this.registrations = registrations;
         this.programs = programs;
         this.shiftSignups = shiftSignups;
+        this.overrides = overrides;
+        this.schedule = schedule;
         this.audit = audit;
     }
 
@@ -184,6 +194,47 @@ public class AttendanceService {
         lessonCounts.forEach((date, c) -> perLesson.add(
                 new AttendanceStatsDto.PerLesson(date.toString(), c[0], c[1], c[2])));
 
-        return new AttendanceStatsDto(perChild, perLesson);
+        return new AttendanceStatsDto(perChild, perLesson, lessonPlan(programId));
+    }
+
+    /**
+     * Held vs. remaining lessons from the schedule: weekly occurrences within the program's validity,
+     * minus cancelled/moved-away dates, plus moved-in and extra one-off lessons of this program.
+     * Null when the program has no bounded validity (nothing meaningful to count down).
+     */
+    private AttendanceStatsDto.LessonPlan lessonPlan(String programId) {
+        var p = programs.findById(programId).orElse(null);
+        if (p == null || p.getValidFrom() == null || p.getValidTo() == null
+                || p.getValidTo().isBefore(p.getValidFrom())) {
+            return null;
+        }
+        java.util.Set<LocalDate> dates = new java.util.TreeSet<>(
+                schedule.occurrenceDates(p, p.getValidFrom(), p.getValidTo()));
+        List<LessonOverride> programOverrides = overrides.findByProgramId(programId);
+        for (LessonOverride o : programOverrides) {
+            if ((o.getType() == LessonOverrideType.CANCELLED || o.getType() == LessonOverrideType.MOVED)
+                    && o.getOriginalDate() != null) {
+                dates.remove(o.getOriginalDate());
+            }
+        }
+        for (LessonOverride o : programOverrides) {
+            if (o.getType() != LessonOverrideType.CANCELLED && o.getDate() != null) {
+                dates.add(o.getDate());
+            }
+        }
+        LocalDate today = LocalDate.now(ZoneId.of("Europe/Prague"));
+        int done = 0;
+        LocalDate next = null;
+        for (LocalDate d : dates) {
+            if (d.isBefore(today)) {
+                done++;
+            } else if (next == null) {
+                next = d;
+            }
+        }
+        return new AttendanceStatsDto.LessonPlan(
+                dates.size(), done, dates.size() - done,
+                next == null ? null : next.toString(),
+                p.getValidFrom().toString(), p.getValidTo().toString());
     }
 }

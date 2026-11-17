@@ -219,6 +219,15 @@ export interface AttendanceStats {
     excused: number;
     absent: number;
   }[];
+  /** Held / remaining lessons from the schedule (null when the program has no date range). */
+  plan: {
+    total: number;
+    done: number;
+    remaining: number;
+    nextDate: string | null;
+    validFrom: string;
+    validTo: string;
+  } | null;
 }
 
 export interface Invoice {

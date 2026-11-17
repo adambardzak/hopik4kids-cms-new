@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Check, X, CircleAlert, Save, BarChart3 } from "lucide-react";
+import { Check, X, CircleAlert, Save, BarChart3, CalendarClock } from "lucide-react";
 import type { AttendanceRow, AttendanceStats, AttendanceStatus, Program } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -210,6 +210,8 @@ export function AttendanceView({ programs }: { programs: Program[] }) {
         </div>
       </div>
 
+      <LessonPlanBar plan={stats?.plan ?? null} />
+
       {showStats ? (
         <StatsPanel stats={stats} onClose={() => setShowStats(false)} programName={program?.name ?? ""} />
       ) : (
@@ -407,4 +409,34 @@ function StatsPanel({
       )}
     </div>
   );
+}
+
+const fmtDate = (iso: string) => new Date(iso).toLocaleDateString("cs-CZ");
+
+/** Held vs. remaining lessons of the program — from the schedule, so it works without attendance too. */
+function LessonPlanBar({ plan }: { plan: AttendanceStats["plan"] }) {
+  if (!plan || plan.total === 0) return null;
+  const pct = Math.round((plan.done / plan.total) * 100);
+  return (
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
+        <span className="inline-flex items-center gap-2 font-semibold">
+          <CalendarClock className="h-4 w-4 text-[var(--accent)]" />
+          Zbývá {plan.remaining} {lessonWord(plan.remaining)} z {plan.total}
+        </span>
+        <span className="text-[var(--muted-foreground)]">odučeno {plan.done}</span>
+        {plan.nextDate && <span className="text-[var(--muted-foreground)]">další {fmtDate(plan.nextDate)}</span>}
+        <span className="text-[var(--muted-foreground)]">
+          {fmtDate(plan.validFrom)} – {fmtDate(plan.validTo)}
+        </span>
+      </div>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--muted)]">
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "var(--success-solid)" }} />
+      </div>
+    </div>
+  );
+}
+
+function lessonWord(n: number): string {
+  return n >= 1 && n <= 4 ? "lekce" : "lekcí";
 }
